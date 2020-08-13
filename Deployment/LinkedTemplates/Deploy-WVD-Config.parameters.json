@@ -5,23 +5,23 @@
         "az_logAnalyticsWorkspaceId": {
             "reference": {
                 "keyVault": {
-                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                "id": "<key-vault-resource-id>"
                 },
-                "secretName": "WVD-East-LA-WorkspaceId"
+                "secretName": "WVD-LA-WorkspaceId"
             }
         },
         "az_logAnalyticsWorkspaceKey": {
             "reference": {
                 "keyVault": {
-                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                "id": "<key-vault-resource-id>"
                 },
-                "secretName": "WVD-East-LA-WorkspaceKey"
+                "secretName": "WVD-LA-WorkspaceKey"
             }
         },
         "dj_adminAccount": {
             "reference": {
                 "keyVault": {
-                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                "id": "<key-vault-resource-id>"
                 },
                 "secretName": "WVDAutomationSvcAcct"
             }
@@ -29,18 +29,18 @@
         "dj_adminAccountPassword": {
             "reference": {
                 "keyVault": {
-                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                "id": "<key-vault-resource-id>"
                 },
                 "secretName": "WVDDJPassword"
             }
         },
         "dj_domainFQDN": {
-            "value": "va.gov"
+            "value": "contoso.com"
         },
         "dj_ouPath": {
             "reference": {
                 "keyVault": {
-                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                "id": "<key-vault-resource-id>"
                 },
                 "secretName": "WVDHostOU"
             }

@@ -6,10 +6,10 @@
             "type": "string",
             "defaultValue": "[utcNow('u')]"
         },
-        "va_cloudResourcePrefix": {
+        "az_cloudResourcePrefix": {
             "type": "string"
         },
-        "va_wkstaPrefix": {
+        "az_wkstaPrefix": {
             "type": "string"
         },
         "dj_adminAccount": {
@@ -89,7 +89,7 @@
                 "getName": {
                     "parameters": [
                         {
-                            "name": "VAEC_RegionPrefix",
+                            "name": "RegionPrefix",
                             "type": "string"
                         },
                         {
@@ -99,7 +99,7 @@
                     ],
                     "output": {
                         "type": "string",
-                        "value": "[toLower(concat(parameters('VAEC_RegionPrefix'),'-wvd-hostpool-',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
+                        "value": "[toLower(concat(parameters('RegionPrefix'),'-wvd-hostpool-',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
                     }
                 }
             }
@@ -110,7 +110,7 @@
                 "getName": {
                     "parameters": [
                         {
-                            "name": "VA_WS_GroupPrefix",
+                            "name": "SessionHostGroupPrefix",
                             "type": "string"
                         },
                         {
@@ -120,7 +120,7 @@
                     ],
                     "output": {
                         "type": "string",
-                        "value": "[toLower(concat(parameters('VA_WS_GroupPrefix'),'-wshp',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
+                        "value": "[toLower(concat(parameters('SessionHostGroupPrefix'),'-wshp',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
                     }
                 }
             }
@@ -129,8 +129,8 @@
     "variables": {
         "wvdHostPoolTokenExpirationTime": "[dateTimeAdd(parameters('timeStamp'), 'PT23H')]",
         "createVMs": "[greater(parameters('az_vmNumberOfInstances'),0)]",
-        "wvdHostPoolName": "[wvdHostPool.getName(parameters('va_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
-        "wvdshPrefix": "[wvdSessionHost.getName(parameters('va_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
+        "wvdHostPoolName": "[wvdHostPool.getName(parameters('az_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
+        "wvdshPrefix": "[wvdSessionHost.getName(parameters('az_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
         "wvdSubnetName": "[concat(parameters('vn_virtualNetworkSubnetPrefix'),padLeft(parameters('wvd_hostPoolIncrement'),2,'0'))]",
         "wvdSubnetId": "[resourceId(parameters('vn_virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vn_virtualNetworkName'), variables('wvdSubnetName'))]",
         "wvdVMTemplate": "[concat(
@@ -166,7 +166,8 @@
             "location": "[variables('wvdResourceLocation')]",
             "tags": {
                 "WVD-Maintenance": "True",
-                "WVD-Deployment": "[concat(parameters('wvd_deploymentType'),'-',parameters('wvd_deploymentPurpose'))]"
+                "WVD-Deployment": "[parameters('wvd_deploymentType')]",
+                "WVD-Function": "[parameters('wvd_deploymentPurpose')]"
             },
             "properties": {
                 "friendlyName": "[concat('WVD Host Pool ',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),' (',toUpper(parameters('wvd_deploymentType')),' v',parameters('wvd_buildVersion'),')')]",
@@ -191,7 +192,7 @@
             "location": "[variables('wvdResourceLocation')]",
             "properties": {
                 "hostpoolarmpath": "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('wvdHostPoolName'))]",
-                "friendlyName": "",
+                "friendlyName": "[concat('vDesktop [',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),']')]",
                 "description": "",
                 "applicationGroupType": "Desktop"
             },
@@ -211,9 +212,8 @@
             },
             "properties": {
                 // if the group reference count is greater than 3, use 3 fault domains, else use the group reference count as the number of fault domains
-                "platformFaultDomainCount": "[if(greater(length(parameters('wvd_groupReference')),3),3,length(parameters('wvd_groupReference')))]",
-                // update domain max count is 20, if less than 20 use session host instance count as update domain count
-                "platformUpdateDomainCount": "[if(greater(variables('wvdSessionHostInstances'),20),20,variables('wvdSessionHostInstances'))]"
+                "platformFaultDomainCount": 3,
+                "platformUpdateDomainCount": 20
             },
             "sku": {
                 "name": "Aligned"

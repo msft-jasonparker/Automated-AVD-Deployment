@@ -32,61 +32,67 @@
                 "description": "[DO NOT CHANGE] Azure VM OS Disk Type."
             }
         },
-        "va_cloudResourcePrefix": {
-            "value": "vac30",
+        "az_cloudResourcePrefix": {
+            "value": "azc10",
             "metadata": {
-                "description": "Update this value to reflect the VA region prefix for cloud resources."
+                "description": "Update this value to reflect the Azure region prefix for cloud resources."
             }
         },
-        "va_wkstaPrefix": {
-            "value": "c30",
+        "az_wkstaPrefix": {
+            "value": "c10",
             "metadata": {
-                "description": "Update this value to reflect the VA region prefix for domain joined computers."
+                "description": "Update this value to reflect the Azure region prefix for domain joined computers. Max of 3 characters"
             }
         },
         "vn_virtualNetworkName": {
-            "value": "WVD-MAP-PROD-EASTUS",
+            "value": "<vnet-name>",
             "metadata": {
                 "description": "Update this value to reflect the Virtual Network name based on the deployment region."
             }
         },
         "vn_virtualNetworkSubnetPrefix": {
-            "value": "N2-Subnet-",
+            "value": "<subnet-prefix>",
             "metadata": {
-                "description": "Update this value to reflect the subnet naming prefix in the deployment region. This value is used in a 'copy' loop and the names are derived from the 'copy count'."
+                "description": "Update this value to reflect the subnet naming prefix in the deployment region. This value is used in a 'copy' loop and the names are derived from the 'copy count' and should be designed to allow a numerical increase from 1-xx"
             }
         },
         "vn_virtualNetworkResourceGroupName": {
-            "value": "WVD-PROD-MAP-EASTUS-NETWORK-RG",
+            "value": "<vnet-resource-group-name>",
             "metadata": {
                 "description": "Update this value to reflect the location of the 'vn_virtualNetworkName' parameter"
             }
         },
         "wvd_buildVersion": {
-            "value": "1.2"
+            "value": "1.0",
+            "metadata": {
+                "description": "Update this value to reflect the current build version"
+            }
         },
         "wvd_groupReference": {
             "value": [
                 "A",
                 "B"
-            ]
+            ],
+            "metadata": {
+                "description": "Alpha -or- numeric can be used to define the grouping of the VMs and the pairings of the AVSets. Number of groups defined here is also how the VM instances are divided."
+            }
         },
         "wvd_keyVaultId": {
-            "value": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv",
+            "value": "<key-vault-resource-id>",
             "metadata": {
                 "description": "Update this value to reflect the resource id of the KeyVault where the secrets are store for the deployment region."
             }
         },
         "wvd_workspaceResourceGroup": {
-            "value": "WVD-PROD-MAP-EASTUS-SVCS-RG",
+            "value": "<wvd-workspace-resource-group-name>",
             "metadata": {
                 "description": "Update this value to reflect the Resource Group where the 'wvd_workspaceName' parameter was created."
             }
         },
         "wvd_hostPoolResourceGroupPrefix": {
-            "value": "WVD-PROD-MAP-EASTUS-POOL-RG-",
+            "value": "<hostpool-resource-group-name-prefix>",
             "metadata": {
-                "description": "Update this value to reflect the Resource Group naming prefix based on the deployment region.  This value is used in a 'copy' loop and the names are derived from the 'copy count'."
+                "description": "Update this value to reflect the Resource Group naming prefix based on the deployment region.  This value is used in a 'copy' loop and the names are derived from the 'copy count' and should support a numerical increase in value appended to the end"
             }
         },
         "wvd_maxSessionLimit": {
@@ -102,7 +108,7 @@
             }
         },
         "wvd_customRdpProperty": {
-            "value": "audiomode:i:0;audiocapturemode:i:1;encode redirected video capture:i:1;redirected video capture encoding quality:i:1;camerastoredirect:s:*;drivestoredirect:s:;redirectclipboard:i:0;redirectprinters:i:0;use multimon:i:0;singlemoninwindowedmode:i:1;maximizetocurrentdisplays:i:1;screen mode id:i:2;smart sizing:i:0;dynamic resolution:i:1;authentication level:i:0;gatewaycredentialssource:i:0;Kdcproxyname:s:kproxy.federation.va.gov",
+            "value": "audiomode:i:0;audiocapturemode:i:1;encode redirected video capture:i:1;redirected video capture encoding quality:i:1;camerastoredirect:s:*;use multimon:i:0;singlemoninwindowedmode:i:1;maximizetocurrentdisplays:i:1;screen mode id:i:2;smart sizing:i:0;dynamic resolution:i:1",
             "metadata": {
                 "description": "Update this value to reflect the RDP settings that ultimately get pushed to the Windows Desktop client application and determine the default connection parameters for WVD."
             }
@@ -114,7 +120,7 @@
             }
         },
         "wvd_hostPoolInitialValue": {
-            "value": 11,
+            "value": 1,
             "metadata": {
                 "description": "update this value to reflect the starting number of the Host Pool to deploy. This number should correspond to the 'wvd_hostPoolResourceGroupPrefix' parameter as these are precreated in each region."
             }
@@ -123,29 +129,29 @@
             "value": {
                 "configs": [
                     {
-                        "deploymentType": "BYOD",
-                        "deploymentPurpose": "ITOPS",
-                        "fsLogixVhdLocation": "\\\\vac30hsm01-af40.va.gov\\vac30-wvd-profile-cloudcache-03",
-                        "dscConfiguration": "VA-WVD-Win10-SessionHost-Config.ps1.zip",
-                        "azVmNumberOfInstances": 2
+                        "deploymentType": "<deployment-type>",
+                        "deploymentFunction": "<deployment-function>",
+                        "fsLogixVhdLocation": "\\\\servername\\sharename",
+                        "dscConfiguration": "DscConfiguration.ps1.zip",
+                        "azVmNumberOfInstances": 20
                     },
                     {
-                        "deploymentType": "GFE",
-                        "deploymentPurpose": "ITOPS",
-                        "fsLogixVhdLocation": "\\\\vac30hsm01-af40.va.gov\\vac30-wvd-profile-cloudcache-03",
-                        "dscConfiguration": "VA-WVD-Win10-SessionHost-Config.ps1.zip",
-                        "azVmNumberOfInstances": 2
+                        "deploymentType": "<deployment-type>",
+                        "deploymentFunction": "<deployment-function>",
+                        "fsLogixVhdLocation": "\\\\servername\\sharename",
+                        "dscConfiguration": "DscConfiguration.ps1.zip",
+                        "azVmNumberOfInstances": 20
                     }
                 ]
             },
             "metadata": {
-                "description": "Update this value to reflect the number of Host Pools to create, the type Host Pool it will serve and the location of the FSLogix profiles."
+                "description": "Update this value to reflect the number of Host Pools to create, the type Host Pool it will serve and the location of the FSLogix profiles. Each config is a host pool with the number of VMs"
             }
         },
         "domain": {
-            "value": "va.gov",
+            "value": "contoso.com",
             "metadata": {
-                "description": "[DO NOT CHANGE] Domain name to join for the Session Hosts."
+                "description": "Domain name to join for the Session Hosts."
             }
         }
     }
