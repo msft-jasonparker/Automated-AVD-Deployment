@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dj_adminAccount": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+        },
+        "secretName": "WVDAutomationSvcAcct"
+      }
+    },
+    "dj_adminAccountPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+        },
+        "secretName": "WVDDJPassword"
+      }
+    },
+    "va_domainFQDN": {
+      "value": "va.gov"
+    },
+    "va_dnsServers": {
+      "value": "10.245.128.165,10.245.128.210"
+    },
+    "va_cloudResourcePrefix": {
+      "value": "vac30"
+    },
+    "va_organizationalUnit": {
+      "value": "OU=VDI Azure Hosts,OU=Azure,OU=VAEC"
+    },
+    "va_adSiteName": {
+      "value": "VAC20"
+    },
+    "vn_virtualNetworkName": {
+      "value": "WVD-MAP-PROD-EASTUS"
+    },
+    "vn_virtualNetworkResourceGroupName": {
+      "value": "WVD-PROD-MAP-EASTUS-NETWORK-RG"
+    },
+    "anf_netappAccountName": {
+      "value": "vac30-wvd-netapp-01"
+    },
+    "anf_netappCapacityPoolName": {
+      "value": "vac30-wvd-netapp-pool01"
+    },
+    "anf_netAppVolumeCount": {
+      "value": 2
+    },
+    "anf_netappVolumeName": {
+      "value": "vac30-wvd-netapp-pool01-vol"
+    },
+    "anf_delegatedSubnetName": {
+      "value": "N2-Subnet-NA01"
+    }
+  }
+}

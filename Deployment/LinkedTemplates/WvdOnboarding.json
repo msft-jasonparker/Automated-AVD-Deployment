@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string"
+        },
+        "wvd_hostpoolName": {
+            "type": "string"
+        },
+        "wvd_hostpoolToken": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2019-07-01",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'),'/dscextension')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.80",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "modulesUrl": "https://datrgallerycontainer.blob.core.windows.net/gallaryartifacts/Configuration.zip",
+                    "configurationFunction": "Configuration.ps1\\AddSessionHost",
+                    "properties": {
+                        "hostPoolName": "[parameters('wvd_hostpoolName')]",
+                        "registrationInfoToken": "[parameters('wvd_hostpoolToken')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+  }

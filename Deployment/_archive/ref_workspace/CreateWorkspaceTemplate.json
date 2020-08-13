@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "workspaceName": {
+        "type": "string"
+      },
+      "workspaceDescription": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "friendlyName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "appGroups": {
+        "type": "array",
+        "defaultValue": []
+      },
+      "tags": {
+        "type": "object",
+        "defaultValue": {}
+      },
+      "apiVersion": {
+        "type": "string",
+        "metadata": {
+          "description": "WVD api version"
+        },
+        "defaultValue": "2019-12-10-preview"
+      }
+    },
+    "resources": [
+      {
+        "name": "[parameters('workspaceName')]",
+        "apiVersion": "[parameters('apiVersion')]",
+        "type": "Microsoft.DesktopVirtualization/workspaces",
+        "location": "[parameters('location')]",
+        "tags": "[parameters('tags')]",
+        "properties": {
+          "friendlyName": "[parameters('workspaceName')]",
+          "description": "[parameters('workspaceDescription')]",
+          "applicationGroupReferences": "[parameters('appGroups')]"
+        }
+      }
+    ]
+  }

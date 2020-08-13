@@ -1,0 +1,152 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "az_vmSize": {
+            "value": "Standard_D8s_v3",
+            "metadata": {
+                "description": "Size of the Session Host VM to deploy.  This should correspond to the wvd_maxSessionLimit parameter to align to the 1 user session per CPU core model."
+            }
+        },
+        "az_vmImageOffer": {
+            "value": "windows-10",
+            "metadata": {
+                "description": "[DO NOT CHANGE] Azure VM Image Offer without the built-in Office product."
+            }
+        },
+        "az_vmImagePublisher": {
+            "value": "MicrosoftWindowsDesktop",
+            "metadata": {
+                "description": "[DO NOT CHANGE] Azure VM Image Publisher for multi-session Windows 10."
+            }
+        },
+        "az_vmImageSKU": {
+            "value": "19h2-evd",
+            "metadata": {
+                "description": "[DO NOT CHANGE] Azure VM Image SKU for Windows 10 1909."
+            }
+        },
+        "az_vmDiskType": {
+            "value": "Premium_LRS",
+            "metadata": {
+                "description": "[DO NOT CHANGE] Azure VM OS Disk Type."
+            }
+        },
+        "va_cloudResourcePrefix": {
+            "value": "vac30",
+            "metadata": {
+                "description": "Update this value to reflect the VA region prefix for cloud resources."
+            }
+        },
+        "va_wkstaPrefix": {
+            "value": "c30",
+            "metadata": {
+                "description": "Update this value to reflect the VA region prefix for domain joined computers."
+            }
+        },
+        "vn_virtualNetworkName": {
+            "value": "WVD-MAP-PROD-EASTUS",
+            "metadata": {
+                "description": "Update this value to reflect the Virtual Network name based on the deployment region."
+            }
+        },
+        "vn_virtualNetworkSubnetPrefix": {
+            "value": "N2-Subnet-",
+            "metadata": {
+                "description": "Update this value to reflect the subnet naming prefix in the deployment region. This value is used in a 'copy' loop and the names are derived from the 'copy count'."
+            }
+        },
+        "vn_virtualNetworkResourceGroupName": {
+            "value": "WVD-PROD-MAP-EASTUS-NETWORK-RG",
+            "metadata": {
+                "description": "Update this value to reflect the location of the 'vn_virtualNetworkName' parameter"
+            }
+        },
+        "wvd_buildVersion": {
+            "value": "1.2"
+        },
+        "wvd_groupReference": {
+            "value": [
+                "A",
+                "B"
+            ]
+        },
+        "wvd_keyVaultId": {
+            "value": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv",
+            "metadata": {
+                "description": "Update this value to reflect the resource id of the KeyVault where the secrets are store for the deployment region."
+            }
+        },
+        "wvd_workspaceResourceGroup": {
+            "value": "WVD-PROD-MAP-EASTUS-SVCS-RG",
+            "metadata": {
+                "description": "Update this value to reflect the Resource Group where the 'wvd_workspaceName' parameter was created."
+            }
+        },
+        "wvd_hostPoolResourceGroupPrefix": {
+            "value": "WVD-PROD-MAP-EASTUS-POOL-RG-",
+            "metadata": {
+                "description": "Update this value to reflect the Resource Group naming prefix based on the deployment region.  This value is used in a 'copy' loop and the names are derived from the 'copy count'."
+            }
+        },
+        "wvd_maxSessionLimit": {
+            "value": 8,
+            "metadata": {
+                "description": "Update this value to reflect the maximum session limit per Session Host. Should be based on 1 user session per CPU core of the VM size."
+            }
+        },
+        "wvd_loadBalancerType": {
+            "value": "BreadthFirst",
+            "metadata": {
+                "description": "Update this value to reflect how the user session are distributed across the Host Pool. BreadthFirst = Spread OUT across Session Hosts | DepthFirst = Spread DOWN into each Session Host."
+            }
+        },
+        "wvd_customRdpProperty": {
+            "value": "audiomode:i:0;audiocapturemode:i:1;encode redirected video capture:i:1;redirected video capture encoding quality:i:1;camerastoredirect:s:*;drivestoredirect:s:;redirectclipboard:i:0;redirectprinters:i:0;use multimon:i:0;singlemoninwindowedmode:i:1;maximizetocurrentdisplays:i:1;screen mode id:i:2;smart sizing:i:0;dynamic resolution:i:1;authentication level:i:0;gatewaycredentialssource:i:0;Kdcproxyname:s:kproxy.federation.va.gov",
+            "metadata": {
+                "description": "Update this value to reflect the RDP settings that ultimately get pushed to the Windows Desktop client application and determine the default connection parameters for WVD."
+            }
+        },
+        "wvd_apiVersion": {
+            "value": "2019-12-10-preview",
+            "metadata": {
+                "description": "Update this value to reflect the API version for the WVD resource objects."
+            }
+        },
+        "wvd_hostPoolInitialValue": {
+            "value": 11,
+            "metadata": {
+                "description": "update this value to reflect the starting number of the Host Pool to deploy. This number should correspond to the 'wvd_hostPoolResourceGroupPrefix' parameter as these are precreated in each region."
+            }
+        },
+        "wvd_hostPoolConfig": {
+            "value": {
+                "configs": [
+                    {
+                        "deploymentType": "BYOD",
+                        "deploymentPurpose": "ITOPS",
+                        "fsLogixVhdLocation": "\\\\vac30hsm01-af40.va.gov\\vac30-wvd-profile-cloudcache-03",
+                        "dscConfiguration": "VA-WVD-Win10-SessionHost-Config.ps1.zip",
+                        "azVmNumberOfInstances": 2
+                    },
+                    {
+                        "deploymentType": "GFE",
+                        "deploymentPurpose": "ITOPS",
+                        "fsLogixVhdLocation": "\\\\vac30hsm01-af40.va.gov\\vac30-wvd-profile-cloudcache-03",
+                        "dscConfiguration": "VA-WVD-Win10-SessionHost-Config.ps1.zip",
+                        "azVmNumberOfInstances": 2
+                    }
+                ]
+            },
+            "metadata": {
+                "description": "Update this value to reflect the number of Host Pools to create, the type Host Pool it will serve and the location of the FSLogix profiles."
+            }
+        },
+        "domain": {
+            "value": "va.gov",
+            "metadata": {
+                "description": "[DO NOT CHANGE] Domain name to join for the Session Hosts."
+            }
+        }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dj_adminAccount": {
+            "reference": {
+                "keyVault": {
+                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                },
+                "secretName": "WVDAutomationSvcAcct"
+            }
+        },
+        "dj_adminAccountPassword": {
+            "reference": {
+                "keyVault": {
+                "id": "/subscriptions/f5d65f77-695f-42ba-a165-6764208c53c1/resourceGroups/WVD-CORE-MAP-EASTUS-SVCS-RG/providers/Microsoft.KeyVault/vaults/wvd-core-eastus-kv"
+                },
+                "secretName": "WVDDJPassword"
+            }
+        }
+    }
+}

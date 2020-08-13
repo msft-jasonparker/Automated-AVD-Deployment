@@ -1,0 +1,100 @@
+[
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/426BF4487901CEA5",
+    "operationId": "426BF4487901CEA5",
+    "properties": {
+      "provisioningOperation": "Create",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T20:09:20.9761444Z",
+      "duration": "PT11M0.9695779S",
+      "trackingId": "982fd7e1-cb14-4f1d-a01c-51f911e7895c",
+      "statusCode": "OK",
+      "targetResource": {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/vmCreation-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043",
+        "resourceType": "Microsoft.Resources/deployments",
+        "resourceName": "vmCreation-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043"
+      }
+    }
+  },
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/E0814D42FB928F1C",
+    "operationId": "E0814D42FB928F1C",
+    "properties": {
+      "provisioningOperation": "Create",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T19:58:21.8119359Z",
+      "duration": "PT24.729532S",
+      "trackingId": "f8b633a9-7429-442e-b80d-6d10f84b887d",
+      "statusCode": "OK",
+      "targetResource": {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-SVCS-RG/providers/Microsoft.Resources/deployments/Workspace-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043",
+        "resourceType": "Microsoft.Resources/deployments",
+        "resourceName": "Workspace-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043"
+      }
+    }
+  },
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/83FAA4997A14B293",
+    "operationId": "83FAA4997A14B293",
+    "properties": {
+      "provisioningOperation": "Create",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T19:58:19.9556251Z",
+      "duration": "PT22.8732212S",
+      "trackingId": "57a1f46e-dd0e-4bd1-ac22-a5e616b15d4d",
+      "statusCode": "OK",
+      "targetResource": {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/AVSet-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043",
+        "resourceType": "Microsoft.Resources/deployments",
+        "resourceName": "AVSet-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043"
+      }
+    }
+  },
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/2490A8C926CF6911",
+    "operationId": "2490A8C926CF6911",
+    "properties": {
+      "provisioningOperation": "Create",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T19:57:44.9434167Z",
+      "duration": "PT28.5584323S",
+      "trackingId": "924ed481-97d0-45f6-bfae-a25b7b55f235",
+      "statusCode": "Created",
+      "targetResource": {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.DesktopVirtualization/applicationgroups/vac30wvdhp01-DAG",
+        "resourceType": "Microsoft.DesktopVirtualization/applicationgroups",
+        "resourceName": "vac30wvdhp01-DAG"
+      }
+    }
+  },
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/D94EB1ECD61EDF78",
+    "operationId": "D94EB1ECD61EDF78",
+    "properties": {
+      "provisioningOperation": "Create",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T19:57:04.323991Z",
+      "duration": "PT1M11.2336413S",
+      "trackingId": "7800d348-ecc0-4f75-b6a0-4291adf61717",
+      "statusCode": "Created",
+      "targetResource": {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.DesktopVirtualization/hostpools/vac30wvdhp01",
+        "resourceType": "Microsoft.DesktopVirtualization/hostpools",
+        "resourceName": "vac30wvdhp01"
+      }
+    }
+  },
+  {
+    "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/HostPool-d4513b30-98b3-433b-9d90-3cfc86fdd043-deployment/operations/08586150583335479085",
+    "operationId": "08586150583335479085",
+    "properties": {
+      "provisioningOperation": "EvaluateDeploymentOutput",
+      "provisioningState": "Succeeded",
+      "timestamp": "2020-04-10T20:09:33.234339Z",
+      "duration": "PT0.1860237S",
+      "trackingId": "9679ac8d-4df3-4b8d-b7c2-57114016beef",
+      "statusCode": "OK",
+      "statusMessage": null
+    }
+  }
+]

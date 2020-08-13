@@ -1,0 +1,2233 @@
+{
+  "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/vmCreation-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043",
+  "name": "vmCreation-linkedTemplate-d4513b30-98b3-433b-9d90-3cfc86fdd043",
+  "type": "Microsoft.Resources/deployments",
+  "properties": {
+    "templateLink": {
+      "uri": "https://catalogartifact.azureedge.net/publicartifacts/Microsoft.Hostpool-ARM-1.0.11-preview/managedDisks-galleryvm.json",
+      "contentVersion": "1.0.0.0"
+    },
+    "templateHash": "13470094202647752251",
+    "parameters": {
+      "artifactsLocation": {
+        "type": "String",
+        "value": "https://datrgallerycontainer.blob.core.windows.net/gallaryartifacts/Configuration.zip"
+      },
+      "vmImageVhdUri": {
+        "type": "String",
+        "value": ""
+      },
+      "storageAccountResourceGroupName": {
+        "type": "String",
+        "value": ""
+      },
+      "vmGalleryImageOffer": {
+        "type": "String",
+        "value": "Windows-10"
+      },
+      "vmGalleryImagePublisher": {
+        "type": "String",
+        "value": "MicrosoftWindowsDesktop"
+      },
+      "vmGalleryImageSKU": {
+        "type": "String",
+        "value": "19h1-evd"
+      },
+      "rdshPrefix": {
+        "type": "String",
+        "value": "vac30p01vm-"
+      },
+      "rdshNumberOfInstances": {
+        "type": "Int",
+        "value": 10
+      },
+      "rdshVMDiskType": {
+        "type": "String",
+        "value": "StandardSSD_LRS"
+      },
+      "rdshVmSize": {
+        "type": "String",
+        "value": "Standard_D4s_v3"
+      },
+      "enableAcceleratedNetworking": {
+        "type": "Bool",
+        "value": false
+      },
+      "administratorAccountUsername": {
+        "type": "String",
+        "value": "VAwvd-Automation-Svc@va.gov"
+      },
+      "administratorAccountPassword": {
+        "type": "SecureString"
+      },
+      "vhds": {
+        "type": "String",
+        "value": "vhds/vac30p01vm-"
+      },
+      "subnet-id": {
+        "type": "String",
+        "value": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-NETWORK-RG/providers/Microsoft.Network/virtualNetworks/WVD-MAP-PROD-EASTUS/subnets/N2-Subnet-01"
+      },
+      "rdshImageSourceId": {
+        "type": "String",
+        "value": ""
+      },
+      "location": {
+        "type": "String",
+        "value": "eastus"
+      },
+      "usePublicIP": {
+        "type": "Bool",
+        "value": false
+      },
+      "publicIpAddressType": {
+        "type": "String",
+        "value": "Dynamic"
+      },
+      "publicIpAddressSku": {
+        "type": "String",
+        "value": "Basic"
+      },
+      "createNetworkSecurityGroup": {
+        "type": "Bool",
+        "value": false
+      },
+      "networkSecurityGroupId": {
+        "type": "String",
+        "value": ""
+      },
+      "networkSecurityGroupRules": {
+        "type": "Array",
+        "value": []
+      },
+      "networkInterfaceTags": {
+        "type": "Object",
+        "value": {}
+      },
+      "networkSecurityGroupTags": {
+        "type": "Object",
+        "value": {}
+      },
+      "publicIPAddressTags": {
+        "type": "Object",
+        "value": {}
+      },
+      "virtualMachineTags": {
+        "type": "Object",
+        "value": {}
+      },
+      "imageTags": {
+        "type": "Object",
+        "value": {}
+      },
+      "vmInitialNumber": {
+        "type": "Int",
+        "value": 0
+      },
+      "_guidValue": {
+        "type": "String",
+        "value": "d4513b30-98b3-433b-9d90-3cfc86fdd043"
+      },
+      "hostpoolToken": {
+        "type": "String",
+        "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjUxM0FERUIwNTJBNjZGODY3OUUxOTY5OTlDQTc2NzhCQUE5NjBBNjMiLCJ0eXAiOiJKV1QifQ.eyJSZWdpc3RyYXRpb25JZCI6IjQ3YjJjZmQ0LTJmMjEtNDcxZi1iNDJlLWI1YTVjMDZkNTVkNCIsIkJyb2tlclVyaSI6Imh0dHBzOi8vcmRicm9rZXItZy11cy1yMC53dmQubWljcm9zb2Z0LmNvbS8iLCJEaWFnbm9zdGljc1VyaSI6Imh0dHBzOi8vcmRkaWFnbm9zdGljcy1nLXVzLXIwLnd2ZC5taWNyb3NvZnQuY29tLyIsIkVuZHBvaW50UG9vbElkIjoiMDg4NWQ0YWMtMzdiYS00ZjVkLTlkZTYtMTc3MjlhMjBlZDU3IiwiR2xvYmFsQnJva2VyVXJpIjoiaHR0cHM6Ly9yZGJyb2tlci53dmQubWljcm9zb2Z0LmNvbS8iLCJHZW9ncmFwaHkiOiJVUyIsIm5iZiI6MTU4NjU0ODU5MCwiZXhwIjoxNTg2NjM0OTM2LCJpc3MiOiJSREluZnJhVG9rZW5NYW5hZ2VyIiwiYXVkIjoiUkRtaSJ9.RsUC6XoXcJ7f1rwlIz2u12bwIz59MjuKeFTVS-vgH48eAeabCH-K5fHQCX4Xg8ua5y9K6wBtkgAjkHlutNJgfNYNncC7NwWIVt_7GkLqHnH2TdSTT1KRkaLkfM3gNQ_MzZlfnan2YoPvaazCjaodPBq7bHtD3rD2bhsu-xkzCiF6--Jw8BmPOlj0TpBclTkB1-Jmtap7AGctKlEC6fdvJBVtGESmH5Pn1Ue5IF7dKuS9Os_zCHOIQl4pc5s7XrCqRuQt44zGkEggGxe3AWS38XtLOmhK7orbZSZWez5_rVjrtCLeji43B7ja5jASX6tCzNzJnd0yarWweTouqc5wFQ"
+      },
+      "hostpoolName": {
+        "type": "String",
+        "value": "vac30wvdhp01"
+      },
+      "ouPath": {
+        "type": "String",
+        "value": "OU=VDI Azure Hosts,OU=Azure,OU=VAEC,DC=VA,DC=GOV"
+      },
+      "domain": {
+        "type": "String",
+        "value": "va.gov"
+      }
+    },
+    "mode": "Incremental",
+    "provisioningState": "Succeeded",
+    "timestamp": "2020-04-10T20:09:13.5621285Z",
+    "duration": "PT10M50.1114409S",
+    "correlationId": "3437047e-10f8-43cc-b94a-f56fea7833f1",
+    "providers": [
+      {
+        "namespace": "Microsoft.Resources",
+        "resourceTypes": [
+          {
+            "resourceType": "deployments",
+            "locations": [
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "namespace": "Microsoft.Network",
+        "resourceTypes": [
+          {
+            "resourceType": "networkInterfaces",
+            "locations": [
+              "eastus"
+            ]
+          }
+        ]
+      },
+      {
+        "namespace": "Microsoft.Compute",
+        "resourceTypes": [
+          {
+            "resourceType": "virtualMachines",
+            "locations": [
+              "eastus"
+            ]
+          },
+          {
+            "resourceType": "virtualMachines/extensions",
+            "locations": [
+              "eastus"
+            ]
+          }
+        ]
+      }
+    ],
+    "dependencies": [
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-0-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-0-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-1-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-1-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-2-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-2-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-3-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-3-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-4-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-4-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-5-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-5-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-6-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-6-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-7-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-7-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-8-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-8-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Resources/deployments/NSG-linkedTemplate",
+            "resourceType": "Microsoft.Resources/deployments",
+            "resourceName": "NSG-linkedTemplate"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-0-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-1-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-2-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-3-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-4-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-5-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-6-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-7-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-8-ip"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip",
+            "resourceType": "Microsoft.Network/publicIpAddresses",
+            "resourceName": "vac30p01vm-9-ip"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-9-nic",
+        "resourceType": "Microsoft.Network/networkInterfaces",
+        "resourceName": "vac30p01vm-9-nic"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-0-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-0-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-0"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-1-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-1-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-1"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-2-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-2-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-2"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-3-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-3-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-3"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-4-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-4-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-4"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-5-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-5-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-5"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-6-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-6-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-6"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-7-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-7-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-7"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-8-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-8-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-8"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-9-nic",
+            "resourceType": "Microsoft.Network/networkInterfaces",
+            "resourceName": "vac30p01vm-9-nic"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+        "resourceType": "Microsoft.Compute/virtualMachines",
+        "resourceName": "vac30p01vm-9"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-0/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-1/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-2/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-3/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-4/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-5/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-6/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-7/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-8/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-0"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-1"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-2"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-3"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-4"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-5"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-6"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-7"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-8"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9",
+            "resourceType": "Microsoft.Compute/virtualMachines",
+            "resourceName": "vac30p01vm-9"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-9/joindomain"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-0/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-1/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-2/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-3/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-4/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-5/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-6/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-7/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-8/dscextension"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-0/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-1/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-2/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-3/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-4/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-5/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-6/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-7/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-8/joindomain"
+          },
+          {
+            "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain",
+            "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+            "resourceName": "vac30p01vm-9/joindomain"
+          }
+        ],
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/dscextension",
+        "resourceType": "Microsoft.Compute/virtualMachines/extensions",
+        "resourceName": "vac30p01vm-9/dscextension"
+      }
+    ],
+    "outputs": {},
+    "outputResources": [
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-0/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-1/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-2/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-3/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-4/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-5/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-6/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-7/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-8/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/dscextension"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Compute/virtualMachines/vac30p01vm-9/extensions/joindomain"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-0-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-1-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-2-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-3-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-4-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-5-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-6-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-7-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-8-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkInterfaces/vac30p01vm-9-nic"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/networkSecurityGroups/vac30p01vm-nsg-d4513b30-98b3-433b-9d90-3cfc86fdd043"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-0-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-1-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-2-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-3-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-4-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-5-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-6-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-7-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-8-ip"
+      },
+      {
+        "id": "/subscriptions/04cdaeb2-270b-4a7c-bec9-52efb7aad19a/resourceGroups/WVD-PROD-MAP-EASTUS-POOL-RG-1/providers/Microsoft.Network/publicIpAddresses/vac30p01vm-9-ip"
+      }
+    ]
+  }
+}

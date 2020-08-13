@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string"
+        },
+        "moduleZipUri": {
+            "type": "string"
+        },
+        "deploymentType": {
+            "type": "string"
+        },
+        "FSLogixVhdLocation": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "scriptName" : "VA-WVD-Win10-SessionHost-Baseline.ps1",
+        "configurationName": "WvdWin10Config"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-07-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('vmName'), '/dscextension')]",
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.80",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "Configuration": {
+                        "url": "[parameters('moduleZipUri')]",
+                        "script": "[variables('scriptName')]",
+                        "function": "[variables('configurationName')]"
+                    },
+                    "configurationArguments": {
+                        "deploymentType": "[parameters('deploymentType')]",
+                        "FSLogixVhdLocation": "[parameters('FSLogixVhdLocation')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+  }
