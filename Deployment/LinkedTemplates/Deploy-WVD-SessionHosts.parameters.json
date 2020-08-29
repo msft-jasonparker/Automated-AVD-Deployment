@@ -1,0 +1,22 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "az_vmAdminAccount": {
+            "reference": {
+                "keyVault": {
+                "id": "<key-vault-resource-id>"
+                },
+                "secretName": "WVD-VM-Admin-Account"
+            }
+        },
+        "az_vmAdminAccountPassword": {
+            "reference": {
+                "keyVault": {
+                "id": "<key-vault-resource-id>"
+                },
+                "secretName": "WVD-VM-Admin-Password"
+            }
+        }
+    }
+}
