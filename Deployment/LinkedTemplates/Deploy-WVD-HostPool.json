@@ -12,10 +12,10 @@
         "az_wkstaPrefix": {
             "type": "string"
         },
-        "dj_adminAccount": {
+        "az_vmAdminAccount": {
             "type": "string"
         },
-        "dj_adminAccountPassword": {
+        "az_vmAdminAccountPassword": {
             "type": "securestring"
         },
         "az_deploymentString": {
@@ -76,6 +76,12 @@
             "type": "string"
         },
         "wvd_deploymentPurpose": {
+            "type": "string"
+        },
+        "wvd_dscConfiguration": {
+            "type": "string"
+        },
+        "wvd_fsLogixVhdLocation": {
             "type": "string"
         },
         "domain": {
@@ -166,8 +172,11 @@
             "location": "[variables('wvdResourceLocation')]",
             "tags": {
                 "WVD-Maintenance": "True",
+                "WVD-Build": "[parameters('wvd_buildVersion')]",
                 "WVD-Deployment": "[parameters('wvd_deploymentType')]",
-                "WVD-Function": "[parameters('wvd_deploymentPurpose')]"
+                "WVD-Function": "[parameters('wvd_deploymentPurpose')]",
+                "WVD-DscConfiguration": "[parameters('wvd_dscConfiguration')]",
+                "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]"
             },
             "properties": {
                 "friendlyName": "[concat('WVD Host Pool ',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),' (',toUpper(parameters('wvd_deploymentType')),' v',parameters('wvd_buildVersion'),')')]",
@@ -212,8 +221,9 @@
             },
             "properties": {
                 // if the group reference count is greater than 3, use 3 fault domains, else use the group reference count as the number of fault domains
-                "platformFaultDomainCount": 3,
-                "platformUpdateDomainCount": 20
+                "platformFaultDomainCount": "[if(greater(length(parameters('wvd_groupReference')),3),3,length(parameters('wvd_groupReference')))]",
+                // update domain max count is 20, if less than 20 use session host instance count as update domain count
+                "platformUpdateDomainCount": "[if(greater(variables('wvdSessionHostInstances'),20),20,variables('wvdSessionHostInstances'))]"
             },
             "sku": {
                 "name": "Aligned"
@@ -272,11 +282,11 @@
                     "wvd_hostpoolName": {
                         "value": "[variables('wvdHostPoolName')]"
                     },
-                    "dj_adminAccountUPN": {
-                        "value": "[concat(parameters('dj_adminAccount'),'@',parameters('domain'))]"
+                    "az_vmAdminAccount": {
+                        "value": "[parameters('az_vmAdminAccount')]"
                     },
-                    "dj_adminAccountPassword": {
-                        "value": "[parameters('dj_adminAccountPassword')]"
+                    "az_vmAdminAccountPassword": {
+                        "value": "[parameters('az_vmAdminAccountPassword')]"
                     }
                 }
             }
