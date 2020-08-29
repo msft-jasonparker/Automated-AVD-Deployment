@@ -23,15 +23,15 @@
                 "keyVault": {
                 "id": "<key-vault-resource-id>"
                 },
-                "secretName": "WVDAutomationSvcAcct"
+                "secretName": "WVD-VM-DomainJoin-Account"
             }
         },
-        "dj_adminAccountPassword": {
+        "dj_adminPassword": {
             "reference": {
                 "keyVault": {
                 "id": "<key-vault-resource-id>"
                 },
-                "secretName": "WVDDJPassword"
+                "secretName": "WVD-VM-DomainJoin-Password"
             }
         },
         "dj_domainFQDN": {
@@ -42,7 +42,7 @@
                 "keyVault": {
                 "id": "<key-vault-resource-id>"
                 },
-                "secretName": "WVDHostOU"
+                "secretName": "WVD-SessionHost-OU"
             }
         }
     }

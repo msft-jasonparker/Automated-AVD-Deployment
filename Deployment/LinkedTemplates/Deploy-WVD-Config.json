@@ -14,7 +14,7 @@
       "dj_adminAccount": {
           "type": "string"
       },
-      "dj_adminAccountPassword": {
+      "dj_adminPassword": {
           "type": "securestring"
       },
       "dj_domainFQDN": {
@@ -26,7 +26,7 @@
       "wvd_deploymentType": {
         "type": "string"
       },
-      "wvd_deploymentPurpose": {
+      "wvd_deploymentFunction": {
         "type": "string"
       },
       "wvd_fsLogixVhdLocation": {
@@ -36,6 +36,9 @@
         "type": "string"
       },
       "wvd_hostPoolToken": {
+        "type": "string"
+      },
+      "wvd_dscConfigZipUrl": {
         "type": "string"
       },
       "wvd_dscConfigurationScript": {
@@ -102,7 +105,7 @@
           "options": "3"
         },
         "protectedSettings": {
-          "password": "[parameters('dj_adminAccountPassword')]"
+          "password": "[parameters('dj_adminPassword')]"
         }
       }
     },
@@ -133,7 +136,8 @@
           "configurationArguments": {
             "hostPoolName": "[parameters('wvd_hostpoolName')]",
             "registrationInfoToken": "[parameters('wvd_hostpoolToken')]",
-            "deploymentPurpose": "[parameters('wvd_deploymentPurpose')]",
+            "wvdDscConfigZipUrl": "[parameters('wvd_dscConfigZipUrl')]",
+            "deploymentFunction": "[parameters('wvd_deploymentFunction')]",
             "deploymentType": "[parameters('wvd_deploymentType')]",
             "fsLogixVhdLocation": "[parameters('wvd_fsLogixVhdLocation')]"
           }
