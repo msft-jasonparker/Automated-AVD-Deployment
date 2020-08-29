@@ -9,7 +9,7 @@
             }
         },
         "az_vmImageOffer": {
-            "value": "windows-10",
+            "value": "office-365",
             "metadata": {
                 "description": "[DO NOT CHANGE] Azure VM Image Offer without the built-in Office product."
             }
@@ -21,7 +21,7 @@
             }
         },
         "az_vmImageSKU": {
-            "value": "19h2-evd",
+            "value": "20h1-evd-o365pp",
             "metadata": {
                 "description": "[DO NOT CHANGE] Azure VM Image SKU for Windows 10 1909."
             }
