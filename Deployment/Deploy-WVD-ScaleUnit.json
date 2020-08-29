@@ -106,20 +106,20 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "dj_adminAccount": {
+                    "az_vmAdminAccount": {
                         "reference": {
                             "keyVault": {
                             "id": "[parameters('wvd_keyVaultId')]"
                             },
-                            "secretName": "WVDAutomationSvcAcct"
+                            "secretName": "WVD-VM-Admin-Account"
                         }
                     },
-                    "dj_adminAccountPassword": {
+                    "az_vmAdminAccountPassword": {
                         "reference": {
                             "keyVault": {
                             "id": "[parameters('wvd_keyVaultId')]"
                             },
-                            "secretName": "WVDDJPassword"
+                            "secretName": "WVD-VM-Admin-Password"
                         }
                     },
                     "va_cloudResourcePrefix": {
@@ -187,6 +187,12 @@
                     },
                     "wvd_deploymentPurpose": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentPurpose]"
+                    },
+                    "wvd_dscConfiguration": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]"
+                    },
+                    "wvd_fsLogixVhdLocation": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]"
                     },
                     "domain": {
                         "value": "[parameters('domain')]"
