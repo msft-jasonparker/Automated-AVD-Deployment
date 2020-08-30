@@ -57,4 +57,33 @@ While these requirements are listed as non-Azure, they could easily be created i
 - Code Repositories(s)
   - 1 x repository for deployment code
 
+## Getting Started
 
+To use this repository, first clone or download to your own repository. This will allow your organization to customize the deployment code to suit your specific needs. Alternative, the repository could also be forked in the event updates to this repository need to flow to other repositories.
+
+Next, create the required Azure resources listed in the Requirements section. This should include not only the creation of the resources, but also the configuration of these resources. For example:
+
+- Upload the ARM template and parameter files to the templates container in the Storage Account
+- Package the DSC configuration script into an archive
+- Upload the DSC configuration archive to the dsc container in the Storage Account
+- Import or create the runbooks for Dynamic Scaling
+
+ Update the templates and scripts based on the resources that either exist or were created to support this deployment process. The **Deployment** section will provide the step-by-step process needed to use this automated deployment repository.
+
+ ## Deployment
+
+ This section will outline the purpose / function for each of the template and parameter files along with which sections should be updated before running a deployment job. The fundamental basis for this deployment process is a series of cascading Resource Group deployments that end with the creation of the Host Pools, Application Groups, Session Hosts, and Availability Sets. The last deployment would define the configuration (Monitoring extension, Domain Join extension, and DSC extension) which ensures the Session Hosts are ready for user load.
+
+ ### PowerShell Module Dependancies
+
+ Before attempting to use this automated deployment process, ensure the following PowerShell modules have been installed and updated.
+
+ - Az Module (and dependancies)
+ - Az.DesktopVirtualization (should be installed with the Az module)
+ - Az.WvdOperations.psm1 (located in the Operations folder)
+
+The Az.WvdOperations module was created to be used with this deployment process.  Located in the .\Scripts directory is a script called 'CopyToPSPath.ps1'.  Run this script to copy the module to your path and import to your session.
+
+ ### Scale Unit
+
+ A "scale unit" is the term used in reference to a group of Host Pools and Session Hosts which should be deployed to meet a specific scenario. This deployment assumes the necessary planning has been done to determine the number of users per Session Host, the number of Session Hosts per Host Pool and the number of Host Pools needed for deployment. 
