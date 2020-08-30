@@ -14,8 +14,47 @@ Below are some of the minimum requirements to be able to use this repo in a Test
 
 ### Azure
 
-- At least 1 Azure Subscription - depending on the size of your organization, you may want to have multiple subscriptions based on regions (Core sub, EastUS sub, WestUS sub, EMEA sub)
-- Resource naming convention suitable for interitive processes
-  - Resource Groups
-    - WVD-RG-01
-    - WVD-RG-02
+The following resources are considered to be the minimum resources needed to ensure successful deployments along with dynamic scaling.
+
+- Subscription(s)
+  - 1 or more Subscriptions (e.g. Core sub, EastUS sub)
+- Resource Group(s)
+  - 1 x Resource Group for services resources
+  - 1 x Resource Group for network resources
+  - 1 or more Resource Groups for WVD Host Pools and Session Hosts
+    - The naming convention for the Resource Groups is a critical part of the deployment process as it relies on a numeric sequence (e.g. HostPool-RG-1, HostPool-RG-2)
+- Network Resource(s)
+  - 1 x Virtual Network
+    - 1 or more Subnets for each Host Pool
+      - The naming convention for the subnets is a critical part of the deployment process as it relies on a numeric sequence and should also correspond with the Resource Groups (e.g. WVD-Subnet-1, WVD-Subnet-2)
+- Storage Account(s)
+  - 1 x Storage Account
+    - 1 x container called dsc
+    - 1 x container called templates
+- Key Vault(s)
+  - 1 x Key Vault
+    - Secrets
+      - WVD-VM-Admin-Account
+      - WVD-VM-Admin-Password
+      - WVD-LA-WorkspaceId
+      - WVD-LA-WorkspaceKey
+      - WVD-VM-DomainJoin-Account
+      - WVD-VM-DomainJoin-Password
+      - WVD-SessionHost-OU
+- Automation Account(s)
+  - 1 x Automation Account
+    - Run As enabled with contributor level access to all subscriptions
+- Log Analytics Workspace(s)
+  - 1 x Workspace
+
+### Non-Azure
+
+While these requirements are listed as non-Azure, they could easily be created in Azure.
+
+- File Share(s)
+  - 1 x SMB file share for FSLogix Profile Storage
+  - 1 x SMB file share for Session Host software package repository
+- Code Repositories(s)
+  - 1 x repository for deployment code
+
+
