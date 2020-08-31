@@ -70,20 +70,82 @@ Next, create the required Azure resources listed in the Requirements section. Th
 
  Update the templates and scripts based on the resources that either exist or were created to support this deployment process. The **Deployment** section will provide the step-by-step process needed to use this automated deployment repository.
 
- ## Deployment
+## Deployment
 
  This section will outline the purpose / function for each of the template and parameter files along with which sections should be updated before running a deployment job. The fundamental basis for this deployment process is a series of cascading Resource Group deployments that end with the creation of the Host Pools, Application Groups, Session Hosts, and Availability Sets. The last deployment would define the configuration (Monitoring extension, Domain Join extension, and DSC extension) which ensures the Session Hosts are ready for user load.
 
- ### PowerShell Module Dependancies
+### PowerShell Module Dependancies
 
  Before attempting to use this automated deployment process, ensure the following PowerShell modules have been installed and updated.
 
- - Az Module (and dependancies)
- - Az.DesktopVirtualization (should be installed with the Az module)
- - Az.WvdOperations.psm1 (located in the Operations folder)
+- Az Module (and dependancies)
+- Az.DesktopVirtualization (should be installed with the Az module)
+- Az.WvdOperations.psm1 (located in the Operations folder)
 
 The Az.WvdOperations module was created to be used with this deployment process.  Located in the .\Scripts directory is a script called 'CopyToPSPath.ps1'.  Run this script to copy the module to your path and import to your session.
 
- ### Scale Unit
+### Scale Unit ARM Template
 
- A "scale unit" is the term used in reference to a group of Host Pools and Session Hosts which should be deployed to meet a specific scenario. This deployment assumes the necessary planning has been done to determine the number of users per Session Host, the number of Session Hosts per Host Pool and the number of Host Pools needed for deployment. 
+ ````.\Deployment\Deploy-WVD-ScaleUnit.json````
+
+A "scale unit" is the term used in reference to a group of Host Pools and Session Hosts which should be deployed to meet a specific scenario. This deployment assumes the necessary planning has been done to determine the number of users per Session Host, the number of Session Hosts per Host Pool and the number of Host Pools needed for deployment.
+
+#### **Variables**
+
+ ````JSON
+"copy": [{
+    "name": "wvdAppGroupArray",
+    "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
+    "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray'))),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
+}],
+"wvdResourceLocation": "[resourceGroup().location]",
+"wvdWorkspaceName": "[concat(parameters('az_cloudResourcePrefix'),'-wvd-workspace')]",
+"azDeploymentString": "[parameters('wvd_deploymentString')]"
+````
+
+- **wvdAppGroupArray**: This variable is a construct of the *to be* created Desktop Application Groups (DAG).  This is required because if you have any existing DAG(s), writing this array to the WVD workspace will override any previous DAG(s). Later in the template, we'll add this variable to the reference of the existing properties.
+- **wvdWorkspaceName**: This variable uses the *az_cloudResourcePrefix* parameter to construct the WVD workspace name. Adjust this variable as needed.
+
+#### **Resources**
+
+The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which are addition deployments. The first is the Host Pool deployment and the last is the Workspace deployment. The Host Pool deployment uses a linked template URI as the based template and the parameters are defined in line. The Workspace deployment defines the WVD Workspace resource and contains the property section below which defines the DAG(s) linked to it.
+
+````JSON
+"properties": {
+    "applicationGroupReferences": "[concat(reference(resourceId(parameters('wvd_workspaceResourceGroup'),'Microsoft.DesktopVirtualization/workspaces',variables('wvdWorkspaceName')),'2019-12-10-preview','Full').properties.applicationGroupReferences,variables('wvdAppGroupArray'))]"
+}
+````
+
+As you can see from the code above, the *applicationGroupReferences* is a combination of the existing references along with the variable above.
+
+#### Outputs
+
+The outputs from this template are important as they provide critical information which is provide to the WVD configuration deployment.
+
+````JSON
+"hostPoolsDeployed": {
+  "type": "array",
+  "copy": {
+      "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
+      "input": {
+          "hostpoolName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.hostPoolName.value]",
+          "resourceGroupName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.resourceGroupName.value]",
+          "deploymentType": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.deploymentType.value]",
+          "deploymentFunction": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentFunction]",
+          "dscConfiguration": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]",
+          "fsLogixVhdLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]",
+          "sessionHostNames": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.sessionHostNames.value]"
+      }
+  }
+}
+````
+
+- **hostPoolsDeployed**: This output is an array of information based on the number of Host Pools that are deployed. For each Host Pool created, the following outputs are collected:
+  - hostPoolName
+  - resourceGroupName
+  - deploymentType
+  - deploymentFunction
+  - dscConfiguration
+  - fsLogixVhdLocation
+  - sessionHostNames
+
