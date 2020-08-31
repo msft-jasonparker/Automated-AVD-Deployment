@@ -6,11 +6,15 @@ This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and
 
 Below are some of the minimum requirements to be able to use this repo in a Test \ Dev \ Prod environment.
 
+---
+
 ### Knowledge
 
 - Intermediate knowledge of PowerShell sytanx, scripts and modules (Advanced is preferred)
 - Intermediate knowledge of Azure infrastructure, networking, storage and automation
 - Strong understanding of ARM templates and parameters
+
+---
 
 ### Azure
 
@@ -47,6 +51,8 @@ The following resources are considered to be the minimum resources needed to ens
 - Log Analytics Workspace(s)
   - 1 x Workspace
 
+---
+
 ### Non-Azure
 
 While these requirements are listed as non-Azure, they could easily be created in Azure.
@@ -70,9 +76,13 @@ Next, create the required Azure resources listed in the Requirements section. Th
 
  Update the templates and scripts based on the resources that either exist or were created to support this deployment process. The **Deployment** section will provide the step-by-step process needed to use this automated deployment repository.
 
+---
+
 ## Deployment
 
  This section will outline the purpose / function for each of the template and parameter files along with which sections should be updated before running a deployment job. The fundamental basis for this deployment process is a series of cascading Resource Group deployments that end with the creation of the Host Pools, Application Groups, Session Hosts, and Availability Sets. The last deployment would define the configuration (Monitoring extension, Domain Join extension, and DSC extension) which ensures the Session Hosts are ready for user load.
+
+---
 
 ### PowerShell Module Dependancies
 
@@ -84,15 +94,17 @@ Next, create the required Azure resources listed in the Requirements section. Th
 
 The Az.WvdOperations module was created to be used with this deployment process.  Located in the .\Scripts directory is a script called 'CopyToPSPath.ps1'.  Run this script to copy the module to your path and import to your session.
 
+---
+
 ### Scale Unit ARM Template
 
- ````.\Deployment\Deploy-WVD-ScaleUnit.json````
+ `.\Deployment\Deploy-WVD-ScaleUnit.json`
 
 A "scale unit" is the term used in reference to a group of Host Pools and Session Hosts which should be deployed to meet a specific scenario. This deployment assumes the necessary planning has been done to determine the number of users per Session Host, the number of Session Hosts per Host Pool and the number of Host Pools needed for deployment.
 
 #### **Variables**
 
- ````JSON
+ ```JSON
 "copy": [{
   "name": "wvdAppGroupArray",
   "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
@@ -101,7 +113,7 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 "wvdResourceLocation": "[resourceGroup().location]",
 "wvdWorkspaceName": "[concat(parameters('az_cloudResourcePrefix'),'-wvd-workspace')]",
 "azDeploymentString": "[parameters('wvd_deploymentString')]"
-````
+```
 
 - **wvdAppGroupArray**: This variable is a construct of the *to be* created Desktop Application Groups (DAG).  This is required because if you have any existing DAG(s), writing this array to the WVD workspace will override any previous DAG(s). Later in the template, we'll add this variable to the reference of the existing properties.
 - **wvdWorkspaceName**: This variable uses the *az_cloudResourcePrefix* parameter to construct the WVD workspace name. Adjust this variable as needed.
@@ -110,19 +122,19 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 
 The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which are addition deployments. The first is the Host Pool deployment and the last is the Workspace deployment. The Host Pool deployment uses a linked template URI as the based template and the parameters are defined in line. The Workspace deployment defines the WVD Workspace resource and contains the property section below which defines the DAG(s) linked to it.
 
-````JSON
+```JSON
 "properties": {
   "applicationGroupReferences": "[concat(reference(resourceId(parameters('wvd_workspaceResourceGroup'),'Microsoft.DesktopVirtualization/workspaces',variables('wvdWorkspaceName')),'2019-12-10-preview','Full').properties.applicationGroupReferences,variables('wvdAppGroupArray'))]"
 }
-````
+```
 
 As you can see from the code above, the *applicationGroupReferences* is a combination of the existing references along with the variable above.
 
-#### Outputs
+#### **Outputs**
 
 The outputs from this template are important as they provide critical information which is provide to the WVD configuration deployment.
 
-````JSON
+```JSON
 "hostPoolsDeployed": {
   "type": "array",
   "copy": {
@@ -138,7 +150,7 @@ The outputs from this template are important as they provide critical informatio
     }
   }
 }
-````
+```
 
 - **hostPoolsDeployed**: This output is an array of information based on the number of Host Pools that are deployed. For each Host Pool created, the following outputs are collected:
   - hostPoolName
@@ -149,13 +161,15 @@ The outputs from this template are important as they provide critical informatio
   - fsLogixVhdLocation
   - sessionHostNames
 
+---
+
 ### Scale Unit Parameter File
 
-````.\Deployment\Deploy-WVD-ScaleUnit.parameters.json````
+`.\Deployment\Deploy-WVD-ScaleUnit.parameters.json`
 
 The parameter file is the main engine which drives the deployment of the "scale unit".  Each of the parameters in the file have metadata descriptions to aide in understand each of the parameters intended purpose.  Below is the detail information for the *wvd_hostPoolConfig* parameter, which is an object.
 
-````JSON
+```JSON
 "wvd_hostPoolConfig": {
   "value": {
     "configs": [
@@ -179,12 +193,118 @@ The parameter file is the main engine which drives the deployment of the "scale 
     "description": "Update this value to reflect the number of Host Pools to create, the type Host Pool it will serve and the location of the FSLogix profiles. Each config is a host pool with the number of VMs"
   }
 },
-````
+```
 
-Each section under ````"configs":```` is a unique Host Pool which will be deployed.  Within each config are a set of parameters which the Host Pool needs for proper deployment.
+Each section under `"configs":` is a unique Host Pool which will be deployed.  Within each config are a set of parameters which the Host Pool needs for proper deployment.
 
 - **deploymentType**: This value can be used in DSC configurations to allow for each Host Pool to drive a unique DSC configuration or install a different set of applications. For example, if you wanted to have a Host Pool for BYOD devices and a Host Pool for CORP devices and the Session Hosts needed unique configurations.
 - **deploymentFunction**: This value can also be used in DSC configurations to allow for unique configurations. For example, if you wanted to have a Host Pool that was geared for IT Operations and the tools they needed, you could set this value to *ADMIN*.
 - **fsLogixVhdLocation**: This is the file share path for profile containers created by FSLogix.
 - **dscConfiguration**: This is the name of the DSC configuration archive (zip) used to configure the Session Hosts.
 - **azVMNumberOfInstances**: This *SHOULD* be an even number as it will split this number based on the number of groups defined by *wvd_groupReference* and is the total number of Session Hosts for the Host Pool.
+
+---
+
+### Host Pool ARM Template
+
+`.\Deployment\LinkedTemplates\Deploy-WVD-HostPool.json`
+
+The Host Pool ARM Template is responsible for the creation of the WVD Host Pool, Desktop Application Group (DAG), Availability Sets, and the deployment of the Session Hosts. The Host Pool and DAG are single item resources, but the Availability Sets and Session Hosts have copy counts based on *wvd_groupReference* parameter which was defined in the `Deploy-WVD-ScaleUnit.parameters.json` file. Below you'll find details about the different secions of the ARM template and the areas which should be reviewed for a more customized deployment.
+
+#### **Functions**
+
+Functions are used to construct resource names based on a predefined set of parameters. This template has a function which creates the Host Pool name and a function for building the inital Session Host prefix.
+
+```JSON
+{
+  "namespace": "wvdHostPool",
+  "members": {
+    "getName": {
+      "parameters": [
+        {
+          "name": "RegionPrefix",
+          "type": "string"
+        },
+        {
+          "name": "HostPoolIncrement",
+          "type": "int"
+        }
+      ],
+      "output": {
+        "type": "string",
+        "value": "[toLower(concat(parameters('RegionPrefix'),'-wvd-hostpool-',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
+      }
+    }
+  }
+},
+{
+  "namespace": "wvdSessionHost",
+  "members": {
+    "getName": {
+      "parameters": [
+        {
+          "name": "SessionHostGroupPrefix",
+          "type": "string"
+        },
+        {
+          "name": "HostPoolIncrement",
+          "type": "int"
+        }
+      ],
+      "output": {
+        "type": "string",
+        "value": "[toLower(concat(parameters('SessionHostGroupPrefix'),'-wshp',padLeft(parameters('HostPoolIncrement'),2,'0')))]"
+      }
+    }
+  }
+}
+```
+
+- **wvdHostPool**: Takes two (2) input parameters (region prefix and host pool increment value) and constructs the Host Pool name. For example, if the region prefix was '*azeus*' and the host pool increment number was 3, the Host Pool name would be '**azeus-wvd-hostpool-03**'.
+- **wvdSessionHost**: Takes two (2) input parameters (session host prefix and host pool increment value) and constructs the **initial** Session Host name prefix.  This prefix is used later in the `.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.json` template. For example, if the prefix was '*eus*' and the host pool increment number was 3, the Session Host prefix would be '**eus-wshp03**'. The prefix should be at most 3 characters to ensure a computer name of no more than 15 characters.
+
+> NOTE: These functions can be modified to suit any organizational naming standards. Keep in mind the Session Hosts are computer accounts and must be less than 15 characters. This deployment scheme creates Host Pool and Session Host names as follows:
+>
+> - Host Pool: `<prefix>`-wvd-hostpool-`<increment value>`
+> - Session Host: `<prefix>`-wshp`<increment value>`
+
+#### **Variables**
+
+```json
+"wvdHostPoolTokenExpirationTime": "[dateTimeAdd(parameters('timeStamp'), 'PT23H')]",
+"createVMs": "[greater(parameters('az_vmNumberOfInstances'),0)]",
+"wvdHostPoolName": "[wvdHostPool.getName(parameters('az_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
+"wvdshPrefix": "[wvdSessionHost.getName(parameters('az_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
+"wvdSubnetName": "[concat(parameters('vn_virtualNetworkSubnetPrefix'),padLeft(parameters('wvd_hostPoolIncrement'),2,'0'))]",
+"wvdSubnetId": "[resourceId(parameters('vn_virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vn_virtualNetworkName'), variables('wvdSubnetName'))]",
+"wvdVMTemplate": "[concat(
+    '{\"domain\":\"',
+    parameters('domain'),
+    '\",\"galleryImageOffer\":\"',
+    parameters('az_vmImageOffer'),
+    '\",\"galleryImagePublisher\":\"',
+    parameters('az_vmImagePublisher'),
+    '\",\"galleryImageSKU\":\"',
+    parameters('az_vmImageSKU'),
+    '\",\"imageType\":\"Gallery\"',
+    ',\"imageUri\":null',
+    ',\"customImageId\":null',
+    ',\"namePrefix\":\"',
+    variables('wvdshPrefix'),
+    '\",\"osDiskType\":\"',
+    parameters('az_vmDiskType'),
+    '\",\"useManagedDisks\":true',
+    ',\"vmSize\":{\"id\":\"',
+    parameters('az_vmSize'),
+    '\",\"cores\":8,\"ram\":32}}')]",
+"wvdResourceLocation": "[resourceGroup().location]",
+"wvdResourceGroupName": "[resourceGroup().name]",
+"wvdSessionHostInstances": "[div(parameters('az_vmNumberOfInstances'),length(parameters('wvd_groupReference')))]"
+```
+
+- **wvdHostPoolTokenExpirationTime**: Creates a date / time value 23 hours in the future as the expiration time of the Host Pool registration token
+- **createVMs**: True / False value used as a condition to create Availability Sets and Virtual Machines.
+- **wvdHostPoolName**: Calls the wvdHostPool function to construct the Host Pool name.
+- **wvdshPrefix**: Calls the wvdSessionHost function to construct the Session Host prefix.
+- **wvdSubnetName**: Creates the subnet name based on Host Pool increment value.
+- **wvdSubnetId**: 
