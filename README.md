@@ -149,3 +149,42 @@ The outputs from this template are important as they provide critical informatio
   - fsLogixVhdLocation
   - sessionHostNames
 
+### Scale Unit Parameter File
+
+````.\Deployment\Deploy-WVD-ScaleUnit.parameters.json````
+
+The parameter file is the main engine which drives the deployment of the "scale unit".  Each of the parameters in the file have metadata descriptions to aide in understand each of the parameters intended purpose.  Below is the detail information for the *wvd_hostPoolConfig* parameter, which is an object.
+
+````JSON
+"wvd_hostPoolConfig": {
+  "value": {
+    "configs": [
+      {
+        "deploymentType": "<deployment-type>",
+        "deploymentFunction": "<deployment-function>",
+        "fsLogixVhdLocation": "\\\\servername\\sharename",
+        "dscConfiguration": "DscConfiguration.ps1.zip",
+        "azVmNumberOfInstances": 20
+      },
+      {
+        "deploymentType": "<deployment-type>",
+        "deploymentFunction": "<deployment-function>",
+        "fsLogixVhdLocation": "\\\\servername\\sharename",
+        "dscConfiguration": "DscConfiguration.ps1.zip",
+        "azVmNumberOfInstances": 20
+      }
+    ]
+  },
+  "metadata": {
+    "description": "Update this value to reflect the number of Host Pools to create, the type Host Pool it will serve and the location of the FSLogix profiles. Each config is a host pool with the number of VMs"
+  }
+},
+````
+
+Each section under ````"configs":```` is a unique Host Pool which will be deployed.  Within each config are a set of parameters which the Host Pool needs for proper deployment.
+
+- **deploymentType**: This value can be used in DSC configurations to allow for each Host Pool to drive a unique DSC configuration or install a different set of applications. For example, if you wanted to have a Host Pool for BYOD devices and a Host Pool for CORP devices and the Session Hosts needed unique configurations.
+- **deploymentFunction**: This value can also be used in DSC configurations to allow for unique configurations. For example, if you wanted to have a Host Pool that was geared for IT Operations and the tools they needed, you could set this value to *ADMIN*.
+- **fsLogixVhdLocation**: This is the file share path for profile containers created by FSLogix.
+- **dscConfiguration**: This is the name of the DSC configuration archive (zip) used to configure the Session Hosts.
+- **azVMNumberOfInstances**: This *SHOULD* be an even number as it will split this number based on the number of groups defined by *wvd_groupReference* and is the total number of Session Hosts for the Host Pool.
