@@ -94,9 +94,9 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 
  ````JSON
 "copy": [{
-    "name": "wvdAppGroupArray",
-    "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
-    "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray'))),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
+  "name": "wvdAppGroupArray",
+  "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
+  "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray'))),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
 }],
 "wvdResourceLocation": "[resourceGroup().location]",
 "wvdWorkspaceName": "[concat(parameters('az_cloudResourcePrefix'),'-wvd-workspace')]",
@@ -112,7 +112,7 @@ The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which a
 
 ````JSON
 "properties": {
-    "applicationGroupReferences": "[concat(reference(resourceId(parameters('wvd_workspaceResourceGroup'),'Microsoft.DesktopVirtualization/workspaces',variables('wvdWorkspaceName')),'2019-12-10-preview','Full').properties.applicationGroupReferences,variables('wvdAppGroupArray'))]"
+  "applicationGroupReferences": "[concat(reference(resourceId(parameters('wvd_workspaceResourceGroup'),'Microsoft.DesktopVirtualization/workspaces',variables('wvdWorkspaceName')),'2019-12-10-preview','Full').properties.applicationGroupReferences,variables('wvdAppGroupArray'))]"
 }
 ````
 
@@ -126,16 +126,16 @@ The outputs from this template are important as they provide critical informatio
 "hostPoolsDeployed": {
   "type": "array",
   "copy": {
-      "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
-      "input": {
-          "hostpoolName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.hostPoolName.value]",
-          "resourceGroupName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.resourceGroupName.value]",
-          "deploymentType": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.deploymentType.value]",
-          "deploymentFunction": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentFunction]",
-          "dscConfiguration": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]",
-          "fsLogixVhdLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]",
-          "sessionHostNames": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.sessionHostNames.value]"
-      }
+    "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
+    "input": {
+      "hostpoolName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.hostPoolName.value]",
+      "resourceGroupName": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.resourceGroupName.value]",
+      "deploymentType": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.deploymentType.value]",
+      "deploymentFunction": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentFunction]",
+      "dscConfiguration": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]",
+      "fsLogixVhdLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]",
+      "sessionHostNames": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.sessionHostNames.value]"
+    }
   }
 }
 ````
