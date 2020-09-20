@@ -12,14 +12,21 @@ This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and
 - [Deployment](#Deployment)
   - [PowerShell Module Dependancies](#PowerShell-Module-Dependancies)
   - [Scale Unit ARM Template](#Scale-Unit-ARM-Template)
-    - [Variables](#Variables)
-    - [Resources](#Resources)
-    - [Outputs](#Outputs)
+    - [Functions](#Scale-Unit-Functions)
+    - [Variables](#Scale-Unit-Variables)
+    - [Resources](#Scale-Unit-Resources)
+    - [Outputs](#Scale-Unit-Outputs)
   - [Scale Unit Parameter File](#Scale-Unit-Parameter-File)
   - [Host Pool ARM Template](#Host-Pool-ARM-Template)
-    - [Functions](#Functions)
-    - [Variables](#Variables)
-    - [Resources](#Resources)
+    - [Functions](#Host-Pool-Functions)
+    - [Variables](#Host-Pool-Variables)
+    - [Resources](#Host-Pool-Resources)
+    - [Outputs](#Host-Pool-Outputs)
+  - [Session Host ARM Template](#Session-Host-ARM-Template)
+    - [Functions](#Session-Host-Functions)
+    - [Variables](#Session-Host-Variables)
+    - [Resources](#Session-Host-Resources)
+    - [Outputs](#Session-Host-Outputs)
 
 ## Requirements
 
@@ -121,7 +128,7 @@ The Az.WvdOperations module was created to be used with this deployment process.
 
 A "scale unit" is the term used in reference to a group of Host Pools and Session Hosts which should be deployed to meet a specific scenario. This deployment assumes the necessary planning has been done to determine the number of users per Session Host, the number of Session Hosts per Host Pool and the number of Host Pools needed for deployment.
 
-#### **Variables**
+#### **Scale Unit Variables**
 
  ```JSON
 "copy": [{
@@ -137,7 +144,7 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 - **wvdAppGroupArray**: This variable is a construct of the *to be* created Desktop Application Groups (DAG).  This is required because if you have any existing DAG(s), writing this array to the WVD workspace will override any previous DAG(s). Later in the template, we'll add this variable to the reference of the existing properties.
 - **wvdWorkspaceName**: This variable uses the *az_cloudResourcePrefix* parameter to construct the WVD workspace name. Adjust this variable as needed.
 
-#### **Resources**
+#### **Scale Unit Resources**
 
 The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which are addition deployments. The first is the Host Pool deployment and the last is the Workspace deployment. The Host Pool deployment uses a linked template URI as the based template and the parameters are defined in line. The Workspace deployment defines the WVD Workspace resource and contains the property section below which defines the DAG(s) linked to it.
 
@@ -149,7 +156,7 @@ The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which a
 
 As you can see from the code above, the *applicationGroupReferences* is a combination of the existing references along with the variable above.
 
-#### **Outputs**
+#### **Scale Unit Outputs**
 
 The outputs from this template are important as they provide critical information which is provide to the WVD configuration deployment.
 
@@ -230,7 +237,7 @@ Each section under `"configs":` is a unique Host Pool which will be deployed.  W
 
 The Host Pool ARM Template is responsible for the creation of the WVD Host Pool, Desktop Application Group (DAG), Availability Sets, and the deployment of the Session Hosts. The Host Pool and DAG are single item resources, but the Availability Sets and Session Hosts have copy counts based on *wvd_groupReference* parameter which was defined in the `Deploy-WVD-ScaleUnit.parameters.json` file. Below you'll find details about the different secions of the ARM template and the areas which should be reviewed for a more customized deployment.
 
-#### **Functions**
+#### **Host Pool Functions**
 
 Functions are used to construct resource names based on a predefined set of parameters. This template has a function which creates the Host Pool name and a function for building the inital Session Host prefix.
 
@@ -287,7 +294,7 @@ Functions are used to construct resource names based on a predefined set of para
 > - Host Pool: `<prefix>`-wvd-hostpool-`<increment value>`
 > - Session Host: `<prefix>`-wshp`<increment value>`
 
-#### **Variables**
+#### **Host Pool Variables**
 
 ```JSON
 {
@@ -334,7 +341,7 @@ Functions are used to construct resource names based on a predefined set of para
 - **wvdResourceGroupName**: Speifis the Azure Resource Group for the WVD resources.
 - **wvdSessionHostInstances**: Uses the provided number of instances and divides the number by the length of the 'wvd_groupReference' parameter (should be 2).
 
-#### **Resources**
+#### **Host Pool Resources**
 
 Below are the resources deployed as part of the Host Pool ARM template.
 
@@ -452,3 +459,204 @@ Below are the resources deployed as part of the Host Pool ARM template.
   }
   ````
 
+#### **Outputs**
+
+The outputs from the Host Pool ARM template are passed up the template chain to the Scale Unit.
+
+````JSON
+{
+  "hostPoolName": {
+      "type": "string",
+      "value": "[variables('wvdHostPoolName')]"
+  },
+  "resourceGroupName": {
+      "type": "string",
+      "value": "[variables('wvdResourceGroupName')]"
+  },
+  "deploymentType": {
+      "type": "string",
+      "value": "[parameters('wvd_deploymentType')]"
+  },
+  "sessionHostNames": {
+      "type": "array",
+      "copy": {
+          "count": "[length(parameters('wvd_groupReference'))]",
+          "input": "[reference(concat('Deploy-WVD-SessionHosts-Group-',parameters('wvd_groupReference')[copyIndex()],'-',parameters('az_deploymentString'))).outputs.sessionHostNames.value]"
+      }
+  }
+}
+````
+
+- **hostPoolName**: Name of the Host Pool deployed
+- **resourceGroupName**: Name of the Resource Group the Host Pool is deployed into
+- **deploymentType**: Free form value for the deployment type
+- **sessionHostNames**: Array of Session Host names which are derived from the down level Session Host deployment job
+
+### Session Host ARM Template
+
+- `.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.json`
+- `.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.parameters.json`
+
+The Session Host ARM template is responsible for the creation of the Azure virtual machines and their associated resources. This template will create a standard virtual network interface and a virtual machine. The ARM template receives 90% of the parameters from the Host Pool template (in-line), but does have an associated `Deploy-WVD-SessionHosts.parameters.json` file containing references to secrets in the Key Vault.
+
+#### **Session Host Functions**
+
+Functions are used to construct resource names based on a predefined set of parameters. This template has a function which creates the Session Host names.
+
+````JSON
+{
+  "namespace": "wvdSessionHost",
+  "members": {
+    "getName": {
+      "parameters": [
+        {
+          "name": "wvdshPrefix",
+          "type": "string"
+        },
+        {
+          "name": "sessionHostIncrement",
+          "type": "int"
+        }
+      ],
+      "output": {
+        "type": "string",
+        "value": "[toLower(concat(parameters('wvdshPrefix'),'sh',padLeft(parameters('sessionHostIncrement'),3,'0')))]"
+      }
+    }
+  }
+}
+````
+
+- **wvdSessionHost**: Takes two (2) input parameters (session host prefix and session host increment) and constructs the name for each Session Host.
+
+#### **Session Host Variables**
+
+````JSON
+{
+  "azVmAvSetName": "[concat(parameters('wvd_hostpoolName'),'-AVSet-',parameters('wvd_groupReference'))]",
+  "storageAccountType": "[parameters('az_vmDiskType')]",
+  "wvdResourceLocation": "[resourceGroup().location]",
+  "wvdshOffSet": "[if(equals(parameters('wvd_groupReference'),'A'),1,add(parameters('az_vmNumberOfInstances'),1))]"
+}
+````
+
+- **azVmAvSetName**: Defines the Availability Set name based on the group reference.
+- **storageAccountType**: Defines the Storage Account Type as a variable.
+- **wvdResourceLocation**: Defines the Azure region for the resources.
+- **wvdshOffSet**: Defines the starting value of the copy index for each of the resources. If the group reference equals 'A', then start with the number 1, otherwise use the number of instances and add 1 to it. This ensures that Session Hosts in group B will always be in the last half of the total resource count.
+
+#### **Session Host Resources**
+
+- **Network Interface**:
+  
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Network/networkInterfaces",
+    "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp'))]",
+    "location": "[variables('wvdResourceLocation')]",
+    "copy": {
+      "name": "WVD-SH-nic-loop",
+      "count": "[parameters('az_vmNumberOfInstances')]"
+    },
+    "properties": {
+      "ipConfigurations": [
+        {
+          "name": "ipconfig",
+          "properties": {
+            "privateIPAllocationMethod": "Dynamic",
+            "subnet": {
+              "id": "[parameters('wvd_subnetId')]"
+            }
+          }
+        }
+      ],
+      "enableAcceleratedNetworking": true
+    },
+    "dependsOn": [
+    ]
+  }
+  ````
+
+- **Virtual Machine**:
+
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/virtualMachines",
+    "name": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
+    "location": "[variables('wvdResourceLocation')]",
+    "tags": {
+      "WVD-Maintenance": "True",
+      "WVD-Build": "[parameters('wvd_buildVersion')]",
+      "WVD-Group": "[parameters('wvd_groupReference')]"
+    },
+    "copy": {
+      "name": "WVD-SH-VM-Loop",
+      "count": "[parameters('az_vmNumberOfInstances')]"
+    },
+    "dependsOn": [
+      "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
+    ],
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "[parameters('az_vmSize')]"
+      },
+      "osProfile": {
+        "computerName": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
+        "adminUsername": "[parameters('az_vmAdminAccount')]",
+        "adminPassword": "[parameters('az_vmAdminAccountPassword')]",
+        "windowsConfiguration": {
+          "timeZone": "Eastern Standard Time"
+        }
+      },
+      "storageProfile": {
+        "imageReference": {
+          "publisher": "[parameters('az_vmImagePublisher')]",
+          "offer": "[parameters('az_vmImageOffer')]",
+          "sku": "[parameters('az_vmImageSKU')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "createOption": "FromImage",
+          "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-osDisk-',parameters('timeStamp'))]",
+          "managedDisk": {
+            "storageAccountType": "[variables('storageAccountType')]"
+          }
+        }
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
+          }
+        ]
+      },
+      "availabilitySet": {
+        "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('azVmAvSetName'))]"
+      },
+      "diagnosticsProfile": {
+        "bootDiagnostics": {
+          "enabled": false
+        }
+      },
+      "licenseType": "Windows_Client"
+    }
+  }
+  ````
+
+#### **Session Host Outputs**
+
+The outputs from the Session Host ARM template are only the names of the Session Hosts.  This is the first of all the outputs which are passed back up through the initiating ARM templates and ultimately end up as an output of the `Deploy-WVD-Scale-Unit.json` ARM template.
+
+````JSON
+{
+  "sessionHostNames": {
+    "type": "array",
+    "copy": {
+      "count": "[parameters('az_vmNumberOfInstances')]",
+      "input": "[reference(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))).osProfile.computerName]"
+    }
+  }
+}
+````
