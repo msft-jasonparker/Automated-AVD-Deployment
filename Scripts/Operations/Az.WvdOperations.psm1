@@ -831,22 +831,27 @@ Function New-AzWvdSessionHostConfig {
     Param (
         # Name of the Subscription for the WVD resources to be deployed (supports tab completion)
         [Parameter(Mandatory=$true,Position=0)]
-        [String]$SubscriptionName,
+        [System.String]$SubscriptionName,
+
+        # String which defines which Session Host Group to process (supports tab completion)
+        [Parameter(Mandatory=$true,Position=1)]
+        [ValidateSet("A","B","ALL")]
+        [System.String]$SessionHostGroup,
 
         # Name of the Subscription for the Storage Account with the artifacts and templates.  This parameter is optional based on the subscription of the Storage Account. (supports tab completion)
-        [Parameter(Mandatory=$false,Position=1)]
+        [Parameter(Mandatory=$false,Position=2)]
         [System.String]$StorageAccountSubscription,
 
         # Name of the Resource Group of the Storage Account
-        [Parameter(Mandatory=$true,Position=2)]
+        [Parameter(Mandatory=$true,Position=3)]
         [System.String]$StorageAccountResourceGroup,
 
         # Name of the Storage Account storing the artifacts and templates.
-        [Parameter(Mandatory=$true,Position=3)]
+        [Parameter(Mandatory=$true,Position=4)]
         [System.String]$StorageAccountName,
 
         # Azure region location of the resources and resource groups
-        [Parameter(Mandatory=$true,Position=4)]
+        [Parameter(Mandatory=$true,Position=5)]
         [String]$Location
     )
     PROCESS {
@@ -876,68 +881,287 @@ Function New-AzWvdSessionHostConfig {
         [System.Collections.ArrayList]$deploymentJobs = @() # empty array for the deployment job
         # loop for menu system to select resource groups and host pools
         Do {
-            # building the menu of available resource groups
-            Write-Verbose "Getting WVD Resource Groups..."
-            $RGs = Get-AzResourceGroup -Location $Location -Verbose:$false -Debug:$false | ForEach-Object {$_.ResourceGroupName} | Sort-Object
-            Write-Verbose ("Found {0} Azure WVD Resource Groups" -f $RGs.Count)
-            $RGSelection = (@"
-`n
-"@)
-            $RGRange = 0..($RGs.Count - 1)
-            For ($i = 0; $i -lt $RGs.Count;$i++) {$RGSelection += " [$i] $($RGs[$i])`n"}
-            $RGSelection += "`n Please select a Resource Group"
+            # building the menu of available host pools
+            Write-Verbose "Getting WVD Host Pools..."
+            $HPs = Get-AzWvdHostPool -Verbose:$false -Debug:$false | Select-Object @{l="Name";e={$_.Name.Split("/")[-1]}},@{l="ResourceGroupName";e={$_.Id.Split("/")[4]}},Tag,Description
+            Write-Verbose ("Found {0} Azure WVD Host Pools" -f $HPs.Count)
+            $HPSelection = ""
+            $HPRange = 1..($HPs.Count)
+            For ($i = 0; $i -lt $HPs.Count;$i++) {$HPSelection += (" [{0}] {1}`n" -f ($i+1),$HPs[$i].Name)}
+            $HPSelection += "`n Please select a Host Pool or [Q] to Quit"
 
-            Do {$RGChoice = Show-Menu -Title "Select an Azure WVD Resource Group" -Menu $RGSelection -Style Full -Color White -ClearScreen}
-            While (($RGRange -notcontains $RGChoice) -OR (-NOT $RGChoice.GetType().Name -eq "Int32"))
-            
-            Clear-Host
-            Write-Host ("Selected WVD Resource Group: {0}" -f $RGs[$RGChoice])
-            
-            $HostPool = Get-AzWvdHostPool -ResourceGroupName $RGs[$RGChoice]
-            If ($HostPool.Count -eq 1) {
-                Write-Host ("Host Pool: {0}" -f $HostPool.Name)
-                Write-Host ("Host Pool: {0} | Generating Host Pool registration token and fetch Configuration URL(s)" -f $HostPool.Name)
-
-                # collecting properties from the existing host pool deployment
-                $DscConfiguration = $HostPool.Tag["WVD-DscConfiguration"]
-                $FsLogixVhdLocation = $HostPool.Tag["WVD-FsLogixVhdLocation"]
-                $wvdHostPoolToken = New-AzWvdRegistrationInfo -ResourceGroupName $RGs[$RGChoice] -HostPoolName $HostPool.Name -ExpirationTime $expirationTime
-                $vmNames = Get-AzVm -ResourceGroupName $RGs[$RGChoice] | ForEach-Object {$_.Name}
-
-                Write-Host ("Host Pool: {0} | Starting WVD Session Host Configuration (AsJob)..." -f $HostPool.Name)
-                $deploymentString = ([Guid]::NewGuid()).Guid.Split("-")[-1] # creates a unique deployment GUID
-                $templateParams = [Ordered]@{
-                    Name = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
-                    az_virtualMachineNames = $vmNames
-                    wvd_dscConfigurationScript = $DscConfiguration
-                    wvd_dscConfigZipUrl = $wvdDscConfigZipUrl
-                    wvd_deploymentType = $HostPool.Tag["WVD-Deployment"]
-                    wvd_deploymentFunction = $HostPool.Tag["WVD-Function"]
-                    wvd_fsLogixVHDLocation = $FsLogixVhdLocation
-                    wvd_hostPoolName = $HostPool.Name
-                    wvd_hostPoolToken = $wvdHostPoolToken.Token
-                    wvd_sessionHostDSCModuleZipUri = $dscZipUri
-                    ResourceGroupName = $RGs[$RGChoice]
-                    TemplateUri = $DscTemplateUri
-                    TemplateParameterFile = ("{0}\dsc.parameters.json" -f $env:TEMP)
-                }
-
-                If ($PSCmdlet.ShouldProcess($HostPool.Name,"Initiate DSC Configuration Deployment")) {
-                    $deploymentJob = New-AzResourceGroupDeployment @templateParams -AsJob
-                    [Void]$deploymentJobs.Add($deploymentJob)
-                    Write-Host ("Active Deployment Jobs: {0}" -f $deploymentJobs.Count)
-                }
-                Else {Write-Host "Configuration cancelled!"}
+            Do {
+                If ($HPChoice -eq "Q") { Return }
+                $HPChoice = Show-Menu -Title "Select an Azure WVD Host Pool" -Menu $HPSelection -Style Full -Color White -ClearScreen
             }
-            Else { Write-Warning ("Too many WVD Host Pools found in {0}" -f $RGs[$RGChoice])}
-                    
-            $Done = Get-ChoicePrompt -Title "`n" -Message "Select another WVD Resource Group?" -OptionList "&Yes","&No"
+            While (($HPRange -notcontains $HPChoice) -OR (-NOT $HPChoice.GetType().Name -eq "Int32"))
+            $HPChoice = $HPChoice - 1
+
+            Clear-Host
+            Write-Host ("Host Pool: {0}" -f $HPs[$HPChoice].Name)
+            Write-Host ("Host Pool: {0} | Generating Host Pool registration token and fetch Configuration URL(s)" -f $HPs[$HPChoice].Name)
+
+            # collecting properties from the existing host pool deployment
+            $deploymentString = ([Guid]::NewGuid()).Guid.Split("-")[-1] # creates a unique deployment GUID
+            $DscConfiguration = $HPs[$HPChoice].Tag["WVD-DscConfiguration"]
+            $FsLogixVhdLocation = $HPs[$HPChoice].Tag["WVD-FsLogixVhdLocation"]
+            $Properties = $HPs[$HPChoice].Description.replace("\","\\") | ConvertFrom-Json
+            $dscZipUri = New-AzStorageBlobSASToken -Container dsc -Blob $DscConfiguration -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+            $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+            $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+            (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
+            $wvdHostPoolToken = New-AzWvdRegistrationInfo -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -HostPoolName $HPs[$HPChoice].Name -ExpirationTime $expirationTime
+            
+            # gets vm names(s) and deployment name for configuration ARM template deployment job
+            If ($SessionHostGroup -eq "A") {
+                $vmNames = Get-AzVm -ResourceGroupName $HPs[$HPChoice].ResourceGroupName | Where-Object {$_.Tags["WVD-Group"] -eq "A"} | ForEach-Object {$_.Name}
+                $deploymentName = ("Deploy-WVD-DscConfiguration-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString)
+            }
+            If ($SessionHostGroup -eq "B") {
+                $vmNames = Get-AzVm -ResourceGroupName $HPs[$HPChoice].ResourceGroupName | Where-Object {$_.Tags["WVD-Group"] -eq "B"} | ForEach-Object {$_.Name}
+                $deploymentName = ("Deploy-WVD-DscConfiguration-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString)
+            }
+            If ($SessionHostGroup -eq "ALL") {
+                $vmNames = Get-AzVm -ResourceGroupName $HPs[$HPChoice].ResourceGroupName | ForEach-Object {$_.Name}
+                $deploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+            }
+        
+            Write-Host ("Host Pool: {0} | Starting WVD Session Host Configuration (AsJob)..." -f $HPs[$HPChoice].Name)
+            # hashtable of parameters which are SPLATTED against the new deployment cmdlet
+            $templateParams = [Ordered]@{
+                Name = $deploymentName
+                az_virtualMachineNames = $vmNames
+                az_vmImagePublisher = $Properties.imagePublisher
+                wvd_dscConfigurationScript = $DscConfiguration.Trim(".zip")
+                wvd_dscConfigZipUrl = $wvdDscConfigZipUrl
+                wvd_deploymentType = $HPs[$HPChoice].Tag["WVD-Deployment"]
+                wvd_deploymentFunction = $HPs[$HPChoice].Tag["WVD-Function"]
+                wvd_fsLogixVHDLocation = $FsLogixVhdLocation
+                wvd_hostPoolName = $HPs[$HPChoice].Name
+                wvd_hostPoolToken = $wvdHostPoolToken.Token
+                wvd_sessionHostDSCModuleZipUri = $dscZipUri
+                ResourceGroupName = $HPs[$HPChoice].ResourceGroupName
+                TemplateUri = $DscTemplateUri
+                TemplateParameterFile = ("{0}\dsc.parameters.json" -f $env:TEMP)
+            }
+
+            If ($PSCmdlet.ShouldProcess($HPs[$HPChoice].Name,"Initiate DSC Configuration Deployment")) {
+                # creates new deployment job and adds to jobs array
+                $deploymentJob = New-AzResourceGroupDeployment @templateParams -AsJob
+                [Void]$deploymentJobs.Add($deploymentJob)
+                Write-Host ("Active Deployment Jobs: {0}" -f $deploymentJobs.Count)
+            }
+            Else {Write-Host "Configuration cancelled!"}
+            $Done = Get-ChoicePrompt -Title "`n" -Message "Select another WVD Host Pool Group?" -OptionList "&Yes","&No"
         } Until ($Done -eq 1)
 
         If ($deploymentJobs.Count -gt 0) {
             Show-Menu -Title "WVD Configuration Deployments" -DisplayOnly -ClearScreen -Color White -Style Info
             _WaitOnJobs -Jobs $deploymentJobs -maxDuration 60
         }
+    }
+}
+
+Function Get-MsiProductInfo {
+    <#
+        .SYNOPSIS
+            Gets Product Name and Product ID for MSI packages
+        .DESCRIPTION
+            This function is used when adding a MSI package to a DSC configuration.  Provides the product name and id for MSI packages without the need to actually install the application.
+    #>
+    [CmdletBinding()]
+    Param (
+        [System.String]$msiPath
+    )
+
+    # Definition
+    $sig = @'
+    [DllImport("msi.dll", CharSet = CharSet.Unicode, PreserveSig = true, SetLastError = true, ExactSpelling = true)]
+    private static extern UInt32 MsiOpenPackageW(string szPackagePath, out IntPtr hProduct);
+    [DllImport("msi.dll", CharSet = CharSet.Unicode, PreserveSig = true, SetLastError = true, ExactSpelling = true)]
+    private static extern uint MsiCloseHandle(IntPtr hAny);
+    [DllImport("msi.dll", CharSet = CharSet.Unicode, PreserveSig = true, SetLastError = true, ExactSpelling = true)]
+    private static extern uint MsiGetPropertyW(IntPtr hAny, string name, StringBuilder buffer, ref int bufferLength);
+    private static string GetPackageProperty(string msi, string property)
+    {
+        IntPtr MsiHandle = IntPtr.Zero;
+        try
+        {
+            var res = MsiOpenPackageW(msi, out MsiHandle);
+            if (res != 0)
+            {
+                return null;
+            }
+            int length = 256;
+            var buffer = new StringBuilder(length);
+            res = MsiGetPropertyW(MsiHandle, property, buffer, ref length);
+            return buffer.ToString();
+        }
+        finally
+        {
+            if (MsiHandle != IntPtr.Zero)
+            {
+                MsiCloseHandle(MsiHandle);
+            }
+        }
+    }
+    public static string GetProductCode(string msi)
+    {
+        return GetPackageProperty(msi, "ProductCode");
+    }
+    public static string GetProductName(string msi)
+    {
+        return GetPackageProperty(msi, "ProductName");
+    }
+'@
+    $msiTools = Add-Type -PassThru -Namespace 'Microsoft.Windows.DesiredStateConfiguration.PackageResource' -Name 'MsiTools' -Using 'System.Text' -MemberDefinition $sig
+
+
+    # Get the MSI Product Name
+    $msiProductName = $msiTools::GetProductName($msiPath)
+    # Get the MSI Product ID / GUID
+    $msiProductGuid = $msiTools::GetProductCode($msiPath)
+
+    $output = [PSCustomObject][Ordered]@{
+        ProductName = $msiProductName
+        ProductGuid = $msiProductGuid
+    }
+
+    Return $output
+}
+
+Function Invoke-AzWvdSessionManager {
+    <#
+        .SYNOPSIS
+            User Session Manager for WVD Host Pools
+        .DESCRIPTION
+            This function will allow the operator to choose between the 'List' or 'Remove' action and pull all the user sessions from a given Host Pool.
+    #>
+    [CmdletBinding()]
+    Param (
+        # Name of the Subscription for the WVD resources to be deployed (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [String]$SubscriptionName,
+
+        # Azure region location of the resources and resource groups
+        [Parameter(Mandatory=$true)]
+        [String]$Location,
+
+        # Select 'List' or 'Remove' as the default action for the Session Manager
+        [Parameter(Mandatory=$true,HelpMessage="Type List or Remove as the Action")]
+        [ValidateSet("List","Remove")]
+        [String]$Action
+    )
+    BEGIN {
+        #Requires -Modules Az.Accounts,Az.DesktopVirtualization
+    }
+    PROCESS {
+        Set-AzContext -Subscription $SubscriptionName | Out-Null
+        
+        Do {
+            # generates a menu of selectable WVD host pools
+            Write-Verbose "Getting WVD Host Pools..."
+            $HPs = Get-AzWvdHostPool -Verbose:$false -Debug:$false | Select-Object @{l="Name";e={$_.Name.Split("/")[-1]}},@{l="ResourceGroupName";e={$_.Id.Split("/")[4]}}
+            Write-Verbose ("Found {0} Azure WVD Host Pools" -f $HPs.Count)
+            $HPSelection = ""
+            $HPRange = 1..($HPs.Count)
+            For ($i = 0; $i -lt $HPs.Count;$i++) {$HPSelection += (" [{0}] {1}`n" -f ($i+1),$HPs[$i].Name)}
+            $HPSelection += "`n Please select a Host Pool or [Q] to Quit"
+
+            Do {
+                # choose a host pool by number or 'Q' to quit
+                If ($HPChoice -eq "Q") { Return }
+                $HPChoice = Show-Menu -Title "Select an Azure WVD Host Pool" -Menu $HPSelection -Style Full -Color White -ClearScreen
+            }
+            While (($HPRange -notcontains $HPChoice) -OR (-NOT $HPChoice.GetType().Name -eq "Int32"))
+            $HPChoice = $HPChoice - 1 # ensures the first option is 1 and not 0
+
+            Clear-Host
+            # creates a custom PS object of the sessions in a host pool
+            [System.Collections.ArrayList]$Sessions = @()
+            Get-AzWvdUserSession -HostPoolName $HPs[$HPChoice].Name -ResourceGroupName $HPs[$HPChoice].ResourceGroupName | ForEach-Object {
+                $elapsedTime = ([DateTime]::Now).Subtract($_.CreateTime.ToLocalTime())
+                $sessionObject = [PSCustomObject][Ordered]@{
+                    UserPrincipalName = $_.UserPrincipalName
+                    UserName = $_.ActiveDirectoryUserName
+                    SessionHost = $_.name.split("/")[1]
+                    Id = $_.name.split("/")[-1]
+                    Duration = ("{0}.{1}:{2}:{3}" -f $elapsedTime.Days,$elapsedTime.Hours,$elapsedTime.Minutes,$elapsedTime.Seconds)
+                    SessionState = $_.SessionState
+                }
+                [Void]$Sessions.Add($sessionObject)
+            }
+
+            If ($Sessions.Count -gt 0) {
+                Show-Menu -Title ("[{0}] Found {1} User Sessions" -f $HPs[$HPChoice].Name,$Sessions.Count) -Style Mini -Color Yellow -DisplayOnly
+                Switch (Get-ChoicePrompt -Message "Display the Results?" -OptionList "&Console","&GridView","&Quit" -Default 0) {
+                    0 {
+                        $Sessions | Sort-Object SessionHost,SessionState | Format-Table -AutoSize
+                        If ($Action -eq "Remove") {
+                            Switch (Get-ChoicePrompt -Message "Select a Session to Kill?" -OptionList "&Yes","&No" -Default 1) {
+                                0 {
+                                    Do {
+                                        try {
+                                            $Id = Show-Menu -Title "Enter the Session Id to Kill" -Menu "Session Id or [Q] to Quit" -Style Info -Color DarkGray
+                                            If ($Id -eq "Q") { Return }
+                                            Else { [Double]$Id = $Id }
+                                        }
+                                        catch { 
+                                            Write-Warning ("Failed to enter a Session Id number")
+                                            $Id = $null
+                                        }
+                                    } While ($null -eq $Id)
+
+                                    $objSession = $Sessions.Where{$_.Id -eq $Id}
+                                    If ($objSession) {
+                                        $SessionHostStatus = Get-AzWvdSessionHost -HostPoolName $HPs[$HPChoice].Name -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -Name $objSession.SessionHost | Select-Object -ExpandProperty Status
+                                        If ($SessionHostStatus -eq "Available") { 
+                                            Write-Warning ("Forcibly removing {0} Session Id {1} for {2} on {3}" -f $objSession.SessionState,$id,$objSession.UserPrincipalName,$objSession.SessionHost)
+                                            Remove-AzWvdUserSession -HostPoolName $HPs[$HPChoice].Name -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -SessionHostName $objSession.SessionHost -Id $Id -Force -Confirm
+                                        }
+                                        Else { Write-Warning ("[{0}] Session Host Agent Status is: {1}, Session Host should be drained and rebooted" -f $objSession.SessionHost,$SessionHostStatus) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    1 {
+                        $Sessions | Out-GridView -Title ("WVD User Sessions on: {0}" -f $HPs[$HPChoice].Name) -Wait
+                        If ($Action -eq "Remove") {
+                            Switch (Get-ChoicePrompt -Message "Select a Session to Kill?" -OptionList "&Yes","&No" -Default 1) {
+                                0 {
+                                    Do {
+                                        try {
+                                            $Id = Show-Menu -Title "Enter the Session Id to Kill" -Menu "Session Id or [Q] to Quit" -Style Info -Color DarkGray
+                                            If ($Id -eq "Q") { Return }
+                                            Else { [Double]$Id = $Id }
+                                        }
+                                        catch { 
+                                            Write-Warning ("Failed to enter a Session Id number")
+                                            $Id = $null
+                                        }
+                                    } While ($null -eq $Id)
+
+                                    $objSession = $Sessions.Where{$_.Id -eq $Id}
+                                    If ($objSession) {
+                                        $SessionHostStatus = Get-AzWvdSessionHost -HostPoolName $HPs[$HPChoice].Name -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -Name $objSession.SessionHost | Select-Object -ExpandProperty Status
+                                        If ($SessionHostStatus -eq "Available") { 
+                                            Write-Warning ("Forcibly removing {0} Session Id {1} for {2} on {3}" -f $objSession.SessionState,$id,$objSession.UserPrincipalName,$objSession.SessionHost)
+                                            Remove-AzWvdUserSession -HostPoolName $HPs[$HPChoice].Name -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -SessionHostName $objSession.SessionHost -Id $Id -Force -Confirm
+                                        }
+                                        Else { Write-Warning ("[{0}] Session Host Agent Status is: {1}, Session Host should be drained and rebooted" -f $objSession.SessionHost,$SessionHostStatus) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    2 { Return }
+                }
+            }
+            Else { Write-Warning ("[{0}] No User Sessions Found in Host Pool" -f $HPs[$HPChoice].Name) }
+                    
+            $Done = Get-ChoicePrompt -Message "Select another WVD Host Pool?" -OptionList "&Yes","&No"
+        } Until ($Done -eq 1)
     }
 }
 
@@ -955,4 +1179,8 @@ Register-ArgumentCompleter -CommandName New-AzWvdSessionHosts -Parametername Res
 Register-ArgumentCompleter -CommandName New-AzWvdSessionHosts -Parametername HostPoolName -ScriptBlock $hpScriptBlock
 Register-ArgumentCompleter -CommandName New-AzWvdSessionHostConfig -Parametername SubscriptionName -ScriptBlock $subScriptBlock
 Register-ArgumentCompleter -CommandName New-AzWvdSessionHostConfig -Parametername StorageAccountSubscription -ScriptBlock $subScriptBlock
+Register-ArgumentCompleter -CommandName Invoke-AzWvdSessionManager -ParameterName SubscriptionName -ScriptBlock $subScriptBlock
+Register-ArgumentCompleter -CommandName Invoke-AzWvdSessionManager -ParameterName Location -ScriptBlock $locScriptBlock
+Register-ArgumentCompleter -CommandName Disable-AzWvdMaintanence -ParameterName ResourceGroupName -ScriptBlock $rgScriptBlock
+Register-ArgumentCompleter -CommandName Disable-AzWvdMaintanence -ParameterName HostPoolName -ScriptBlock $hpScriptBlock
 #endregion
