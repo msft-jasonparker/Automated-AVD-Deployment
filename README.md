@@ -2,6 +2,25 @@
 
 This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and ARM parameter files.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
 
+## Table of Contents
+
+- [Requirements](#Requirements)
+  - [Knowledge](#Knowledge)
+  - [Azure](#Azure)
+  - [Non-Azure](#Non-Azure)
+- [Getting Started](#Getting-Started)
+- [Deployment](#Deployment)
+  - [PowerShell Module Dependancies](#PowerShell-Module-Dependancies)
+  - [Scale Unit ARM Template](#Scale-Unit-ARM-Template)
+    - [Variables](#Variables)
+    - [Resources](#Resources)
+    - [Outputs](#Outputs)
+  - [Scale Unit Parameter File](#Scale-Unit-Parameter-File)
+  - [Host Pool ARM Template](#Host-Pool-ARM-Template)
+    - [Functions](#Functions)
+    - [Variables](#Variables)
+    - [Resources](#Resources)
+
 ## Requirements
 
 Below are some of the minimum requirements to be able to use this repo in a Test \ Dev \ Prod environment.
