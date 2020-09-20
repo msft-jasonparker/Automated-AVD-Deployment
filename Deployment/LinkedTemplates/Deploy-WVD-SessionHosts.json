@@ -97,7 +97,8 @@
               }
             }
           }
-        ]
+        ],
+        "enableAcceleratedNetworking": true
       },
       "dependsOn": [
       ]

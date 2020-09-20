@@ -79,6 +79,26 @@
         }
       }
     },
+    // Azure Depenency Agent extension; copy iteration based on the 'az_vmNumberOfInstances' parameter
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/DependencyAgent')]",
+      "location": "[variables('wvdResourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MMAExtenMicrosoftMonitoringAgentsion')]"
+      ],      
+      "copy": {
+        "name": "WVD-SH-DepAgent-Extension",
+        "count": "[length(parameters('az_virtualMachineNames'))]"
+      },
+      "properties": {
+          "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+          "type": "DependencyAgentWindows",
+          "typeHandlerVersion": "9.10",
+          "autoUpgradeMinorVersion": true
+      }
+    },
     // joinDomain extension; copy iteration based on the 'az_virtualMachineNames' parameter
     {
       "apiVersion": "2019-07-01",
@@ -86,7 +106,7 @@
       "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/ActiveDirectoryDomainJoin')]",
       "location": "[variables('wvdResourceLocation')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MicrosoftMonitoringAgent')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'DependencyAgent')]"
       ],
       "copy": {
         "name": "WVD-SH-Domain-Join-Loop",
