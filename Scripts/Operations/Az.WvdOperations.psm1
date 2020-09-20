@@ -74,40 +74,31 @@ Function Show-Menu {
     [System.Text.StringBuilder]$menuPrompt = ""
     Switch($Style) {
         "Full" {
-            [Void]$menuPrompt.AppendLine("`n")
             [Void]$menuPrompt.AppendLine("/" * (95))
             [Void]$menuPrompt.AppendLine("////`n`r//// $Title`n`r////")
             [Void]$menuPrompt.AppendLine("/" * (95))
-            [Void]$menuPrompt.AppendLine("`n")
         }
         "Mini" {
-            [Void]$menuPrompt.AppendLine("`n")
             [Void]$menuPrompt.AppendLine("\" * (80))
             [Void]$menuPrompt.AppendLine(" $Title")
             [Void]$menuPrompt.AppendLine("\" * (80))
-            [Void]$menuPrompt.AppendLine("`n") 
         }
         "Info" {
-            [Void]$menuPrompt.AppendLine("`n")
             [Void]$menuPrompt.AppendLine("-" * (80))
             [Void]$menuPrompt.AppendLine("-- $Title")
             [Void]$menuPrompt.AppendLine("-" * (80))
-            [Void]$menuPrompt.AppendLine("`n")
         }
     }
 
     #add the menu
-    [Void]$menuPrompt.AppendLine($Menu)
-
+    If (-NOT [System.String]::IsNullOrEmpty($Menu)) { [Void]$menuPrompt.Append($Menu) }
     If ($ClearScreen) { [System.Console]::Clear() }
-
     If ($DisplayOnly) {Write-Host $menuPrompt.ToString() -ForegroundColor $Color}
     Else {
-        [System.Console]::ForegroundColor($Color)
+        [System.Console]::ForegroundColor = $Color
         Read-Host -Prompt $menuPrompt.ToString()
         [System.Console]::ResetColor()
-    }
-    
+    }    
 }
 
 Function Get-ChoicePrompt {
@@ -146,18 +137,38 @@ Function Get-LatestWVDConfigZip {
         .DESCRIPTION
             This function takes no parameters and simply fetches the latest configuration zip file for WVD Deployments from the Microsoft WVD Product Group
     #>
-    [xml]$results = (Invoke-WebRequest -Uri "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts?restype=container&comp=list").Content.Substring(3)
-    If ($results.EnumerationResults.Blobs.Blob.Count -gt 0) {
-        [System.Collections.ArrayList]$list = @()
-        $x = $results.EnumerationResults.Blobs.Blob | Where-Object {$_.Name -like "Configuration_*"}
-        $x | ForEach-Object {
-            $dateindex = $_.Name.IndexOf("_")
-            $config = $_ | Select-Object Url,@{l='Date';e={$_.Name.Substring($dateindex + 1).Split(".")[0] | Get-Date}}
-            [void]$list.Add($config)
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)]
+        [System.String]$Path
+    )
+    try {
+        [xml]$results = (Invoke-WebRequest -Uri "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts?restype=container&comp=list" -UseBasicParsing -ErrorAction SilentlyContinue).Content.Substring(3)
+        If ($results.EnumerationResults.Blobs.Blob.Count -gt 0) {
+            Write-Verbose ("Found {0} Blobs for WVD Configuration" -f $results.EnumerationResults.Blobs.Blob.Count)
+            [System.Collections.ArrayList]$list = @()
+            $x = $results.EnumerationResults.Blobs.Blob | Where-Object {$_.Name -like "Configuration_*"}
+            $x | ForEach-Object {
+                $dateindex = $_.Name.IndexOf("_")
+                $config = $_ | Select-Object Url,@{l='Date';e={$_.Name.Substring($dateindex + 1).Split(".")[0] | Get-Date}}
+                [void]$list.Add($config)
+            }
+
+            $latestZipUri = ($list | Sort-Object Date -Descending | Select-Object -First 1).Url
+            (New-Object System.Net.WebClient).DownloadFile($latestZipUri,("{0}\wvdConfiguration.zip" -f $Path))
+            $wvdConfigurationZip = Get-ChildItem -Path ("{0}\wvdConfiguration.zip" -f $Path) -File
+            If ($wvdConfigurationZip) { Return $wvdConfigurationZip.FullName }
+            #Return ($list | Sort-Object Date -Descending | Select-Object -First 1).Url
         }
-        Return ($list | Sort-Object Date -Descending | Select-Object -First 1).Url
+        Else {     
+            If (Test-Path -Path ("{0}\wvdConfiguration.zip" -f $Path)) {
+                $wvdConfigurationZip = Get-ChildItem -Path ("{0}\wvdConfiguration.zip" -f $Path) -File
+                If ($wvdConfigurationZip) { Return $wvdConfigurationZip.FullName }
+            }
+            Else { Return "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration.zip" }
+        }
     }
-    Else { Return "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration.zip" }
+    catch { $PSCmdlet.ThrowTerminatingError($PSItem) }
 }
 
 Function Enable-AzWvdMaintanence {
@@ -249,11 +260,14 @@ Function Enable-AzWvdMaintanence {
                 Write-Progress -Id 42 -Activity ("[{0}] Updating Maintenance Tag and Drain Mode" -f $HostPoolName) -Completed
 
                 # 5 minute sleep timer to allow active users to save work and logoff - update these values to change the duration
-                For ($i = 0; $i -lt 300; $i++) {
-                    Write-Progress -Activity "WVD Session Logoff Stall Timer" -Status "Please wait..." -SecondsRemaining (300 - $i)
-                    Start-Sleep -Milliseconds 999
+                If ($msgsSent -gt 0) {
+                    For ($i = 0; $i -lt 300; $i++) {
+                        Write-Progress -Activity "WVD Session Logoff Stall Timer" -Status "Please wait..." -SecondsRemaining (300 - $i)
+                        Start-Sleep -Milliseconds 999
+                    }
+                    Write-Progress -Activity "WVD Session Logoff Stall Timer" -Completed
                 }
-                Write-Progress -Activity "WVD Session Logoff Stall Timer" -Completed
+                Else { Show-Menu -Title ("No Active Sessions found") -Style Info -DisplayOnly -Color Green }
 
                 # collects the number of running vm(s) to determine which to stop
                 $vmsOnline = ($vmCollection.Where{$_.PowerState -eq "VM running"} | Measure-Object).Count
@@ -272,6 +286,115 @@ Function Enable-AzWvdMaintanence {
                     Write-Host ("-" * 120) -ForegroundColor Green
                 }
                 Else { Write-Warning "User aborted Stop-AzVM operation!" }
+            }
+            Else { Write-Warning "User aborted WVD Maintenance operation!" }
+        }
+        catch { $PSCmdlet.ThrowTerminatingError($PSItem) }
+    }
+}
+
+Function Disable-AzWvdMaintanence {
+    <#
+        .SYNOPSIS
+            Puts a specific group of session hosts in a host pool into 'maintenance'
+        .DESCRIPTION
+            This function targets a specific host pool and group of session hosts, changes their Azure maintenance tag to TRUE and turns on drain mode to prevent new connections. Use of this function is for session host redeployment for monthly patching or session host recycling.
+    #>
+    [CmdletBinding(SupportsShouldProcess,ConfirmImpact="High")]
+    Param (
+        # Name of the Resource Group of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true,Position=0)]
+        [System.String]$ResourceGroupName,
+
+        # Name of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true,Position=1)]
+        [System.String]$HostPoolName,
+
+        # Group of Session Hosts to target (A or B)
+        [Parameter(Mandatory=$true,Position=2)]
+        [System.String]$SessionHostGroup,
+
+        # Minimum number of Session Hosts which should be online after the command completes
+        [Parameter(Mandatory=$false,Position=3)]
+        [Double]$MinimumNumberOfSessionHosts = 2
+    )
+    PROCESS {
+        try {
+
+            # collection the virtual machines based on WVD-Group tag
+            Write-Verbose ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup)
+            $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object {$_.Tags["WVD-Group"] -eq $SessionHostGroup}
+            
+            # loop through the virtual machines and add the session host information to the vm object
+            $i = 0
+            $sessionHostCount = 0
+            Foreach ($virtualMachine in $vmCollection) {
+                Write-Progress -Activity ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup.ToUpper()) -Status ("Session Hosts Collected: {0}" -f $sessionHostCount) -CurrentOperation $virtualMachine.Name -PercentComplete (($i / $vmCollection.Count) * 100)
+                # collect WVD session host objects
+                $sessionHost = Get-AzWvdSessionHost -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName | Where-Object {$_.ResourceId -eq $virtualMachine.Id}
+                # collect extension object data
+                $extensionStatus = Get-AzVMExtension -VMName $virtualMachine.Name -ResourceGroupName $virtualMachine.ResourceGroupName -Status
+                
+                If ($sessionHost) {
+                    $sessionHostCount++
+                    $virtualMachine | Add-Member -NotePropertyName SessionHost -NotePropertyValue $sessionHost
+                    $virtualMachine | Add-Member -NotePropertyName ExtensionStatus -NotePropertyValue $extensionStatus
+                }
+                $i++
+            }
+            Write-Progress -Activity ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup.ToUpper()) -Completed
+
+            # prevent this prompt by using -Confirm $false
+            If ($PSCmdlet.ShouldProcess(("{0} WVD Session Hosts" -f $vmCollection.Count),"DISABLE maintenace and ENABLE new sessions")) {
+                # loop through each vm in the collection, update the maintenance/dsc tag and turn off drain mode
+                $x = 0
+                Foreach ($virtualMachine in $vmCollection) {
+                    Write-Progress -Id 42 -Activity ("[{0}] Updating Maintenance Tag and Disabling Drain Mode" -f $HostPoolName) -Status ("Session Hosts Updated: {0}" -f $x) -CurrentOperation $virtualMachine.SessionHost.Name -PercentComplete (($x / $vmCollection.Count) * 100)
+                    $tagUpdate = @{
+                        "WVD-Maintenance" = $false
+                        "WVD-PostDscComplete" = $true
+                    }
+                    $dscExtension = $virtualMachine.ExtensionStatus.Where{$_.Name -eq "Microsoft.PowerShell.DSC"}
+                    If ($dscExtension.ProvisioningState -eq "Succeeded") {
+                        Update-AzTag -ResourceId $virtualMachine.Id -Tag $tagUpdate -Operation Merge | Out-Null
+                        Update-AzWvdSessionHost -Name $virtualMachine.SessionHost.Name.Split("/")[-1] -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -AllowNewSession:$true | Out-Null
+                        $x++
+                    }
+                }
+                Write-Progress -Id 42 -Activity ("[{0}] Updating Maintenance Tag and Drain Mode" -f $HostPoolName) -Completed
+
+                # collects the number of running vm(s) to determine which to stop
+                $vmsOnline = ($vmCollection.Where{$_.PowerState -eq "VM running"} | Measure-Object).Count
+                # checks the number of vms online vs the minimum number set as a parameter
+                If ($vmsOnline -gt $MinimumNumberOfSessionHosts) {
+                    # prevent this prompt by using -Confirm $false
+                    If ($PSCmdlet.ShouldProcess(("{0} Running WVD Session Hosts" -f $vmsOnline),("STOP and DEALLOCATE {0} Virtual Machines in Group {1}" -f ($vmsOnline - $MinimumNumberOfSessionHosts),$SessionHostGroup.ToUpper()))) {
+                        # loop through each running vm and initiate the stop command without waiting - no need to wait as the portal should be used to validate the vm state
+                        Write-Warning ("Online Session Hosts is more than the Minimum Number of Sessions Hosts provided, Stopping remaining Session Hosts.")
+                        $vmCollection.Where{$_.PowerState -eq "VM running"} | Select-Object -First ($vmsOnline - $MinimumNumberOfSessionHosts) | ForEach-Object {
+                            $shName = $_.SessionHost.Name
+                            $_ | Stop-AzVm -NoWait -Force | Select-Object @{l="Session Host Name";e={$shName}},@{l="Group";e={$SessionHostGroup}},@{l="Stop VM Status";e={$_.IsSuccessStatusCode}}
+                        } | Format-Table -Autosize
+
+                        Show-Menu -Title ("Attempted to STOP and DEALLOCATE {0} virtual machines. Please verify their state in the Azure Portal." -f ($vmsOnline - $MinimumNumberOfSessionHosts)) -Style Info -DisplayOnly -Color Yellow
+                    }
+                    Else { Write-Warning "User aborted Stop-AzVM operation!" }
+                }
+                ElseIf ($vmsOnline -ge 0 -and $vmsOnline -lt $MinimumNumberOfSessionHosts) {
+                    # prevent this prompt by using -Confirm $false
+                    If ($PSCmdlet.ShouldProcess(("{0} Running WVD Session Hosts" -f $vmsOnline),("START {0} Virtual Machines in Group {1}" -f ($MinimumNumberOfSessionHosts - $vmsOnline),$SessionHostGroup.ToUpper()))) {
+                        # loop through each running vm and initiates the start command without waiting - no need to wait as the portal should be used to validate the vm state
+                        Write-Warning ("Online Session Hosts does NOT match the Minimum Number of Sessions Hosts provided, starting {0} VM(s)." -f ($MinimumNumberOfSessionHosts - $vmsOnline))
+                        $vmCollection.Where{$_.PowerState -eq "VM deallocated"} | Select-Object -First ($MinimumNumberOfSessionHosts - $vmsOnline) | ForEach-Object {
+                            $shName = $_.SessionHost.Name
+                            $_ | Start-AzVm -NoWait | Select-Object @{l="Session Host Name";e={$shName}},@{l="Group";e={$SessionHostGroup}},@{l="Stop VM Status";e={$_.IsSuccessStatusCode}}
+                        } | Format-Table -Autosize
+
+                        Show-Menu -Title ("Attempted to START {0} virtual machines. Please verify their state in the Azure Portal." -f ($MinimumNumberOfSessionHosts - $vmsOnline)) -Style Info -DisplayOnly -Color Yellow
+                    }
+                    Else { Write-Warning "User aborted Start-AzVM operation!" }
+                }
+                Else { Show-Menu -Title ("Session Hosts online MATCHES the minimum number of Session Hosts provided") -Style Info -DisplayOnly -Color Green }
             }
             Else { Write-Warning "User aborted WVD Maintenance operation!" }
         }
@@ -334,14 +457,24 @@ Function Remove-AzWvdResources {
                 [system.collections.ArrayList]$deleteResults = @()
                 Foreach ($virtualMachine in $vmCollection) {
                     Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Removing Session Host from Host Pool") -PercentComplete (($i / $vmCollection.Count) * 100)
-                    $shRemove = Remove-AzWvdSessionHost -Name $virtualMachine.SessionHost.Name.Split("/")[-1] -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -Force
+                    try {
+                        Remove-AzWvdSessionHost -Name $virtualMachine.SessionHost.Name.Split("/")[-1] -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -Force | Out-Null
+                        $shRemove = "Succeeded"
+                    }
+                    catch { $shRemove = "Failed" }
                     Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Machine") -PercentComplete (($i / $vmCollection.Count) * 100)
-                    $vmRemove = Remove-AzResource -ResourceId $virtualMachine.Id -Force
+                    $vmRemove = Remove-AzVm -Id $virtualMachine.Id -Force -NoWait
                     If ($IncludeAttachedResources) {
                         Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Network Interface(s)") -PercentComplete (($i / $vmCollection.Count) * 100)
-                        $nicRemove = $virtualMachine.NetworkProfile.NetworkInterfaces | ForEach-Object {Remove-AzResource -ResourceId $_.Id -Force}
+                        try {
+                            $virtualMachine.NetworkProfile.NetworkInterfaces | ForEach-Object {
+                                Get-AzNetworkInterface -ResourceId $_.Id | Remove-AzNetworkInterface -Force
+                            }
+                            $nicRemove = "Succeeded"
+                        }
+                        catch { $nicRemove = "Failed" }
                         Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure OS Disk") -PercentComplete (($i / $vmCollection.Count) * 100)
-                        $diskRemove = Remove-AzResource -ResourceId $virtualMachine.StorageProfile.OsDisk.ManagedDisk.Id -Force
+                        $diskRemove = Remove-AzDisk -ResourceGroupName $ResourceGroupName -DiskName $virtualMachine.StorageProfile.OsDisk.ManagedDisk.Id.Split("/")[-1] -Force | Select-Object -ExpandProperty Status
                     }
                     Else {
                         $nicRemove = "N/A"
@@ -602,10 +735,11 @@ Function New-AzWvdSessionHosts {
         $stgAccountContext = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroup -DefaultProfile $AzContext).Context        
         $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         $wvdSessionHostTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.parameters.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        Invoke-WebRequest $wvdSessionHostTemplateParamUri | Select-Object -ExpandProperty Content | Out-File $env:TEMP\sessionhost.parameters.json -Force
+        (New-Object System.Net.WebClient).DownloadFile($wvdSessionHostTemplateParamUri,("{0}\wvd.parameters.json" -f $env:TEMP))
+
         $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        Invoke-WebRequest $DscTemplateParamUri | Select-Object -ExpandProperty Content | Out-File $env:TEMP\dsc.parameters.json -Force
+        (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
         
         # if using alternate context with storage account, switch to wvd subscription for remaining tasks
         If ($StorageAccountSubscription) {
@@ -615,6 +749,7 @@ Function New-AzWvdSessionHosts {
 
         # collect host pool and network information
         $HostPool = Get-AzWvdHostPool -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName
+        $Properties = $hostPool.Description.replace("\","\\") | ConvertFrom-Json
         $vmTemplate = $HostPool.VMTemplate | ConvertFrom-Json
         $subnetId = Get-AzVirtualNetwork -Name $VirtualNetworkName -ResourceGroupName $VirtualNetworkResourceGroup | Get-AzVirtualNetworkSubnetConfig -Name ("N2-Subnet-{0}" -f $HostPoolName.Split("-")[-1]) | Select-Object -ExpandProperty Id
         
@@ -626,7 +761,7 @@ Function New-AzWvdSessionHosts {
             -Name ("Deploy-WVD-SessionHosts-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString) `
             -ResourceGroupName $ResourceGroupName `
             -TemplateUri $wvdSessionHostTemplateUri `
-            -TemplateParameterFile ("{0}\WvdParams.json" -f $env:TEMP) `
+            -TemplateParameterFile ("{0}\wvd.parameters.json" -f $env:TEMP) `
             -az_vmSize $vmTemplate.vmSize.Id `
             -az_vmNumberOfInstances $NumberOfInstances `
             -az_vmNamePrefix $vmTemplate.namePrefix `
@@ -660,7 +795,8 @@ Function New-AzWvdSessionHosts {
             $templateParams = [Ordered]@{
                 Name = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
                 az_virtualMachineNames = $vmNames
-                wvd_dscConfigurationScript = $HostPool.Tag["WVD-DscConfiguration"]
+                az_vmImagePublisher = $Properties.imagePublisher
+                wvd_dscConfigurationScript = $HostPool.Tag["WVD-DscConfiguration"].Trim(".zip")
                 wvd_dscConfigZipUrl = $wvdDscConfigZipUrl
                 wvd_deploymentType = $HostPool.Tag["WVD-Deployment"]
                 wvd_deploymentFunction = $HostPool.Tag["WVD-Function"]
