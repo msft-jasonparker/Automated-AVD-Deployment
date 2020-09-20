@@ -46,24 +46,6 @@ Param (
     [Int]$sessionMaxThreshold = 70,
     [Int]$sessionMinThreshold = 40
 )
-#>
-<#
-Param (
-    [System.String]$subscriptionId = "04cdaeb2-270b-4a7c-bec9-52efb7aad19a",
-    [System.String]$aaAccountName = "wvd-core-int-east-automation",
-    [System.String]$aaResourceGroupName = "WVD-CORE-MAP-EASTUS-SVCS-RG",
-    [System.String]$aaSubscriptionId = "f5d65f77-695f-42ba-a165-6764208c53c1",
-    [System.String]$laWorkspaceId = "b5346cae-4e08-42d3-a8d6-99647471bbbe",
-    [System.String]$laWorkspaceKey = "Pq3r+2Blpl0sRY3pac4oXUrPP4GpdMdVqCPm2Kvdh9YFcN3xr8Bl9xLfx9bxylrp2cRDwz1rZzGgMHqpwK1e3w==",
-    [System.String]$laComplianceLogName = "WVD_HostPoolComplianceLog_CL",
-    [System.Int32]$TZOffSetFromGMT = 4,
-    [System.String]$startPeakUsageTime = "07:00",
-    [System.String]$endPeakUsageTime = "20:00",
-    [Int]$sessionHeadroomPercent = 30,
-    [Int]$sessionMaxThreshold = 70,
-    [Int]$sessionMinThreshold = 40
-)
-#>
 
 #region Helper funcitons
 Function Global:_NewComplianceLogEntry {

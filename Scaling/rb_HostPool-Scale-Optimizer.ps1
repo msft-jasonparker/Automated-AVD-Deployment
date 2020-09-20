@@ -442,72 +442,76 @@ If ($scaleInfo.DrainAndStopVMs -gt 0) {
     [Void]$logMessages.Add($logEntry) # Log entry added to an array
 
     # Loop through session hosts based on availability matrix, add an action property to the host object with drain as the default action
-    [System.Collections.ArrayList]$sessionHostsToStop = @()
-    $sessionHostLoopCheck = $true
-    While ($sessionHostLoopCheck) {
-        $metrics.sessionHosts | Where-Object {$_.sessionHostStatus -eq "available" -and $_.vmStatus -eq "vm running" -and $_.wvdMaintenance -eq $false -and $_.wvdPostDscComplete -eq $true} | Sort-Object Session | ForEach-Object {
-            $objSessionHost = $_
-            $objSessionHost | Add-Member -Name "action" -MemberType NoteProperty -Value "drain"
+    $shHashTable = $metrics.sessionHosts | Where-Object { 
+        $_.sessionHostStatus -eq "available" -and 
+        $_.vmStatus -eq "vm running" -and 
+        $_.wvdMaintenance -eq $false -and 
+        $_.wvdPostDscComplete -eq $true
+    } | Group-Object AllowNewSession -AsHashTable -AsString
 
-            # Set the action to stop if there are NO sessions
-            If ($objSessionHost.session -eq 0 -and (Get-AzWvdSessionHost -Name $objSessionHost.sessionHostName -HostPoolName $HostPoolName -ResourceGroupName $objSessionHost.resourceGroupName).Session -eq 0) {
-                $message = ("[{0}] No sessions found, setting action to STOP" -f $objSessionHost.sessionHostName)
+    [System.Collections.ArrayList]$sessionHostsToStop = @()
+    Switch ($shHashTable.Keys | Sort-Object) {
+        "False" {
+            Foreach ($item in $shHashTable["False"]) {
+                $item | Add-Member -Name "action" -MemberType NoteProperty -Value "drain"
+                $sessionHostsToStop.Add($item)
+                If ($sessionHostsToStop.count -eq $scaleinfo.DrainAndStopVMs) { Break }
+            }
+        }
+        "True" {
+            If ($sessionHostsToStop.count -eq $scaleinfo.DrainAndStopVMs) { Break }
+            Foreach ($item in $shHashTable["True"]) {
+                $item | Add-Member -Name "action" -MemberType NoteProperty -Value "drain"
+                $sessionHostsToStop.Add($item)
+                If ($sessionHostsToStop.count -eq $scaleinfo.DrainAndStopVMs) { Break }
+            }
+        }
+    }
+
+    Foreach ($objSessionHost in $sessionHostsToStop) {
+        # Set the action to stop if there are NO sessions
+        If ($objSessionHost.session -eq 0 -and (Get-AzWvdSessionHost -Name $objSessionHost.sessionHostName -HostPoolName $HostPoolName -ResourceGroupName $objSessionHost.resourceGroupName).Session -eq 0) {
+            $message = ("[{0}] No sessions found, setting action to STOP" -f $objSessionHost.sessionHostName)
+            $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                -Entry 'INFO' `
+                -Operation 'SCALE-DOWN' `
+                -SessionHostName $objSessionHost.sessionHostName `
+                -Message $message
+            [Void]$logMessages.Add($logEntry) # Log entry added to an array
+            $objSessionHost.action = "Stop"
+        }
+        Else {
+            # Session host shows sessions, get current sessions to determine which are active vs disconnected
+            $Sessions = Get-AzWvdUserSession -SessionHostName $objSessionHost.sessionHostName -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName
+            If ($Sessions.SessionState -contains "Active") {
+                # Session hosts with active sessions are set to drain
+                $message = ("[{0}] {1} active sessions remaining, setting action to DRAIN" -f $objSessionHost.sessionHostName,($Sessions | Where-Object {$_.SessionState -eq "Active"}).Count)
                 $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
                     -Entry 'INFO' `
-                    -Operation 'SCALE-DOWN' `
+                    -Operation 'DISABLE-NEW-SESSIONS' `
                     -SessionHostName $objSessionHost.sessionHostName `
                     -Message $message
                 [Void]$logMessages.Add($logEntry) # Log entry added to an array
-                $objSessionHost.action = "Stop"
-                [void]$sessionHostsToStop.Add($objSessionHost)
             }
-            Else {
-                # Session host shows sessions, get current sessions to determine which are active vs disconnected
-                $Sessions = Get-AzWvdUserSession -SessionHostName $objSessionHost.sessionHostName -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName
-                If ($Sessions.SessionState -contains "Active") {
-                    # Session hosts with active sessions are set to drain
-                    $message = ("[{0}] {1} active sessions remaining, setting action to DRAIN" -f $objSessionHost.sessionHostName,($Sessions | Where-Object {$_.SessionState -eq "Active"}).Count)
+            ElseIf ($Sessions.SessionState -contains "Disconnected") {
+                # Session hosts with disconnected sessions need to be checked for their duration.
+                $Sessions | Where-Object {$_.SessionState -eq "Disconnected"} | ForEach-Object {
+                    $duration = $_.CreateTime.ToUniversalTime().Subtract([DateTime]::UtcNow)
+                    If ($duration.TotalHours -lt 8) { $validSessions++ } # Less than 8 hrs disconnected, don't stop the VM
+                }
+
+                If ($validSessions -gt 0) {
+                    # Session host has valid sessions, action set to drain only
+                    $message = ("[{0}] {1} valid sessions remaining (< 8hr disconnected), setting action to DRAIN" -f $objSessionHost.sessionHostName,$validSessions)
                     $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
                         -Entry 'INFO' `
                         -Operation 'DISABLE-NEW-SESSIONS' `
                         -SessionHostName $objSessionHost.sessionHostName `
                         -Message $message
-                    [Void]$logMessages.Add($logEntry) # Log entry added to an array             
-                    [void]$sessionHostsToStop.Add($objSessionHost)
-                }
-                ElseIf ($Sessions.SessionState -contains "Disconnected") {
-                    # Session hosts with disconnected sessions need to be checked for their duration.
-                    $Sessions | Where-Object {$_.SessionState -eq "Disconnected"} | ForEach-Object {
-                        $duration = $_.CreateTime.ToUniversalTime().Subtract([DateTime]::UtcNow)
-                        If ($duration.TotalHours -lt 8) { $validSessions++ } # Less than 8 hrs disconnected, don't stop the VM
-                    }
-
-                    If ($validSessions -gt 0) {
-                        # Session host has valid sessions, action set to drain only
-                        $message = ("[{0}] {1} valid sessions remaining (< 8hr disconnected), setting action to DRAIN" -f $objSessionHost.sessionHostName,$validSessions)
-                        $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                            -Entry 'INFO' `
-                            -Operation 'DISABLE-NEW-SESSIONS' `
-                            -SessionHostName $objSessionHost.sessionHostName `
-                            -Message $message
-                        [Void]$logMessages.Add($logEntry) # Log entry added to an array              
-                        [void]$sessionHostsToStop.Add($objSessionHost)
-                    }
-                    Else {
-                        # Session host has NO valid sessions, action set to stop
-                        $message = ("[{0}] No valid sessions remaining, setting action to STOP" -f $objSessionHost.sessionHostName)
-                        $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                            -Entry 'INFO' `
-                            -Operation 'STOP-VM' `
-                            -SessionHostName $objSessionHost.sessionHostName `
-                            -Message $message
-                        [Void]$logMessages.Add($logEntry) # Log entry added to an array
-                        $objSessionHost.action = 'stop'            
-                        [void]$sessionHostsToStop.Add($objSessionHost)
-                    }
+                    [Void]$logMessages.Add($logEntry) # Log entry added to an array
                 }
                 Else {
-                    # Any other session state, set the action to stop
+                    # Session host has NO valid sessions, action set to stop
                     $message = ("[{0}] No valid sessions remaining, setting action to STOP" -f $objSessionHost.sessionHostName)
                     $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
                         -Entry 'INFO' `
@@ -515,15 +519,19 @@ If ($scaleInfo.DrainAndStopVMs -gt 0) {
                         -SessionHostName $objSessionHost.sessionHostName `
                         -Message $message
                     [Void]$logMessages.Add($logEntry) # Log entry added to an array
-                    $objSessionHost.action = 'stop'            
-                    [void]$sessionHostsToStop.Add($objSessionHost)
+                    $objSessionHost.action = 'stop'
                 }
             }
-
-            If ($sessionHostsToStop.Count -eq $scaleInfo.DrainAndStopVMs) {
-                # Break the loop when the session hosts to stop matches the number from the $scaleinfo
-                $sessionHostLoopCheck = $false
-                Break
+            Else {
+                # Any other session state, set the action to stop
+                $message = ("[{0}] No valid sessions remaining, setting action to STOP" -f $objSessionHost.sessionHostName)
+                $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                    -Entry 'INFO' `
+                    -Operation 'STOP-VM' `
+                    -SessionHostName $objSessionHost.sessionHostName `
+                    -Message $message
+                [Void]$logMessages.Add($logEntry) # Log entry added to an array
+                $objSessionHost.action = 'stop'
             }
         }
     }
