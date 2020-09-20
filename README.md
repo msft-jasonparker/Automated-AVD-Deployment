@@ -270,36 +270,38 @@ Functions are used to construct resource names based on a predefined set of para
 
 #### **Variables**
 
-```json
-"wvdHostPoolTokenExpirationTime": "[dateTimeAdd(parameters('timeStamp'), 'PT23H')]",
-"createVMs": "[greater(parameters('az_vmNumberOfInstances'),0)]",
-"wvdHostPoolName": "[wvdHostPool.getName(parameters('az_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
-"wvdshPrefix": "[wvdSessionHost.getName(parameters('az_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
-"wvdSubnetName": "[concat(parameters('vn_virtualNetworkSubnetPrefix'),padLeft(parameters('wvd_hostPoolIncrement'),2,'0'))]",
-"wvdSubnetId": "[resourceId(parameters('vn_virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vn_virtualNetworkName'), variables('wvdSubnetName'))]",
-"wvdVMTemplate": "[concat(
-    '{\"domain\":\"',
-    parameters('domain'),
-    '\",\"galleryImageOffer\":\"',
-    parameters('az_vmImageOffer'),
-    '\",\"galleryImagePublisher\":\"',
-    parameters('az_vmImagePublisher'),
-    '\",\"galleryImageSKU\":\"',
-    parameters('az_vmImageSKU'),
-    '\",\"imageType\":\"Gallery\"',
-    ',\"imageUri\":null',
-    ',\"customImageId\":null',
-    ',\"namePrefix\":\"',
-    variables('wvdshPrefix'),
-    '\",\"osDiskType\":\"',
-    parameters('az_vmDiskType'),
-    '\",\"useManagedDisks\":true',
-    ',\"vmSize\":{\"id\":\"',
-    parameters('az_vmSize'),
-    '\",\"cores\":8,\"ram\":32}}')]",
-"wvdResourceLocation": "[resourceGroup().location]",
-"wvdResourceGroupName": "[resourceGroup().name]",
-"wvdSessionHostInstances": "[div(parameters('az_vmNumberOfInstances'),length(parameters('wvd_groupReference')))]"
+```JSON
+{
+  "wvdHostPoolTokenExpirationTime": "[dateTimeAdd(parameters('timeStamp'), 'PT23H')]",
+  "createVMs": "[greater(parameters('az_vmNumberOfInstances'),0)]",
+  "wvdHostPoolName": "[wvdHostPool.getName(parameters('az_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
+  "wvdshPrefix": "[wvdSessionHost.getName(parameters('az_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
+  "wvdSubnetName": "[concat(parameters('vn_virtualNetworkSubnetPrefix'),padLeft(parameters('wvd_hostPoolIncrement'),2,'0'))]",
+  "wvdSubnetId": "[resourceId(parameters('vn_virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vn_virtualNetworkName'), variables('wvdSubnetName'))]",
+  "wvdVMTemplate": "[concat(
+      '{\"domain\":\"',
+      parameters('domain'),
+      '\",\"galleryImageOffer\":\"',
+      parameters('az_vmImageOffer'),
+      '\",\"galleryImagePublisher\":\"',
+      parameters('az_vmImagePublisher'),
+      '\",\"galleryImageSKU\":\"',
+      parameters('az_vmImageSKU'),
+      '\",\"imageType\":\"Gallery\"',
+      ',\"imageUri\":null',
+      ',\"customImageId\":null',
+      ',\"namePrefix\":\"',
+      variables('wvdshPrefix'),
+      '\",\"osDiskType\":\"',
+      parameters('az_vmDiskType'),
+      '\",\"useManagedDisks\":true',
+      ',\"vmSize\":{\"id\":\"',
+      parameters('az_vmSize'),
+      '\",\"cores\":8,\"ram\":32}}')]",
+  "wvdResourceLocation": "[resourceGroup().location]",
+  "wvdResourceGroupName": "[resourceGroup().name]",
+  "wvdSessionHostInstances": "[div(parameters('az_vmNumberOfInstances'),length(parameters('wvd_groupReference')))]"
+}
 ```
 
 - **wvdHostPoolTokenExpirationTime**: Creates a date / time value 23 hours in the future as the expiration time of the Host Pool registration token
@@ -307,4 +309,127 @@ Functions are used to construct resource names based on a predefined set of para
 - **wvdHostPoolName**: Calls the wvdHostPool function to construct the Host Pool name.
 - **wvdshPrefix**: Calls the wvdSessionHost function to construct the Session Host prefix.
 - **wvdSubnetName**: Creates the subnet name based on Host Pool increment value.
-- **wvdSubnetId**: 
+- **wvdSubnetId**: Required variable used in the Session Host deployment process.
+- **wvdVMTemplate**: JSON escaped string which ensures the Host Pool has a defined VM template in order to support adding Session Hosts to the Host Pool.
+- **wvdResourceLocation**: Specifies the Azure region for the WVD resources.
+- **wvdResourceGroupName**: Speifis the Azure Resource Group for the WVD resources.
+- **wvdSessionHostInstances**: Uses the provided number of instances and divides the number by the length of the 'wvd_groupReference' parameter (should be 2).
+
+#### **Resources**
+
+Below are the resources deployed as part of the Host Pool ARM template.
+
+- **Host Pool**: 
+
+  ````JSON
+  {
+    "type": "Microsoft.DesktopVirtualization/hostpools",
+    "apiVersion": "[parameters('wvd_apiVersion')]",
+    "name": "[variables('wvdHostPoolName')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "tags": {
+        "WVD-Maintenance": "True",
+        "WVD-Build": "[parameters('wvd_buildVersion')]",
+        "WVD-Deployment": "[parameters('wvd_deploymentType')]",
+        "WVD-Function": "[parameters('wvd_deploymentPurpose')]",
+        "WVD-DscConfiguration": "[parameters('wvd_dscConfiguration')]",
+        "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]"
+    },
+    "properties": {
+        "friendlyName": "[concat('WVD Host Pool ',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),' (',toUpper(parameters('wvd_deploymentType')),' v',parameters('wvd_buildVersion'),')')]",
+        "hostpoolType": "Pooled",
+        "description": "[concat(
+            '{\"DscConfiguration\":\"',
+            parameters('wvd_dscConfiguration'),
+            '\",\"FsLogixVhdLocation\":\"',
+            parameters('wvd_fsLogixVhdLocation'),
+            '\",\"ImagePublisher\":\"',
+            parameters('az_vmImagePublisher'),'\"}'
+        )]",
+        "customRdpProperty": "[parameters('wvd_customRdpProperty')]",
+        "maxSessionLimit": "[parameters('wvd_maxSessionLimit')]",
+        "loadBalancerType": "[parameters('wvd_loadBalancerType')]",
+        "ring": null,
+        "registrationInfo": {
+            "expirationTime": "[variables('wvdhostPoolTokenExpirationTime')]",
+            "token": null,
+            "registrationTokenOperation": "Update"
+        },
+        "vmTemplate": "[variables('wvdVMTemplate')]"
+    }
+  }
+  ````
+
+- **Desktop Application Group (DAG)**:
+
+  ````JSON
+  {
+    "type": "Microsoft.DesktopVirtualization/applicationgroups",
+    "apiVersion": "[parameters('wvd_apiVersion')]",
+    "name": "[concat(variables('wvdHostPoolName'),'-DAG')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "properties": {
+        "hostpoolarmpath": "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('wvdHostPoolName'))]",
+        "friendlyName": "[concat('vDesktop [',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),']')]",
+        "description": "",
+        "applicationGroupType": "Desktop"
+    },
+    "dependsOn": [
+        "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('wvdHostPoolName'))]"
+    ]
+  }
+  ````
+
+- **Availability Sets**:
+
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/availabilitySets",
+    "name": "[concat(variables('wvdHostPoolName'),'-AVSet-',parameters('wvd_groupReference')[copyIndex()])]",
+    "location": "[variables('wvdResourceLocation')]",
+    "condition": "[variables('createVMs')]",
+    "copy": {
+        "name": "WVD-Availability-Set",
+        "count": "[length(parameters('wvd_groupReference'))]"
+    },
+    "properties": {
+        // if the group reference count is greater than 3, use 3 fault domains, else use the group reference count as the number of fault domains
+        "platformFaultDomainCount": "[if(greater(length(parameters('wvd_groupReference')),3),3,length(parameters('wvd_groupReference')))]",
+        // update domain max count is 20, if less than 20 use session host instance count as update domain count
+        "platformUpdateDomainCount": "[if(greater(variables('wvdSessionHostInstances'),20),20,variables('wvdSessionHostInstances'))]"
+    },
+    "sku": {
+        "name": "Aligned"
+    } 
+  }
+  ````
+
+- **Session Host Deployment Job**:
+
+  ````JSON
+  {
+    "apiVersion": "2019-10-01",
+    "name": "[concat('Deploy-WVD-SessionHosts-Group-',parameters('wvd_groupReference')[copyIndex()],'-',parameters('az_deploymentString'))]",
+    "type": "Microsoft.Resources/deployments",
+    "condition": "[variables('createVMs')]",
+    "resourceGroup": "[variables('wvdResourceGroupName')]",
+    "copy": {
+        "name": "WVD-SessionHost-Loop",
+        "count": "[length(parameters('wvd_groupReference'))]"
+    },
+    "dependsOn": [
+    ],
+    "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+            "uri": "[parameters('wvd_sessionHostTemplateUri')]",
+            "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          //Truncated; see actual ARM template
+        }
+    }
+  }
+  ````
+
