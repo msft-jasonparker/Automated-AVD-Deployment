@@ -420,9 +420,7 @@ Below are the resources deployed as part of the Host Pool ARM template.
         "count": "[length(parameters('wvd_groupReference'))]"
     },
     "properties": {
-        // if the group reference count is greater than 3, use 3 fault domains, else use the group reference count as the number of fault domains
         "platformFaultDomainCount": "[if(greater(length(parameters('wvd_groupReference')),3),3,length(parameters('wvd_groupReference')))]",
-        // update domain max count is 20, if less than 20 use session host instance count as update domain count
         "platformUpdateDomainCount": "[if(greater(variables('wvdSessionHostInstances'),20),20,variables('wvdSessionHostInstances'))]"
     },
     "sku": {
@@ -431,7 +429,7 @@ Below are the resources deployed as part of the Host Pool ARM template.
   }
   ````
 
-- **Session Host Deployment Job**:
+- **Session Host Deployment**:
 
   ````JSON
   {
@@ -453,13 +451,13 @@ Below are the resources deployed as part of the Host Pool ARM template.
             "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          //Truncated; see actual ARM template
+          Truncated, see actual template
         }
     }
   }
   ````
 
-#### **Outputs**
+#### **Host Pool Outputs**
 
 The outputs from the Host Pool ARM template are passed up the template chain to the Scale Unit.
 
@@ -492,10 +490,13 @@ The outputs from the Host Pool ARM template are passed up the template chain to 
 - **deploymentType**: Free form value for the deployment type
 - **sessionHostNames**: Array of Session Host names which are derived from the down level Session Host deployment job
 
+---
+
 ### Session Host ARM Template
 
-- `.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.json`
-- `.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.parameters.json`
+`.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.json`
+
+`.\Deployment\LinkedTemplates\Deploy-WVD-SessionHosts.parameters.json`
 
 The Session Host ARM template is responsible for the creation of the Azure virtual machines and their associated resources. This template will create a standard virtual network interface and a virtual machine. The ARM template receives 90% of the parameters from the Host Pool template (in-line), but does have an associated `Deploy-WVD-SessionHosts.parameters.json` file containing references to secrets in the Key Vault.
 
@@ -660,3 +661,154 @@ The outputs from the Session Host ARM template are only the names of the Session
   }
 }
 ````
+
+---
+
+### WVD Configuration ARM Template
+
+`.\Deployment\LinkedTemplates\Deploy-WVD-Config.json`
+
+`.\Deployment\LinkedTemplates\Deploy-WVD-Config.parameters.json`
+
+The WVD Configuration ARM template is a completely separated process from the initial WVD resource deployment process. This is intentional so that any issues that arise during the configuration, doesn't cause the resource deployments to fail or report as a false positive. The purpose of this configuration process is to ensure each Session Host is setup with the Azure Dependency Agent, Microsoft Monitoring Agent, Active Directory Domain Join Extension, and the Desired State Configuration extension.  Each of these play an important role in the overall WVD deployment process. This ARM template utilizes both inline parameters and a `Deploy-WVD-Config.parameters.json` parameters file.
+
+#### **Configuration Variables**
+
+````JSON
+{
+  "dscScriptName" : "[parameters('wvd_dscConfigurationScript')]",
+  "dscConfigurationName": "WvdSessionHostConfig",
+  "wvdResourceLocation": "[resourceGroup().location]"
+}
+````
+
+- **dscScriptName**: Name of the DSC Script (should end with .ps1)
+- **dscConfigurationName**: Name of the DSC Configuration
+- **wvdResourceLocation**: Name of the Azure region for the resources in the deployment
+
+#### **Configuration Resources**
+
+- **Microsoft Monitoring Agent (Log Analytics)**:
+  
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/MicrosoftMonitoringAgent')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "dependsOn": [],
+    "copy": {
+      "name": "WVD-SH-MMA-Extension",
+      "count": "[length(parameters('az_virtualMachineNames'))]"
+    },
+    "properties": {
+      "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+      "type": "MicrosoftMonitoringAgent",
+      "typeHandlerVersion": "1.0",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "workspaceId": "[parameters('az_logAnalyticsWorkspaceId')]"
+      },
+      "protectedSettings": {
+        "workspaceKey": "[parameters('az_logAnalyticsWorkspaceKey')]"
+      }
+    }
+  }
+  ````
+
+- **Dependency Agent**:
+  
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/DependencyAgent')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MMAExtenMicrosoftMonitoringAgentsion')]"
+    ],      
+    "copy": {
+      "name": "WVD-SH-DepAgent-Extension",
+      "count": "[length(parameters('az_virtualMachineNames'))]"
+    },
+    "properties": {
+        "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+        "type": "DependencyAgentWindows",
+        "typeHandlerVersion": "9.10",
+        "autoUpgradeMinorVersion": true
+    }
+  }
+  ````
+
+- **Active Directory Domain Join**:
+
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/ActiveDirectoryDomainJoin')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'DependencyAgent')]"
+    ],
+    "copy": {
+      "name": "WVD-SH-Domain-Join-Loop",
+      "count": "[length(parameters('az_virtualMachineNames'))]"
+    },
+    "properties": {
+      "publisher": "Microsoft.Compute",
+      "type": "JsonADDomainExtension",
+      "typeHandlerVersion": "1.3",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "name": "[parameters('dj_domainFQDN')]",
+        "ouPath": "[parameters('dj_ouPath')]",
+        "user": "[concat(parameters('dj_adminAccount'),'@',parameters('dj_domainFQDN'))]",
+        "restart": "true",
+        "options": "3"
+      },
+      "protectedSettings": {
+        "password": "[parameters('dj_adminPassword')]"
+      }
+    }
+  }
+  ````
+
+- **Desired State Configuration**:
+
+  ````JSON
+  {
+    "apiVersion": "2019-07-01",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/Microsoft.PowerShell.DSC')]",
+    "location": "[variables('wvdResourceLocation')]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'ActiveDirectoryDomainJoin')]"
+    ],
+    "copy": {
+      "name": "WVD-SH-DSC-Config-Loop",
+      "count": "[length(parameters('az_virtualMachineNames'))]"
+    },
+    "properties": {
+      "publisher": "Microsoft.Powershell",
+      "type": "DSC",
+      "typeHandlerVersion": "2.80",
+      "autoUpgradeMinorVersion": true,
+      "settings": {
+        "Configuration": {
+          "url": "[parameters('wvd_sessionHostDSCModuleZipUri')]",
+          "script": "[variables('dscScriptName')]",
+          "function": "[variables('dscConfigurationName')]"
+        },
+        "configurationArguments": {
+          "hostPoolName": "[parameters('wvd_hostpoolName')]",
+          "registrationInfoToken": "[parameters('wvd_hostpoolToken')]",
+          "wvdDscConfigZipUrl": "[parameters('wvd_dscConfigZipUrl')]",
+          "deploymentFunction": "[parameters('wvd_deploymentFunction')]",
+          "deploymentType": "[parameters('wvd_deploymentType')]",
+          "fsLogixVhdLocation": "[parameters('wvd_fsLogixVhdLocation')]"
+        }
+      }
+    }
+  }
+  ````
