@@ -8,6 +8,9 @@
         "wvdKeyVaultName": {
             "type": "string"
         },
+        "kvAccessObjectId": {
+            "type": "string"
+        },
         "wvdAutomationAccountName": {
             "type": "string"
         },
@@ -31,7 +34,7 @@
             "secretVMDomainJoinAccount": "WVD-VM-DomainJoin-Account",
             "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
             "secretVMDomainJoinOU": "WVD-SessionHost-OU",
-            "accessPolicyObjectId": ""
+            "accessPolicyObjectId": "[parameters('kvAccessObjectId')]"
         }
     },
     "resources": [

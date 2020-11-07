@@ -6,6 +6,10 @@
             "type": "string",
             "defaultValue": "westus"
         },
+        "kvAccessObjectId": {
+            "type": "string",
+            "defaultValue": "[newGuid()]"
+        },
         "hostPoolRgPrefix": {
             "type": "string",
             "defaultValue": "WVD-POOL-RG-"
@@ -103,6 +107,9 @@
                     },
                     "wvdKeyVaultName": {
                         "value": "[parameters('wvdKeyVaultName')]"
+                    },
+                    "kvAccessObjectId": {
+                        "value": "[parameters('kvAccessObjectId')]"
                     },
                     "wvdAutomationAccountName": {
                         "value": "[parameters('wvdAutomationAccountName')]"
