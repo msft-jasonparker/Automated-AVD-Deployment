@@ -103,7 +103,7 @@
             "resources": [
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
+                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
                         "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
@@ -112,7 +112,8 @@
                         "contentType": "Local Admin Account name for VM(s)",
                         "attributes": {
                             "enabled": true
-                        }
+                        },
+                        "value": "SecretValue"
                     }
                 }
             ]
