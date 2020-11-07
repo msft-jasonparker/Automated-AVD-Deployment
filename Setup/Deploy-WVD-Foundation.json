@@ -8,7 +8,10 @@
         },
         "kvAccessObjectId": {
             "type": "string",
-            "defaultValue": "[newGuid()]"
+            "defaultValue": "",
+            "metadata": {
+                "description": "REQUIRED! Provide the ObjectId of the Azure AD user or group with access to Key Vault secrets"
+            }
         },
         "hostPoolRgPrefix": {
             "type": "string",
