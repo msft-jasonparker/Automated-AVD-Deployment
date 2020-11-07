@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
@@ -19,48 +19,40 @@
             "defaultValue": "WVD-NET-RG"
         },
         "wvdStorageAccountName": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "wvdartifactblobstore"
         },
         "wvdKeyVaultName": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "wvd-kv"
         },
         "wvdAutomationAccountName": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "WVD-AA"
         },
         "wvdLogAnalyticsWorkspaceName": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "WVD-Log-Analytics"
         },
         "wvdVirtualNetworkName": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "WVD-VNET"
         },
         "wvdMinHostPools": {
-            "type": "int"
+            "type": "int",
+            "defaultValue": 2
+        },
+        "wvdSvcsTemplateUri": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-SVCS-Template.json"
+        },
+        "wvdNetTemplateUri": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-NET-Template.json"
         }
     },
     "functions": [],
-    "variables": {
-        "storageAccountConfig": {
-            "dscContainer": "dsc",
-            "templateContainer": "templates",
-            "tier": "Standard",
-            "replication": "Standard_RAGRS",
-            "accessTier": "Hot"
-        },
-        "keyVaultConfig": {
-            "secretVMAdminAccount": "/WVD-VM-Admin-Account",
-            "secretVMAdminPassword": "/WVD-VM-Admin-Password",
-            "secretLAWorkspaceId": "/WVD-LA-WorkspaceId",
-            "secretLAWorkspaceKey": "/WVD-LA-WorkspaceKey",
-            "secretVMDomainJoinAccount": "/WVD-VM-DomainJoin-Account",
-            "secretVMDomainJoinPassword": "/WVD-VM-DomainJoin-Password",
-            "secretVMDomainJoinOU": "/WVD-SessionHost-OU"
-        },
-        "virtualNetworkConfig": {
-            "addressSpace": "192.168.0.0/16",
-            "subnetCount": 2,
-            "subnetPrefix": "WVD-Subnet-"
-        }
-    },
+    "variables": {},
     "resources": [
         // Creates SVCS Resource Group
         {
@@ -69,9 +61,7 @@
             "apiVersion": "2019-10-01",
             "location": "[parameters('location')]",
             "dependsOn": [],
-            "properties": {
-                "description": "Resource Group for Services / Resources that support the Windows Virtual Desktop environment"
-            }
+            "properties": {}
         },
         // Creates NET Resource Group
         {
@@ -80,9 +70,7 @@
             "apiVersion": "2019-10-01",
             "location": "[parameters('location')]",
             "dependsOn": [],
-            "properties": {
-                "description": "Resource Group for Virtual Network Resources that support the Windows Virtual Desktop environment"
-            }
+            "properties": {}
         },
         // Creates Host Pool Resource Group(s) based on wvdMinHostPools
         {
@@ -95,9 +83,7 @@
                 "name": "Pool-Rgs",
                 "count": "[parameters('wvdMinHostPools')]"
             },
-            "properties": {
-                "description": "Resource Group for Windows Virtual Desktop Host Pool(s) and supporting Resources"
-            }
+            "properties": {}
         },
         // Resource Group deployment for SVCS resources, depends on SVCS RG
         {
@@ -107,208 +93,23 @@
             "resourceGroup": "[parameters('svcRgName')]",
             "properties": {
                 "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        // Creates minimum storage account for wvd artifacts with 2 containers
-                        {
-                            "name": "[parameters('wvdStorageAccountName')]",
-                            "type": "Microsoft.Storage/storageAccounts",
-                            "apiVersion": "2019-06-01",
-                            "location": "[resourceGroup().location]",
-                            "kind": "StorageV2",
-                            "sku": {
-                                "name": "[variables('storageAccountConfig').replication]",
-                                "tier": "[variables('storageAccountConfig').tier]"
-                            },
-                            "resources": [
-                                {
-                                    "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-                                    "apiVersion": "2019-06-01",
-                                    "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
-                                    "dependsOn": [
-                                        "[parameters('wvdStorageAccountName')]"
-                                    ]
-                                },
-                                {
-                                    "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-                                    "apiVersion": "2019-06-01",
-                                    "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
-                                    "dependsOn": [
-                                        "[parameters('wvdStorageAccountName')]"
-                                    ]
-                                }
-                            ],
-                            "properties": {
-                                "accessTier": "[variables('storageAccountConfig').accessTier]"
-                            }
-                        },
-                        // Creates a Key Vault used for storing secrets needed during deployment
-                        {
-                            "name": "[parameters('wvdKeyVaultName')]",
-                            "type": "Microsoft.KeyVault/vaults",
-                            "apiVersion": "2016-10-01",
-                            "location": "[resourceGroup().location]",
-                            "properties": {
-                                "enabledForDeployment": true,
-                                "enabledForTemplateDeployment": true,
-                                "enabledForDiskEncryption": false,
-                                "tenantId": "[subscription().tenantId]",
-                                "accessPolicies": [
-                                    {
-                                        "tenantId": "tenantId",
-                                        "objectId": "objectId",
-                                        "permissions": {
-                                            "keys": [
-                                                "Get"
-                                            ],
-                                            "secrets": [
-                                                "List",
-                                                "Get",
-                                                "Set"
-                                            ]
-                                        }
-                                    }
-                                ],
-                                "sku": {
-                                    "name": "standard",
-                                    "family": "A"
-                                }
-                            },
-                            "resources": [
-                                // Key Vault Secrets
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretVMAdminAccount)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Local Admin Account name for VM(s)",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretVMAdminPassword)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Local Admin Account password for VM(s)",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretVMDomainJoinAccount)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Domain Join Account UPN for VM(s)",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretVMDomainJoinPassword)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Domain Join Account password for VM(s)",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretVMDomainJoinOU)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Organizational Unit for Session Host Computer Accounts during Domain Join",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretLAWorkspaceId)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Primary Log Analytics Workspace Id",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Microsoft.KeyVault/vaults/secrets",
-                                    "name": "[concat(parameters('wvdKeyVaultName'),variables('keyVaultConfig').secretLAWorkspaceKey)]",
-                                    "apiVersion": "2016-10-01",
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.KeyVault/vaults', parameters('wvdKeyVaultName'))]"
-                                    ],
-                                    "properties": {
-                                        "contentType": "Primary Log Analytics Workspace Key",
-                                        "attributes": {
-                                            "enabled": true
-                                        }
-                                    }
-                                }
-                            ]
-                        },
-                        // Creates Automation Account needed for Dynamic Scaling runbooks
-                        {
-                            "name": "[parameters('wvdAutomationAccountName')]",
-                            "type": "Microsoft.Automation/automationAccounts",
-                            "apiVersion": "2015-10-31",
-                            "location": "[resourceGroup().location]",
-                            "properties": {
-                                "sku": {
-                                    "name": "Basic"
-                                }
-                            }
-                        },
-                        // Creates Log Analytics Workspace
-                        {
-                            "name": "[parameters('wvdLogAnalyticsWorkspaceName')]",
-                            "type": "Microsoft.OperationalInsights/workspaces",
-                            "apiVersion": "2015-11-01-preview",
-                            "location": "[resourceGroup().location]",
-                            "properties": {
-                                "sku": {
-                                    "name": "PerGB2018"
-                                },
-                                "features": {
-                                    "searchVersion": 1
-                                }
-                            }
-                        }
-                    ],
-                    "outputs": {}
+                "templateLink": {
+                    "uri": "[parameters('wvdSvcsTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "wvdStorageAccountName": {
+                        "value": "[parameters('wvdStorageAccountName')]"
+                    },
+                    "wvdKeyVaultName": {
+                        "value": "[parameters('wvdKeyVaultName')]"
+                    },
+                    "wvdAutomationAccountName": {
+                        "value": "[parameters('wvdAutomationAccountName')]"
+                    },
+                    "wvdLogAnalyticsWorkspaceName": {
+                        "value": "[parameters('wvdLogAnalyticsWorkspaceName')]"
+                    }
                 }
             },
             "dependsOn": [
@@ -323,45 +124,14 @@
             "resourceGroup": "[parameters('netRgName')]",
             "properties": {
                 "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "name": "[parameters('wvdVirtualNetworkName')]",
-                            "type": "Microsoft.Network/virtualNetworks",
-                            "apiVersion": "2019-11-01",
-                            "location": "[resourceGroup().location]",
-                            "properties": {
-                                "addressSpace": {
-                                    "addressPrefixes": [
-                                        "[variables('virtualNetworkConfig').addressSpace]"
-                                    ]
-                                }
-                            },
-                            "resources": [
-                                {
-                                    "type": "Microsoft.Network/virtualNetworks/subnets",
-                                    "apiVersion": "2020-05-01",
-                                    "location": "[resourceGroup().location]",
-                                    "name": "[concat(variables('virtualNetworkConfig').subnetPrefix,padLeft(add(copyIndex(),1),2,'0'))]",
-                                    "copy": {
-                                        "name": "SubnetCopy",
-                                        "count": "[variables('virtualNetworkConfig').subnetCount]"
-                                    },
-                                    "dependsOn": [
-                                        "[resourceId('Microsoft.Network/virtualNetworks',parameters('wvdVirtualNetworkName'))]"
-                                    ],
-                                    "properties": {
-                                        "addressPrefix": "[concat('192.168.',add(copyIndex(),1),'.0/24')]"
-                                    }
-                                }
-                            ]
-                        }
-                    ],
-                    "outputs": {}
+                "templateLink": {
+                    "uri": "[parameters('wvdNetTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "wvdVirtualNetworkName": {
+                        "value": "[parameters('wvdVirtualNetworkName')]"
+                    }
                 }
             },
             "dependsOn": [
