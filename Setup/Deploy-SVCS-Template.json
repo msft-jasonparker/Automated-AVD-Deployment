@@ -30,7 +30,8 @@
             "secretLAWorkspaceKey": "WVD-LA-WorkspaceKey",
             "secretVMDomainJoinAccount": "WVD-VM-DomainJoin-Account",
             "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
-            "secretVMDomainJoinOU": "WVD-SessionHost-OU"
+            "secretVMDomainJoinOU": "WVD-SessionHost-OU",
+            "accessPolicyObjectId": "41e3a078-9ed2-4d7a-adbf-c100b04d0def"
         }
     },
     "resources": [
@@ -78,6 +79,22 @@
                 "enabledForTemplateDeployment": true,
                 "enabledForDiskEncryption": false,
                 "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[variables('keyVaultConfig').accessPolicyObjectId]",
+                        "permissions": {
+                            "keys": [
+                                "Get"
+                            ],
+                            "secrets": [
+                                "List",
+                                "Get",
+                                "Set"
+                            ]
+                        }
+                    }
+                ],
                 "sku": {
                     "name": "standard",
                     "family": "A"
