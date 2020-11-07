@@ -2,6 +2,12 @@
 
 This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and ARM parameter files.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
 
+**UPDATED**: Use these links to setup the foundational resources in your Azure subscription
+
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+[![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+
 ## Table of Contents
 
 - [Requirements](#Requirements)
@@ -27,6 +33,7 @@ This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and
     - [Variables](#Session-Host-Variables)
     - [Resources](#Session-Host-Resources)
     - [Outputs](#Session-Host-Outputs)
+- [Desired State Configuration](#Desired-State-Configuration-(Session-Host-Customization))
 
 ## Requirements
 
@@ -88,6 +95,8 @@ While these requirements are listed as non-Azure, they could easily be created i
   - 1 x SMB file share for Session Host software package repository
 - Code Repositories(s)
   - 1 x repository for deployment code
+
+---
 
 ## Getting Started
 
@@ -672,6 +681,10 @@ The outputs from the Session Host ARM template are only the names of the Session
 
 The WVD Configuration ARM template is a completely separated process from the initial WVD resource deployment process. This is intentional so that any issues that arise during the configuration, doesn't cause the resource deployments to fail or report as a false positive. The purpose of this configuration process is to ensure each Session Host is setup with the Azure Dependency Agent, Microsoft Monitoring Agent, Active Directory Domain Join Extension, and the Desired State Configuration extension.  Each of these play an important role in the overall WVD deployment process. This ARM template utilizes both inline parameters and a `Deploy-WVD-Config.parameters.json` parameters file.
 
+> NOTE:
+>
+>Ensure the `Deploy-WVD-Config.parameters.json` is updated to reflect the correct values for the Key Vault and Log Analytics references, otherwise the configuration template will not succeed.
+
 #### **Configuration Variables**
 
 ````JSON
@@ -812,3 +825,9 @@ The WVD Configuration ARM template is a completely separated process from the in
     }
   }
   ````
+
+---
+
+## Desired State Configuration (Session Host Customization)
+
+There are many ways to perform a post Operating System configuration of a Session Host, however, this deployment guide is centered around using Desired State Configuration (DSC). There is a wealth of information avaiable for DSC on the [Microsoft Docs](https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview?view=powershell-7) website.
