@@ -1,0 +1,132 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "wvdStorageAccountName": {
+            "type": "string"
+        },
+        "wvdKeyVaultName": {
+            "type": "string"
+        },
+        "wvdAutomationAccountName": { 
+            "type": "string"
+        },
+        "wvdLogAnalyticsWorkspaceName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountConfig": {
+            "dscContainer": "dsc",
+            "templateContainer": "templates",
+            "tier": "Standard",
+            "replication": "Standard_RAGRS",
+            "accessTier": "Hot"
+        },
+        "keyVaultConfig": {
+            "secretVMAdminAccount": "WVD-VM-Admin-Account",
+            "secretVMAdminPassword": "WVD-VM-Admin-Password",
+            "secretLAWorkspaceId": "WVD-LA-WorkspaceId",
+            "secretLAWorkspaceKey": "WVD-LA-WorkspaceKey",
+            "secretVMDomainJoinAccount": "WVD-VM-DomainJoin-Account",
+            "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
+            "secretVMDomainJoinOU": "WVD-SessionHost-OU"
+        }
+    },
+    "resources": [
+        // Creates minimum storage account for wvd artifacts with 2 containers
+        {
+            "name": "[parameters('wvdStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "[variables('storageAccountConfig').replication]",
+                "tier": "[variables('storageAccountConfig').tier]"
+            },
+            "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
+                    "dependsOn": [
+                        "[parameters('wvdStorageAccountName')]"
+                    ]
+                },
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
+                    "dependsOn": [
+                        "[parameters('wvdStorageAccountName')]"
+                    ]
+                }
+            ],
+            "properties": {
+                "accessTier": "[variables('storageAccountConfig').accessTier]"
+            }
+        },
+        // Creates a Key Vault used for storing secrets needed during deployment
+        {
+            "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "enabledForDeployment": true,
+                "enabledForTemplateDeployment": true,
+                "enabledForDiskEncryption": false,
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('wvdKeyVaultName'),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
+                    "apiVersion": "2019-09-01",
+                    "dependsOn": [
+                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                    ],
+                    "properties": {
+                        "contentType": "Local Admin Account name for VM(s)",
+                        "attributes": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        // Creates Automation Account needed for Dynamic Scaling runbooks
+        {
+            "name": "[concat(parameters('wvdAutomationAccountName'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-10-31",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "Basic"
+                }
+            }
+        },
+        // Creates Log Analytics Workspace
+        {
+            "name": "[concat(parameters('wvdLogAnalyticsWorkspaceName'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "features": {
+                    "searchVersion": 1
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

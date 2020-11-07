@@ -1,0 +1,59 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "wvdVirtualNetworkName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "virtualNetworkConfig": {
+            "addressSpace": "192.168.0.0/16",
+            "subnetAddressPrefix": "192.168.0.0/24",
+            "subnetCount": 2,
+            "subnetPrefix": "WVD-Subnet-"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('wvdVirtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('virtualNetworkConfig').addressSpace]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[concat(variables('virtualNetworkConfig').subnetPrefix,padLeft('0',2,'0'))]",
+                        "properties": {
+                            "addressPrefix": "[variables('virtualNetworkConfig').subnetAddressPrefix]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('wvdVirtualNetworkName'),'/',variables('virtualNetworkConfig').subnetPrefix,padLeft(copyIndex(1),2,'0'))]",
+            "copy": {
+                "name": "SubnetCopy",
+                "count": "[variables('virtualNetworkConfig').subnetCount]",
+                "batchSize": 1,
+                "mode": "Serial"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/',parameters('wvdVirtualNetworkName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[concat('192.168.', copyIndex(1), '.0/24')]"
+            }
+        }
+    ],
+    "outputs": {}
+}
