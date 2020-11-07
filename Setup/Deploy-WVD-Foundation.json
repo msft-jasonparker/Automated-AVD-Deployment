@@ -8,7 +8,7 @@
         },
         "kvAccessObjectId": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": ">>> YOU MUST PROVIDE AN AZURE AD OBJECT ID FOR SECRET ACCESS <<<",
             "metadata": {
                 "description": "REQUIRED! Provide the ObjectId of the Azure AD user or group with access to Key Vault secrets"
             }
@@ -31,7 +31,7 @@
         },
         "wvdKeyVaultName": {
             "type": "string",
-            "defaultValue": "wvd-kv"
+            "defaultValue": "WVD-KV"
         },
         "wvdAutomationAccountName": {
             "type": "string",
@@ -39,7 +39,7 @@
         },
         "wvdLogAnalyticsWorkspaceName": {
             "type": "string",
-            "defaultValue": "WVD-Log-Analytics"
+            "defaultValue": "WVD-LA"
         },
         "wvdVirtualNetworkName": {
             "type": "string",
