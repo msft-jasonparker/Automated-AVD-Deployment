@@ -1,12 +1,21 @@
+[CmdletBinding()]
+Param ([Switch]$SelfHosted)
 $psModPath = $env:PSModulePath.Split(";")[0]
 if (!(Test-Path -Path $psModPath)) { New-Item -Path $psModPath -ItemType Directory | Out-Null }
 
-$psdFile = Import-PowerShellDataFile -Path .\Operations\Az.WvdOperations.psd1
+If ($SelfHosted) { $psdFile = Import-PowerShellDataFile -Path ".\Scripts\Operations\Az.WvdOperations.psd1" }
+Else { $psdFile = Import-PowerShellDataFile -Path ".\Operations\Az.WvdOperations.psd1" }
 $desiredModulePath = "$psModPath\Az.WvdOperations\$($psdFile.ModuleVersion)\"
 if (!(Test-Path -Path $desiredModulePath)) { New-Item -Path $desiredModulePath -ItemType Directory | Out-Null }
 
-Copy-Item -Path ".\Operations\Az.WvdOperations.psd1" -Destination $desiredModulePath
-Copy-Item -Path ".\Operations\Az.WvdOperations.psm1" -Destination $desiredModulePath
+If ($SelfHosted) {
+    Copy-Item -Path ".\Scripts\Operations\Az.WvdOperations.psd1" -Destination $desiredModulePath -Force
+    Copy-Item -Path ".\Scripts\Operations\Az.WvdOperations.psm1" -Destination $desiredModulePath -Force
+}
+Else {
+    Copy-Item -Path ".\Operations\Az.WvdOperations.psd1" -Destination $desiredModulePath -Force
+    Copy-Item -Path ".\Operations\Az.WvdOperations.psm1" -Destination $desiredModulePath -Force
+}
 
 Write-Host ("Importing Module: Az.WvdOperations")
 If (!(Get-InstalledModule Az -MinimumVersion 4.0.0)) {
