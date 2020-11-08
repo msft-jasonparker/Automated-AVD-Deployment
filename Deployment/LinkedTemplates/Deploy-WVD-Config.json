@@ -50,7 +50,7 @@
     },
   "variables": {
     "dscScriptName" : "[parameters('wvd_dscConfigurationScript')]",
-    "dscConfigurationName": "WvdWin10Config",
+    "dscConfigurationName": "WvdSessionHostConfig",
     "wvdResourceLocation": "[resourceGroup().location]"
   },
   "functions": [],
