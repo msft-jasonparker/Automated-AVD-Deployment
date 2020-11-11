@@ -208,6 +208,31 @@ Function Get-ChoicePrompt {
     $Host.ui.PromptForChoice($Title, $Message, $Options, $Default) 
 }
 
+Function Create-AccessToken {
+    param($resourceURI)
+
+    If ($null -eq $env:MSI_ENDPOINT) {
+        $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+        if(!$azProfile.Accounts.Count) { Write-Error "Ensure you have logged in before calling this function." }
+        $azContext = Get-AzContext
+        $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
+        $token = $profileClient.AcquireAccessToken($azContext.Tenant.TenantId)
+        Return $token.AccessToken
+    }
+    Else {
+        $tokenAuthURI = $env:MSI_ENDPOINT + "?resource=$resourceURI&api-version=2017-09-01"
+        $headers =  @{'Secret'="$env:MSI_SECRET"}
+        try {
+            $tokenResponse = Invoke-RestMethod -Method Get -header $headers -Uri $tokenAuthURI -ErrorAction:stop
+            return $tokenResponse.access_token
+        }
+        catch {
+            write-error "Unable to retrieve access token $error"
+            exit 1
+        }
+    }
+}
+
 Function Get-LatestWVDConfigZip {
     <#
         .SYNOPSIS
@@ -598,23 +623,101 @@ Function Remove-AzWvdResources {
     Param (
         # Name of the Resource Group of the WVD Host Pool (supports tab completion)
         [Parameter(Mandatory=$true,Position=0)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
         [System.String]$ResourceGroupName,
 
         # Name of the WVD Host Pool (supports tab completion)
         [Parameter(Mandatory=$true,Position=1)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.DesktopVirtualization/hostpools","ResourceGroupName")]
         [System.String]$HostPoolName,
 
         # Group of Session Hosts to target (A or B)
         [Parameter(Mandatory=$true,Position=2)]
-        [System.String]$SessionHostGroup,
+        [ValidateSet("A","B","ALL")]
+        [String]$SessionHostGroup,
 
         # Also removes nic(s) and disk(s)
         [Switch]$IncludeAttachedResources
     )
+    BEGIN {
+        Function _CheckDeletionStatus {
+            [CmdletBinding()]
+            Param(
+                [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
+                [object]$objectDeletionURI,
+                [Parameter(Mandatory=$true,Position=1)]
+                [string]$azAccessToken
+
+            )
+            BEGIN {
+                $objectDeletionCounter = [PSCustomObject]@{
+                    Succeeded = 0
+                    Failed = [System.Collections.Generic.List[System.Object]]@()
+                    InProgress = 0
+                    Unknown = 0
+                }
+            }
+            PROCESS {
+                try {
+                    $objectDeletionContent = ((Invoke-WebRequest -Method Get -Headers @{"Authorization" = "Bearer " + $azAccessToken} -Uri $objectDeletionURI).Content | ConvertFrom-Json)
+                }
+                catch {
+                    [System.Console]::ForegroundColor = "Red"
+                    [System.Management.Automation.ErrorRecord]::new(
+                        [System.SystemException]::new("Failed to get virtual machine deletion status"),
+                        "ObjectDeletionStatus",
+                        [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                        $objectDeletionURI
+                    )
+                    [System.Console]::ResetColor()
+                    #Continue
+                }
+                
+                Switch ($objectDeletionContent.Status) {
+                    "Succeeded" { $objectDeletionCounter.Succeeded++ }
+                    "Cancelled" {
+                        $objectDeletionCounter.Failed.Add($objectDeletionURI)
+                        [System.Console]::ForegroundColor = "Red"
+                        [System.Management.Automation.ErrorRecord]::new(
+                            [System.SystemException]::new("Virtual machine deletion cancelled"),
+                            "ObjectDeletionCancelled",
+                            [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                            $objectDeletionURI
+                        )
+                        [System.Console]::ResetColor()
+                    }
+                    "Failed" {
+                        $objectDeletionCounter.Failed.Add($objectDeletionURI)
+                        [System.Console]::ForegroundColor = "Red"
+                        [System.Management.Automation.ErrorRecord]::new(
+                            [System.SystemException]::new("Virtual machine deletion failed"),
+                            "ObjectDeletionFailed",
+                            [System.Management.Automation.ErrorCategory]::OperationStopped,
+                            $objectDeletionURI
+                        )
+                        [System.Console]::ResetColor()
+                    }
+                    "InProgress" { $objectDeletionCounter.InProgress++ }
+                    Default { 
+                        $objectDeletionCounter.Unknown++ 
+                        Write-Warning $objectDeletionContent.Status
+                    }
+                }
+            }
+            END {
+                return $objectDeletionCounter
+            }
+        }
+    }
     PROCESS {
         try {
             # collection the virtual machines based on WVD-Group tag
-            $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object {$_.Tags["WVD-Group"] -eq $SessionHostGroup}
+            if($SessionHostGroup -eq "ALL") {
+                $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status
+            }
+            else {
+                $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object {$_.Tags["WVD-Group"] -eq $SessionHostGroup}
+            }
             
             # loop through the virtual machines and add the session host information to the vm object
             $i = 0
@@ -633,56 +736,96 @@ Function Remove-AzWvdResources {
 
             # separate messages based on removing attached resources
             If ($IncludeAttachedResources) { $message = ("REMOVE and DELETE Session Host(s) and attached resources (VM, OsDisk, Nic)" -f $HostPoolName) }
-            Else { $message = ("REMOVE and DELETE Session Host(s) and attached resources (VM ONLY)" -f $HostPoolName) }
+            Else { $message = ("REMOVE and DELETE Session Host(s) (VM ONLY)" -f $HostPoolName) }
 
             # prevent this prompt by using -Confirm $false
             If ($PSCmdlet.ShouldProcess(("{0} WVD Session Host(s)" -f $vmCollection.Count),$message)) {
                 # loop through each vm in the collection, remove from host pool, delete the vm, and optionally delete the nic and os disk
                 $i = 0
-                [system.collections.ArrayList]$deleteResults = @()
+                $accessToken = Create-AccessToken
+                [System.Collections.Generic.List[System.Object]]$attachedResources = @()
+                [System.Collections.Generic.List[System.Object]]$attachedResourcesDeletionURIs = @()
+                [System.Collections.Generic.List[System.Object]]$vmDeletionURIs = @()
                 Foreach ($virtualMachine in $vmCollection) {
                     Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Removing Session Host from Host Pool") -PercentComplete (($i / $vmCollection.Count) * 100)
                     try {
                         Remove-AzWvdSessionHost -Name $virtualMachine.SessionHost.Name.Split("/")[-1] -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -Force | Out-Null
-                        $shRemove = "Succeeded"
                     }
-                    catch { $shRemove = "Failed" }
-                    Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Machine") -PercentComplete (($i / $vmCollection.Count) * 100)
-                    $vmRemove = Remove-AzVm -Id $virtualMachine.Id -Force
-                    If ($IncludeAttachedResources) {
-                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Network Interface(s)") -PercentComplete (($i / $vmCollection.Count) * 100)
-                        try {
-                            $virtualMachine.NetworkProfile.NetworkInterfaces | ForEach-Object {
-                                Get-AzNetworkInterface -ResourceId $_.Id | Remove-AzNetworkInterface -Force
-                            }
-                            $nicRemove = "Succeeded"
-                        }
-                        catch { $nicRemove = "Failed" }
-                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure OS Disk") -PercentComplete (($i / $vmCollection.Count) * 100)
-                        $diskRemove = Remove-AzDisk -ResourceGroupName $ResourceGroupName -DiskName $virtualMachine.StorageProfile.OsDisk.ManagedDisk.Id.Split("/")[-1] -Force | Select-Object -ExpandProperty Status
+                    catch {
+                        [System.Console]::ForegroundColor = "Red"
+                        [System.Management.Automation.ErrorRecord]::new(
+                            [System.SystemException]::new("Failed to remove the WVD Session Host from the Host Pool"),
+                            "SessionHostRemovalFailed",
+                            [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                            $virtualMachine.Name
+                        )
+                        [System.Console]::ResetColor()
+                        Continue
                     }
-                    Else {
-                        $nicRemove = "N/A"
-                        $diskRemove = "N/A"
+                    $virtualMachine.NetworkProfile.NetworkInterfaces | ForEach-Object { $attachedResources.Add($_.Id) }
+                    $attachedResources.Add( $virtualMachine.StorageProfile.OsDisk.ManagedDisk.Id )      
+                    
+                    try {
+                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Machine") -PercentComplete (($i / $vmCollection.Count) * 100)
+                        $vmDeletion = Invoke-WebRequest -Method Delete -Headers @{"Authorization" = "Bearer " + $accessToken} -Uri ("https://management.azure.com{0}?api-version=2020-06-01" -f $virtualMachine.Id)
+                        $vmDeletionURIs.Add(($vmDeletion.RawContent.Split("`n") | Select-String -Pattern "Azure-AsyncOperation").Line.split(" ")[-1])
                     }
-                    # creates an object with the results of the deletions for each vm and is collected into an array
-                    $obj = [PSCustomObject][Ordered]@{
-                        Resource = $virtualMachine.Name
-                        "Remove Session Host" = $shRemove
-                        "Remove Virtual Machine" = $vmRemove
-                        "Remove Network Interface(s)" = $nicRemove
-                        "Remove OS Disk" = $diskRemove
+                    catch {
+                        [System.Console]::ForegroundColor = "Red"
+                        [System.Management.Automation.ErrorRecord]::new(
+                            [System.SystemException]::new("Failed to delete virtual machine"),
+                            "VMDeletionFailed",
+                            [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                            $virtualMachine.Name
+                        )
+                        [System.Console]::ResetColor()
+                        Continue
                     }
-                    [Void]$deleteResults.Add($obj) # array of delete objects and statuses
                     $i++
+                }
+                while ($true) {
+                    $deletionResults = $vmDeletionURIs | _CheckDeletionStatus -azAccessToken $accessToken
+                    Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: ({0} of {1})" -f $deletionResults.Succeeded,$vmDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Virtual Machine(s)") -PercentComplete (($deletionResults.Succeeded / $vmDeletionURIs.Count) * 100)
+                    If($deletionResults.Failed.Count -gt 0) { $deletionResults.Failed | ForEach-Object { $vmDeletionURIs.Remove($_) | Out-Null } }
+                    If($deletionResults.Succeeded -eq $vmDeletionURIs.Count) { break }
+                    Start-Sleep -Seconds 2
+                }
+                $deletionResults = $null
+
+                If ($IncludeAttachedResources) {
+                    $x = 0
+                    foreach ($attachedResource in $attachedResources) {
+                        try {
+                            Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Attached Resource: ({0} of {1})" -f $x,$attachedResources.Count) -CurrentOperation ("Deleting Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($x / $attachedResources.Count) * 100)
+                            $attachedResourceDeletion = Invoke-WebRequest -Method Delete -Headers @{"Authorization" = "Bearer " + $accessToken} -Uri ("https://management.azure.com{0}?api-version=2019-07-01" -f $attachedResource)
+                            $attachedResourcesDeletionURIs.Add( ($attachedResourceDeletion.RawContent.Split("`n") | Select-String -Pattern "Azure-AsyncOperation").Line.split(" ")[-1] )
+                        }
+                        catch {
+                            [System.Console]::ForegroundColor = "Red"
+                            [System.Management.Automation.ErrorRecord]::new(
+                                [System.SystemException]::new("Failed to delete virtual machine attached object"),
+                                "VMAttachedObjectDeletionFailed",
+                                [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                                $attachedResource
+                            )
+                            [System.Console]::ResetColor()
+                            Continue
+                        }
+                        $x++
+                    }
+                    while ($true) {
+                        $deletionResults = $attachedResourcesDeletionURIs | _CheckDeletionStatus -azAccessToken $accessToken
+                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Attached Resource: ({0} of {1})" -f $deletionResults.Succeeded,$attachedResourcesDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($deletionResults.Succeeded / $attachedResourcesDeletionURIs.Count) * 100)
+                        If($deletionResults.Failed.Count -gt 0) { $deletionResults.Failed | ForEach-Object { $attachedResourcesDeletionURIs.Remove($_) | Out-Null } }
+                        If($deletionResults.Succeeded -eq $attachedResourcesDeletionURIs.Count) { break }
+                        Start-Sleep -Seconds 2                    }
                 }
                 Write-Progress -Activity "WVD Session Host(s) Clean Up Operation"  -Completed
                 
                 Write-Host ("`n`r")
-                $deleteResults | Format-Table -Autosize # display the results on screen
-
+=
                 Write-Host ("-" * 120) -ForegroundColor Green
-                Write-Host ("-- Attempted to REMOVE and DELETE {0} WVD Resources. Please validate using PowerShell or Azure Portal." -f $vmCollection.Count) -ForegroundColor Green
+                Write-Host ("-- Attempted to REMOVE and DELETE {0} WVD Virtual Machines and associated objects. Please validate using PowerShell or Azure Portal." -f $vmCollection.Count) -ForegroundColor Green
                 Write-Host ("-" * 120) -ForegroundColor Green
             }
             Else { Write-Warning "User aborted clean up operation!" }
