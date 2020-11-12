@@ -75,7 +75,7 @@
         "wvd_deploymentType": {
             "type": "string"
         },
-        "wvd_deploymentPurpose": {
+        "wvd_deploymentFunction": {
             "type": "string"
         },
         "wvd_dscConfiguration": {
@@ -158,7 +158,7 @@
             '\",\"useManagedDisks\":true',
             ',\"vmSize\":{\"id\":\"',
             parameters('az_vmSize'),
-            '\",\"cores\":8,\"ram\":32}}')]",
+            '\",\"cores\":2,\"ram\":8}}')]",
         "wvdResourceLocation": "[resourceGroup().location]",
         "wvdResourceGroupName": "[resourceGroup().name]",
         "wvdSessionHostInstances": "[div(parameters('az_vmNumberOfInstances'),length(parameters('wvd_groupReference')))]"
@@ -174,7 +174,7 @@
                 "WVD-Maintenance": "True",
                 "WVD-Build": "[parameters('wvd_buildVersion')]",
                 "WVD-Deployment": "[parameters('wvd_deploymentType')]",
-                "WVD-Function": "[parameters('wvd_deploymentPurpose')]",
+                "WVD-Function": "[parameters('wvd_deploymentFunction')]",
                 "WVD-DscConfiguration": "[parameters('wvd_dscConfiguration')]",
                 "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]"
             },
@@ -228,10 +228,8 @@
                 "count": "[length(parameters('wvd_groupReference'))]"
             },
             "properties": {
-                // if the group reference count is greater than 3, use 3 fault domains, else use the group reference count as the number of fault domains
-                "platformFaultDomainCount": "[if(greater(length(parameters('wvd_groupReference')),3),3,length(parameters('wvd_groupReference')))]",
-                // update domain max count is 20, if less than 20 use session host instance count as update domain count
-                "platformUpdateDomainCount": "[if(greater(variables('wvdSessionHostInstances'),20),20,variables('wvdSessionHostInstances'))]"
+                "platformFaultDomainCount": 3,
+                "platformUpdateDomainCount": 20
             },
             "sku": {
                 "name": "Aligned"
@@ -249,6 +247,7 @@
                 "count": "[length(parameters('wvd_groupReference'))]"
             },
             "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('wvdHostPoolName'),'-AVSet-',parameters('wvd_groupReference')[copyIndex()]))]"
             ],
             "properties": {
                 "mode": "Incremental",
