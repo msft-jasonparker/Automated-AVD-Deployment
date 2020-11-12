@@ -4,6 +4,7 @@ Configuration WvdSessionHostConfig
         [string]$HostPoolName,
         [string]$RegistrationInfoToken,
         [string]$wvdDscConfigZipUrl,
+        [string]$wvdArtifactLocation,
         [string]$DeploymentFunction,
         [string]$DeploymentType,
         [string]$fsLogixVhdLocation
@@ -29,25 +30,28 @@ Configuration WvdSessionHostConfig
         LocalConfigurationManager {
             RebootNodeIfNeeded = $true
         }
-        ## Local Administrators
-        Script LocalAdministratorsGroup {
-            GetScript = { return @{'Result' = ''} }
-            SetScript = { Add-LocalGroupMember -Group "Administrators" -Member "<group-name-to-be-added-to-local-admins>" -ErrorAction SilentlyContinue }
-            TestScript = {
-                $Members = Get-LocalGroupMember -Group "Administrators" | Foreach-Object {$_.Name}
-                If ($Members -contains "<group-name-to-be-added-to-local-admins>") { Return $true }
-                Else { Return $false }
-            }
+        # Ensure directory for packages exists
+        File CreatePackageDirectory {
+            Ensure = "Present"
+            Type = "Directory"
+            DestinationPath = ("{0}\DSC\Packages" -f $wvdConfigDataPath)
+        }
+        #Create directory for MSI logs
+        File CreateLogDirectory {
+            Ensure = "Present"
+            Type = "Directory"
+            DestinationPath = ("{0}\Logs" -f $wvdConfigDataPath)
         }
         ## Domain Join Sleep
         Script DomainJoinSleep {
-            TestScript = { return (Test-Path ("{0}\DomainJoinSleep.txt" -f $wvdConfigDataPath)) }
+            GetScript = { Return @{ 'Result' = '' } }
+            TestScript = {
+                If (Test-Path ("{0}\DomainJoinSleep.txt" -f $using:wvdConfigDataPath)) { Return $true }
+                Else { Return $false }
+            }
             SetScript = {
                 New-Item -Path $using:wvdConfigDataPath -Name "DomainJoinSleep.txt" -ItemType "file"
                 Start-Sleep -Seconds 60
-            }
-            GetScript = {
-                @{ Result = (Test-Path (Test-Path ("{0}\DomainJoinSleep.txt" -f $wvdConfigDataPath)) }
             }
         }
         ## Local Administrators
@@ -59,6 +63,7 @@ Configuration WvdSessionHostConfig
                 If ($Members -contains "PRKRLABS\WVDAdmins") { Return $true }
                 Else { Return $false }
             }
+            DependsOn = "[Script]DomainJoinSleep"
         }
         # WVD Packages
         Script WVDSoftwarePackage {
@@ -72,9 +77,13 @@ Configuration WvdSessionHostConfig
                 else { return $false }
             }
             SetScript = {
+                $stopWatch = [system.diagnostics.stopwatch]::startnew()
                 Start-BitsTransfer -Source ($using:wvdArtifactLocation + "\wvd_packages.zip") -Destination ($env:TEMP + "\wvd_packages.zip")
-                If (Test-Path -Path ($env:TEMP + "\wvd_packages.zip")) { Expand-Archive -Path ($env:TEMP + "\wvd_packages.zip") -DestinationPath ($using:vaConfigDataPath + "\DSC") -Force }
+                If (Test-Path -Path ($env:TEMP + "\wvd_packages.zip")) { Expand-Archive -Path ($env:TEMP + "\wvd_packages.zip") -DestinationPath ($using:wvdConfigDataPath + "\DSC") -Force }
+                $stopwatch.stop()
+                $stopwatch.elapsed | out-file -path ("{0}\Logs\wvd_package.log" -f $using:wvdConfigDataPath)
             }
+            DependsOn = "[Script]LocalAdministratorsGroup"
         }
         # Powershell Modules
         Script PowerShellModules {
@@ -130,19 +139,6 @@ Configuration WvdSessionHostConfig
                 Else { Install-Module -Name SqlServer -Force }
             }
         }
-        # Ensure directory for packages exists
-        File CreatePackageDirectory {
-            Ensure = "Present"
-            Type = "Directory"
-            DestinationPath = ("{0}\DSC\Packages" -f $wvdConfigDataPath)
-        }
-        #Create directory for MSI logs
-        File CreateLogDirectory {
-            Ensure = "Present"
-            Type = "Directory"
-            DestinationPath = ("{0}\Logs" -f $wvdConfigDataPath)
-        }
-
         # WVD HostPool Registration
         If (Get-Command -Name isRdshServer) {
             $rdshIsServer = isRdshServer
@@ -159,7 +155,7 @@ Configuration WvdSessionHostConfig
                 }
     
                 Script ExecuteRdAgentInstallServer {
-                    DependsOn = "[WindowsFeature]RDS-RD-Server","[File]CreatePackageDirectory"
+                    DependsOn = "[WindowsFeature]RDS-RD-Server","[Script]WVDSoftwarePackage"
                     GetScript = { return @{'Result' = ''} }
                     SetScript = {
                         . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
@@ -171,11 +167,20 @@ Configuration WvdSessionHostConfig
                         }
                     }
                     TestScript = {
-                        . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
-                        try { return (Test-path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\RDInfraAgent") }
-                        catch {
+                        If (Test-Path -Path ($using:wvdConfigDataPath + "\WVD\Functions.ps1")) {
+                            . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
+                            try {
+                                If (Test-path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\RDInfraAgent") { Return $true }
+                                Else { Return $false }
+                            }
+                            catch {
+                                $ErrMsg = $PSItem | Format-List -Force | Out-String
+                                Write-Log -Err $ErrMsg
+                                throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer TestScript: $ErrMsg", $PSItem.Exception)
+                            }
+                        }
+                        Else {
                             $ErrMsg = $PSItem | Format-List -Force | Out-String
-                            Write-Log -Err $ErrMsg
                             throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer TestScript: $ErrMsg", $PSItem.Exception)
                         }
                     }
@@ -184,7 +189,7 @@ Configuration WvdSessionHostConfig
             else {
                 ("[{0}] {1} | rdshIsServer = FALSE" -f (Get-Date),$env:COMPUTERNAME) | Out-File "$wvdConfigDataPath\WVD\rdshIsServer_Results.log" -Append
                 Script ExecuteRdAgentInstallClient {
-                    DependsOn = "[File]CreatePackageDirectory"
+                    DependsOn = "[Script]WVDSoftwarePackage"
                     GetScript = { return @{'Result' = ''} }
                     SetScript = {
                         . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
@@ -196,12 +201,21 @@ Configuration WvdSessionHostConfig
                         }
                     }
                     TestScript = {
-                        . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
-                        try { return (Test-path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\RDInfraAgent") }
-                        catch {
+                        If (Test-Path -Path ($using:wvdConfigDataPath + "\WVD\Functions.ps1")) {
+                            . ($using:wvdConfigDataPath + "\WVD\Functions.ps1")
+                            try {
+                                If (Test-path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\RDInfraAgent") { Return $true }
+                                Else { Return $false }
+                            }
+                            catch {
+                                $ErrMsg = $PSItem | Format-List -Force | Out-String
+                                Write-Log -Err $ErrMsg
+                                throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer TestScript: $ErrMsg", $PSItem.Exception)
+                            }
+                        }
+                        Else {
                             $ErrMsg = $PSItem | Format-List -Force | Out-String
-                            Write-Log -Err $ErrMsg
-                            throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallClient TestScript: $ErrMsg", $PSItem.Exception)
+                            throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer TestScript: $ErrMsg", $PSItem.Exception)
                         }
                     }
                 }
@@ -211,119 +225,69 @@ Configuration WvdSessionHostConfig
                         if ((Get-ScheduledTask MapsToastTask).State -eq "Disabled") { return $true }
                         else { return $false }
                     }
-                    SetScript = { 
-                        $version = (Get-ItemProperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\").ReleaseId
-                        If($version -eq "20H2" -or $version -eq "2009") { $version = "2004" }
-                        powershell.exe -NonInteractive -File "$using:wvdConfigDataPath\DSC\Packages\optimizations\Win10_VirtualDesktop_Optimize.ps1" -WindowsVersion $version                    }
+                    SetScript = {
+                        try { & "$using:wvdConfigDataPath\DSC\Packages\VDIOptimize\Win10_VirtualDesktop_Optimize.ps1" -WindowsMediaPlayer -AppxPackages -ScheduledTasks -DefaultUserSettings -Autologgers -Services -NetworkOptimizations -LGPO -DiskCleanup -Verbose }
+                        catch {
+                            $ErrMsg = $PSItem | Format-List -Force | Out-String
+                            throw [System.Exception]::new(("Error running VDI Script Resource: {0}" -f $ErrMsg),$PSItem.Exception)
+                        }
+                    }
                     GetScript = {
                         @{ Result = ((Get-ScheduledTask MapsToastTask).State) }
                     }
-                    DependsOn = "[File]CreatePackageDirectory"
+                    DependsOn = "[Script]WVDSoftwarePackage"
                 }
             }
         }
-        Else { ("[{0}] {1} | Failed to find isRdshServer command - module didn't import" -f (Get-Date),$env:COMPUTERNAME) | Out-File "$vaConfigDataPath\WVD\rdsh_function_import.log" -Append }
+        Else { ("[{0}] {1} | Failed to find isRdshServer command - module didn't import" -f (Get-Date),$env:COMPUTERNAME) | Out-File "$wvdConfigDataPath\WVD\rdsh_function_import.log" -Append }
         
-        ## Network Tracing
-        File CreateUtilitiesDirectory {
-            Ensure = "Present"
-            Type = "Directory"
-            DestinationPath = "C:\Windows\Utilities\NetMon"
-        }
-        File CopyNetMonUtilities {
-            Ensure = "Present"
-            Type = "File"
-            SourcePath = ("{0}\DSC\Packages\NetworkTracing\NetMonCleanUp.ps1" -f $wvdConfigDataPath)
-            DestinationPath = "C:\Windows\Utilities\NetMonCleanUp.ps1"
-            Force = $true
-            DependsOn = "[File]CreateUtilitiesDirectory"
-        }
-        xPackage NetworkMonitor {
-            Ensure = "Present"
-            Name = "Microsoft Network Monitor 3.4"
-            Path = ("{0}\DSC\Packages\NetworkTracing\NM34_x64.exe" -f $wvdConfigDataPath)
-            ProductId = ''
-            Arguments = "/Q"
-            IgnoreReboot = $true
-        }
-        ScheduledTask EnableNetMonTracing {
-            Ensure = "Present"
-            Enable = $true
-            TaskName = "NetMonCapture"
-            TaskPath = "\Microsoft\Windows\NetTrace"
-            ActionExecutable = "C:\Program Files\Microsoft Network Monitor 3\nmcap.exe"
-            ActionArguments = "/Network * /Capture /MaxFrameLength 256 /File C:\Windows\Utilities\NetMon\%computername%.chn:250MB"
-            Description = "Starts NetMon Tracing at user logon"
-            ScheduleType = "AtLogon"
-            BuiltInAccount = "SYSTEM"
-            Priority = 7
-            RunLevel = "Highest"
-            MultipleInstances = "IgnoreNew"
-            RunOnlyIfIdle = $false
-            DependsOn = "[xPackage]NetworkMonitor"
-        }
-        ScheduledTask NetMonTracingCleanUp {
-            Ensure = "Present"
-            Enable = $true
-            TaskName = "NetMonCleanUp"
-            TaskPath = "\Microsoft\Windows\NetTrace"
-            ActionExecutable = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-            ActionArguments = "-NoProfile -NonInteractive -File NetMonCleanUp.ps1"
-            ActionWorkingPath = "C:\Windows\Utilities"
-            Description = "Runs PowerShell script to clean up old NetMon capture files"
-            StartTime = '2020-01-01T10:00:00'
-            SynchronizeAcrossTimeZone = $true
-            ScheduleType = "Daily"
-            DaysInterval = 1
-            ExecutionTimeLimit = "01:00:00"
-            BuiltInAccount = "SYSTEM"
-            Priority = 7
-            RunLevel = "Highest"
-            MultipleInstances = "IgnoreNew"
-            RunOnlyIfIdle = $false
-            DependsOn = "[ScheduledTask]EnableNetMonTracing"
-        }
         xPackage VisualStudioCode {
             Ensure = "Present"
             Name = "Microsoft Visual Studio Code"
-            Path = ("{0}\DSC\Packages\VSCode_v1.47.3\VSCodeSetup-x64-1.47.3.exe" -f $wvdConfigDataPath)
+            Path = ("{0}\DSC\Packages\VSCode\VSCodeSetup-x64-1.51.0.exe" -f $wvdConfigDataPath)
             ProductId = ''
-            Arguments = ('/VERYSILENT /NORESTART /MERGETASKS=!runcode /LOG="{0}\Logs\VSCodeSetup-x64-1.47.3.log"' -f $wvdConfigDataPath)
+            Arguments = ('/VERYSILENT /NORESTART /MERGETASKS=!runcode /LOG="{0}\Logs\VSCodeSetup-x64-1.51.0.log"' -f $wvdConfigDataPath)
             IgnoreReboot = $true
+            DependsOn = "[Script]WVDSoftwarePackage"
         }
         xPackage Git {
             Ensure = "Present"
-            Name = "Git version 2.28.0"
-            Path = ("{0}\DSC\Packages\Git_v2.28.0\Git-2.28.0-64-bit.exe" -f $wvdConfigDataPath)
+            Name = "Git version 2.29.0"
+            Path = ("{0}\DSC\Packages\Git\Git-2.29.2.2-64-bit.exe" -f $wvdConfigDataPath)
             ProductId = ''
-            Arguments = ('/VERYSILENT /NORESTART /LOG="{0}\Logs\Git-2.28.0-64-bit.log"' -f $wvdConfigDataPath)
+            Arguments = ('/VERYSILENT /NORESTART /LOG="{0}\Logs\Git-2.29.2.2-64-bit.log"' -f $wvdConfigDataPath)
             IgnoreReboot = $true
+            DependsOn = "[Script]WVDSoftwarePackage"
         }
         xPackage NotepadPlusPlus {
             Ensure = "Present"
             Name = "Notepad++ (64-bit x64)"
-            Path = ("{0}\DSC\Packages\Notepad++\7.8.6\MSI\npp.7.8.6.Installer.x64.exe" -f $wvdConfigDataPath)
+            Path = ("{0}\DSC\Packages\Notepad++\npp.7.9.1.Installer.x64.exe" -f $wvdConfigDataPath)
             ProductId = ''
             Arguments = '/S /noUpdater'
+            LogPath = "$wvdConfigDataPath\Logs\npp.7.9.1.Installer.x64.log"
             IgnoreReboot = $true
+            DependsOn = "[Script]WVDSoftwarePackage"
         }
         xPackage PowerBIDesktop {
             Ensure = "Present"
             Name = "Microsoft PowerBI Desktop (x64)"
-            Path = ("{0}\DSC\Packages\MicrosoftPowerBIDesktop\PBIDesktopSetup_x64.exe" -f $wvdConfigDataPath)
+            Path = ("{0}\DSC\Packages\PowerBIDesktop\PBIDesktopSetup_x64.exe" -f $wvdConfigDataPath)
             ProductId = ""
             Arguments = "-quiet -norestart ACCEPT_EULA=1 DISABLE_UPDATE_NOTIFICATION=1"
             LogPath = "$wvdConfigDataPath\Logs\PBIDesktopSetup_x64.log"
             IgnoreReboot = $true
+            DependsOn = "[Script]WVDSoftwarePackage"
         }
         ## FSLogix
         xPackage FsLogix {
             Ensure = "Present"
             Name = "Microsoft FsLogix Apps"
-            Path = ("{0}\DSC\Packages\FSLogix_Apps_2.9.7486.53382\x64\Release\FSLogixAppsSetup.exe" -f $wvdConfigDataPath)
+            Path = ("{0}\DSC\Packages\FSLogix\FSLogixAppsSetup.exe" -f $wvdConfigDataPath)
             ProductId = ''
-            Arguments = ("/norestart /quiet /log {0}\Logs\FSLogix_Apps_2.9.7486.53382.log" -f $wvdConfigDataPath)
+            Arguments = ("/norestart /quiet /log {0}\Logs\FSLogixAppsSetup.log" -f $wvdConfigDataPath)
             IgnoreReboot = $true
+            DependsOn = "[Script]WVDSoftwarePackage"
         }
         Registry FsLogixProfileEnabled {
             Ensure = "Present"
@@ -421,13 +385,14 @@ Configuration WvdSessionHostConfig
             DependsOn = '[xPackage]FsLogix'
         }
         Script RebootPostInstall {
-            TestScript = { return (Test-Path ("{0}\RebootPostInstall.txt" -f $wvdConfigDataPath)) }
+            GetScript = { return @{'Result' = ''} }
+            TestScript = {
+                If (Test-Path ("{0}\RebootPostInstall.txt" -f $using:wvdConfigDataPath)) { Return $true }
+                Else { Return $false }
+            }
             SetScript = {
                 New-Item -Path $using:wvdConfigDataPath -Name "RebootPostInstall.txt" -ItemType "file"
                 $global:DSCMachineStatus = 1
-            }
-            GetScript = {
-                @{ Result = (Test-Path ("{0}\RebootPostInstall.txt" -f $wvdConfigDataPath)) }
             }
         }
     }
