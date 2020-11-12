@@ -82,7 +82,7 @@
         "copy": [{
             "name": "wvdAppGroupArray",
             "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
-            "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray'))),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
+            "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),padleft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0')),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
         }],
         "wvdResourceLocation": "[resourceGroup().location]",
         "wvdWorkspaceName": "[concat(parameters('az_cloudResourcePrefix'),'-wvd-workspace')]",
@@ -94,7 +94,7 @@
             "apiVersion": "2018-05-01",
             "name": "[concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))]",
             "type": "Microsoft.Resources/deployments",
-            "resourceGroup": "[concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex()))]",
+            "resourceGroup": "[concat(parameters('wvd_hostPoolResourceGroupPrefix'),padleft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'))]",
             "copy": {
                 "name": "WVD-HostPool-Loop",
                 "count": "[length(parameters('wvd_hostPoolConfig').configs)]"
@@ -122,10 +122,10 @@
                             "secretName": "WVD-VM-Admin-Password"
                         }
                     },
-                    "va_cloudResourcePrefix": {
+                    "az_cloudResourcePrefix": {
                         "value": "[parameters('az_cloudResourcePrefix')]"
                     },
-                    "va_wkstaPrefix": {
+                    "az_wkstaPrefix": {
                         "value": "[parameters('az_wkstaPrefix')]"
                     },
                     "az_deploymentString": {
@@ -185,8 +185,8 @@
                     "wvd_deploymentType": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentType]"
                     },
-                    "wvd_deploymentPurpose": {
-                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentPurpose]"
+                    "wvd_deploymentFunction": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentFunction]"
                     },
                     "wvd_dscConfiguration": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]"
@@ -241,6 +241,7 @@
                     "deploymentFunction": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].deploymentFunction]",
                     "dscConfiguration": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]",
                     "fsLogixVhdLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]",
+                    "wvdArtifactLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdArtifactLocation]",
                     "sessionHostNames": "[reference(concat('Deploy-WVD-HostPool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex()),2,'0'),'-',variables('azDeploymentString'))).outputs.sessionHostNames.value]"
                 }
             }
