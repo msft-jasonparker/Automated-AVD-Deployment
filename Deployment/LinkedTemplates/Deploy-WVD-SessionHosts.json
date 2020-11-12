@@ -97,8 +97,7 @@
               }
             }
           }
-        ],
-        "enableAcceleratedNetworking": true
+        ]
       },
       "dependsOn": [
       ]
@@ -111,6 +110,7 @@
       "location": "[variables('wvdResourceLocation')]",
       "tags": {
         "WVD-Maintenance": "True",
+        "WVD-PostDscComplete": "False",
         "WVD-Build": "[parameters('wvd_buildVersion')]",
         "WVD-Group": "[parameters('wvd_groupReference')]"
       },
@@ -119,7 +119,7 @@
         "count": "[parameters('az_vmNumberOfInstances')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]",
       ],
       "properties": {
         "hardwareProfile": {
@@ -172,7 +172,7 @@
       "type": "array",
       "copy": {
         "count": "[parameters('az_vmNumberOfInstances')]",
-        "input": "[reference(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))).osProfile.computerName]"
+        "input": "[reference(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))))]"
       }
     }
   }
