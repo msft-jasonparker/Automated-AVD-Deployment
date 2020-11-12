@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "az_vmSize": {
-            "value": "Standard_D8s_v3",
+            "value": "Standard_D2s_v3",
             "metadata": {
                 "description": "Size of the Session Host VM to deploy.  This should correspond to the wvd_maxSessionLimit parameter to align to the 1 user session per CPU core model."
             }
@@ -45,19 +45,19 @@
             }
         },
         "vn_virtualNetworkName": {
-            "value": "<vnet-name>",
+            "value": "WVD-VNET",
             "metadata": {
                 "description": "Update this value to reflect the Virtual Network name based on the deployment region."
             }
         },
         "vn_virtualNetworkSubnetPrefix": {
-            "value": "<subnet-prefix>",
+            "value": "WVD-Subnet-",
             "metadata": {
                 "description": "Update this value to reflect the subnet naming prefix in the deployment region. This value is used in a 'copy' loop and the names are derived from the 'copy count' and should be designed to allow a numerical increase from 1-xx"
             }
         },
         "vn_virtualNetworkResourceGroupName": {
-            "value": "<vnet-resource-group-name>",
+            "value": "WVD-NET-RG",
             "metadata": {
                 "description": "Update this value to reflect the location of the 'vn_virtualNetworkName' parameter"
             }
@@ -78,19 +78,19 @@
             }
         },
         "wvd_keyVaultId": {
-            "value": "<key-vault-resource-id>",
+            "value": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01",
             "metadata": {
                 "description": "Update this value to reflect the resource id of the KeyVault where the secrets are store for the deployment region."
             }
         },
         "wvd_workspaceResourceGroup": {
-            "value": "<wvd-workspace-resource-group-name>",
+            "value": "WVD-SVCS-RG",
             "metadata": {
                 "description": "Update this value to reflect the Resource Group where the 'wvd_workspaceName' parameter was created."
             }
         },
         "wvd_hostPoolResourceGroupPrefix": {
-            "value": "<hostpool-resource-group-name-prefix>",
+            "value": "WVD-POOL-RG-",
             "metadata": {
                 "description": "Update this value to reflect the Resource Group naming prefix based on the deployment region.  This value is used in a 'copy' loop and the names are derived from the 'copy count' and should support a numerical increase in value appended to the end"
             }
@@ -129,18 +129,13 @@
             "value": {
                 "configs": [
                     {
-                        "deploymentType": "<deployment-type>",
-                        "deploymentFunction": "<deployment-function>",
-                        "fsLogixVhdLocation": "\\\\servername\\sharename",
-                        "dscConfiguration": "DscConfiguration.ps1.zip",
-                        "azVmNumberOfInstances": 20
-                    },
-                    {
-                        "deploymentType": "<deployment-type>",
-                        "deploymentFunction": "<deployment-function>",
-                        "fsLogixVhdLocation": "\\\\servername\\sharename",
-                        "dscConfiguration": "DscConfiguration.ps1.zip",
-                        "azVmNumberOfInstances": 20
+                        "deploymentType": "PROD",
+                        "deploymentFunction": "VDI",
+                        "fsLogixVhdLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdfileshare\\Profiles\\%userdomain%",
+                        "dscConfiguration": "WVD-Win10-SessionHost-Config.ps1.zip",
+                        "wvdArtifactLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdfileshare\\wvdartifacts",
+                        "azVmNumberOfInstances": 6,
+                        "azVmStartingIncrement": 1
                     }
                 ]
             },
@@ -149,9 +144,9 @@
             }
         },
         "domain": {
-            "value": "contoso.com",
+            "value": "prkrlabs.local",
             "metadata": {
-                "description": "Domain name to join for the Session Hosts."
+                "description": "Domain name used for the VM template created for the Host Pools"
             }
         }
     }
