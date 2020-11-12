@@ -38,6 +38,9 @@
       "wvd_hostPoolToken": {
         "type": "string"
       },
+      "wvd_ArtifactLocation": {
+        "type": "string"
+      },
       "wvd_dscConfigZipUrl": {
         "type": "string"
       },
@@ -86,7 +89,7 @@
       "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/DependencyAgent')]",
       "location": "[variables('wvdResourceLocation')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MMAExtenMicrosoftMonitoringAgentsion')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MicrosoftMonitoringAgent')]"
       ],      
       "copy": {
         "name": "WVD-SH-DepAgent-Extension",
@@ -157,6 +160,7 @@
             "hostPoolName": "[parameters('wvd_hostpoolName')]",
             "registrationInfoToken": "[parameters('wvd_hostpoolToken')]",
             "wvdDscConfigZipUrl": "[parameters('wvd_dscConfigZipUrl')]",
+            "wvdArtifactLocation": "[parameters('wvd_ArtifactLocation')]",
             "deploymentFunction": "[parameters('wvd_deploymentFunction')]",
             "deploymentType": "[parameters('wvd_deploymentType')]",
             "fsLogixVhdLocation": "[parameters('wvd_fsLogixVhdLocation')]"

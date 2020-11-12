@@ -5,7 +5,7 @@
         "az_logAnalyticsWorkspaceId": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01"
                 },
                 "secretName": "WVD-LA-WorkspaceId"
             }
@@ -13,7 +13,7 @@
         "az_logAnalyticsWorkspaceKey": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01"
                 },
                 "secretName": "WVD-LA-WorkspaceKey"
             }
@@ -21,7 +21,7 @@
         "dj_adminAccount": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01"
                 },
                 "secretName": "WVD-VM-DomainJoin-Account"
             }
@@ -29,18 +29,18 @@
         "dj_adminPassword": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01"
                 },
                 "secretName": "WVD-VM-DomainJoin-Password"
             }
         },
         "dj_domainFQDN": {
-            "value": "contoso.com"
+            "value": "prkrlabs.local"
         },
         "dj_ouPath": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01"
                 },
                 "secretName": "WVD-SessionHost-OU"
             }
