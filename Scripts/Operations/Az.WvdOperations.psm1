@@ -1,3 +1,68 @@
+Function Set-FunctionBreakPoint {
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("Enable","Disable")]
+        [System.String]$State,
+
+        [Parmeter(Mandatory=$true)]
+        [System.String]$Message
+    )
+    Switch ($State) {
+        "Enable" { $DebugPreference = "Inquire" }
+        "Disable" { $DebugPreference = "SilentlyContinue" }
+    }
+    Write-Debug $Message
+}
+
+Function Create-AccessToken {
+    param($resourceURI)
+
+    If ($null -eq $env:MSI_ENDPOINT) {
+        $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+        if(!$azProfile.Accounts.Count) { Write-Error "Ensure you have logged in before calling this function." }
+        $azContext = Get-AzContext
+        $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
+        $token = $profileClient.AcquireAccessToken($azContext.Tenant.TenantId)
+        Return $token.AccessToken
+    }
+    Else {
+        $tokenAuthURI = $env:MSI_ENDPOINT + "?resource=$resourceURI&api-version=2017-09-01"
+        $headers =  @{'Secret'="$env:MSI_SECRET"}
+        try {
+            $tokenResponse = Invoke-RestMethod -Method Get -header $headers -Uri $tokenAuthURI -ErrorAction:stop
+            return $tokenResponse.access_token
+        }
+        catch {
+            write-error "Unable to retrieve access token $error"
+            exit 1
+        }
+    }
+}
+
+Function Push-DscConfigToAzStorage {
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
+        $StorageAccountResourceGroup,
+
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.Storage/storageAccounts","StorageAccountResourceGroup")]
+        $StorageAccountName,
+
+        [Parameter(Mandatory=$true)]
+        [System.String]$Container
+    )
+    BEGIN {}
+    PROCESS {
+        Show-Menu -Title "Select Desired State Configuration .PS1 File(s)" -Style Mini -Color Yellow -DisplayOnly
+        $Files = Get-FileNameDialog -InitialDirectory [System.IO.Path]::GetFullPath($PWD)
+        Write-Verbose ("Found {0} Files" -f $Files.Count)
+        Foreach ($File in $Files) { Publish-AzVMDscConfiguration -ResourceGroupName $StorageAccountResourceGroup -StorageAccountName $StorageAccountName -ContainerName $Container -ConfigurationPath $File -Force -Verbose:$false }
+    }
+}
+
 Function New-AzWvdLogEntry {
     <#
         .SYNOPSIS
@@ -102,16 +167,16 @@ Function _WaitOnJobs {
 }
 
 Function Get-FileNameDialog {
-    Param ( $InitialDirectory )
-    If ($null -eq $InitialDirectory) { $InitialDirectory = [system.io.path]::GetDirectoryName($PSCommandPath) }
-    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
-        
+    Param ($InitialDirectory)
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null 
     $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.initialDirectory = $InitialDirectory
+    If ($InitialDirectory) { $OpenFileDialog.initialDirectory = $InitialDirectory }
+    Else { $OpenFileDialog.InitialDirectory = [system.io.path]::GetDirectoryName($MyInvocation.PSScriptRoot) }
+    $OpenFileDialog.Multiselect = $true
     $OpenFileDialog.filter = "All files (*.*)| *.*"
     $OpenFileDialog.ShowDialog() | Out-Null
-    $File = $OpenFileDialog.filename
-    Return $File
+    If ($OpenFileDialog.FileNames) { Return $OpenFileDialog.FileNames }
+    Else { Return $OpenFileDialog.filename }
 }
 
 Function Show-Menu {
@@ -286,26 +351,72 @@ Function Enable-AzWvdMaintanence {
     [CmdletBinding(SupportsShouldProcess,ConfirmImpact="High")]
     Param (
         # Name of the Resource Group of the WVD Host Pool (supports tab completion)
-        [Parameter(Mandatory=$true,Position=0)]
+        [Parameter(Mandatory=$true)]
         [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
         [System.String]$ResourceGroupName,
 
         # Name of the WVD Host Pool (supports tab completion)
-        [Parameter(Mandatory=$true,Position=1)]
+        [Parameter(Mandatory=$true)]
         [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.DesktopVirtualization/hostpools","ResourceGroupName")]
         [System.String]$HostPoolName,
 
         # Group of Session Hosts to target (A or B)
-        [Parameter(Mandatory=$true,Position=2)]
+        [Parameter(Mandatory=$true)]
         [ValidateSet("A","B","ALL")]
-        [System.String]$SessionHostGroup
+        [System.String]$SessionHostGroup,
+
+        [Parameter(Mandatory=$false)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
+        [System.String]$LogAnalyticsResourceGroup,
+
+        [Parameter(Mandatory=$false)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.OperationalInsights/workspaces","DeploymentResourceGroup")]
+        [System.String]$LogAnalyticsWorkspace,
+
+        [Parameter(ParameterSetName="SelfHosted")]
+        [System.Guid]$CorrelationId,
+
+        [Parameter(ParameterSetName="SelfHosted")]
+        [Switch]$SelfHosted
     )
     BEGIN {
         #Requires -Modules @{ ModuleName = "Az.DesktopVirtualization"; ModuleVersion = "2.0.0" }
+        
+        $azContext = Get-AzContext
+        $userName = ("{0} ({1})" -f $azContext.Account.Id,$azContext.Account.Type)
+        If ($SelfHosted) {
+            $ConfirmPreference = "None"
+            $ProgressPreference = "SilentlyContinue"
+            $VerbosePreference = "Continue"
+            If (!$CorrelationId) {
+                Write-Warning ("MISSING CORRELATIONID, LOGGING WILL BE COMPROMISED, CREATING NEW ID!")
+                $CorrelationId = [System.Guid]::NewGuid()
+            }
+            If ($env:COMPUTERNAME -ne "GITHUBRUNNER" -AND $azContext.Account.Type -ne "ManagedService") {
+                Write-Warning ("NOT EXECUTED FROM GITHUB ACTION RUNNER, ABORTING THE OPERATION!")
+                Exit
+            }
+        }
+        Else {
+            If ($env:COMPUTERNAME -eq "GITHUBRUNNER" -AND $azContext.Account.Type -eq "ManagedService") {
+                Write-Warning ("EXECUTED FROM GITHUB ACTION RUNNER, ENABLING SELFHOSTED SWITCH!")
+                $SelfHosted = $true
+                $ConfirmPreference = "None"
+                $ProgressPreference = "SilentlyContinue"
+                $VerbosePreference = "Continue"
+            }
+            If (!$CorrelationId) {
+                Write-Warning ("MISSING CORRELATIONID, LOGGING WILL BE COMPROMISED, CREATING NEW ID!")
+                $CorrelationId = [System.Guid]::NewGuid()
+            }
+        }
     }
     PROCESS {
         try {
-
+            # variables for writing data to log analytics
+            $azLogAnalyticsId = (Get-AzOperationalInsightsWorkspace -ResourceGroupName $LogAnalyticsResourceGroup -Name $LogAnalyticsWorkspace).CustomerId.ToString()
+            $azLogAnalyticsKey = (Get-AzOperationalInsightsWorkspaceSharedKey -ResourceGroupName $LogAnalyticsResourceGroup -Name $LogAnalyticsWorkspace).PrimarySharedKey
+            
             # logoff message sent to users with active sessions
             $Global:LogOffMessage = (@"
 {0}
@@ -339,7 +450,10 @@ Function Enable-AzWvdMaintanence {
                 }
                 Else {
                     Write-Warning ("[{0}] Unable to match Virtual Machine object to Session Host object, removing the VM from processing collection!" -f $virtualMachine.Name)
-                    If ($null -eq $missingVMs) { $missingVMs = [System.Collections.Generic.List[System.Object]]@($virtualMachine) }
+                    If ($null -eq $missingVMs) {
+                        $missingVMs = [System.Collections.Generic.List[System.Object]]@()
+                        $missingVMs.Add($virtualMachine)
+                    }
                     Else { $missingVMs.Add($virtualMachine) }
                 }
                 $i++
@@ -356,6 +470,19 @@ Function Enable-AzWvdMaintanence {
                     Write-Verbose ("Updating 'WVD-Maintenance' Tag on Host Pool {0}" -f $HostPoolName)
                     $HostPool = Get-AzWvdHostPool -ResourceGroupName $ResourceGroupName
                     Update-AzTag -ResourceId $HostPool.Id -Tag @{"WVD-Maintenance" = $true} -Operation Merge | Out-Null
+                    $logEntry = [PSCustomObject]@{
+                        Timestamp = [DateTime]::UtcNow.ToString('o')
+                        CorrelationId = $correlationId
+                        Computer = $env:COMPUTERNAME
+                        UserName = $userName
+                        EntryType = "INFO"
+                        Subscription = $azContext.Subscription.Name
+                        ResourceGroupName = $ResourceGroupName
+                        HostPoolName = $HostPoolName
+                        SessionHostGroup = $SessionHostGroup.ToUpper()
+                        'WVD-Maintenance' = 'True'
+                    }
+                    New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_Maintenance_CL" -logMessage $logEntry -Verbose:$false
                 }
                 
                 $x = 0
@@ -381,6 +508,21 @@ Function Enable-AzWvdMaintanence {
                         Write-Progress -ParentId 42 -Activity ("Sending Logoff Messages") -Completed
                     }
                     $x++
+                    $logEntry = [PSCustomObject]@{
+                        Timestamp = [DateTime]::UtcNow.ToString('o')
+                        CorrelationId = $correlationId
+                        Computer = $env:COMPUTERNAME
+                        UserName = $userName
+                        EntryType = "INFO"
+                        Subscription = $azContext.Subscription.Name
+                        ResourceGroupName = $ResourceGroupName
+                        HostPoolName = $HostPoolName
+                        SessionHostGroup = $SessionHostGroup.ToUpper()
+                        SessionHostName = $virtualMachine.SessionHost.Name.Split("/")[-1]
+                        AllowNewSessions = "False"
+                        'WVD-Maintenance' = "True"
+                    }
+                    New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_Maintenance_CL" -logMessage $logEntry -Verbose:$false
                 }
                 Write-Progress -Id 42 -Activity ("[{0}] Updating Maintenance Tag and Drain Mode" -f $HostPoolName) -Completed
 
@@ -532,11 +674,13 @@ Function Disable-AzWvdMaintanence {
                 $i++
             }
 
-            If ($missingVMs) { $missingVMs | ForEach-Object {$vmCollection.Remove($_)} }
+            If ($missingVMs) { $missingVMs | ForEach-Object { $vmCollection.Remove($_) | Out-Null } }
             Write-Progress -Activity ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup.ToUpper()) -Completed
-            $vmMaintenanceHash = $vmCollection | Group-Object -Property {$_.Tags["WVD-Maintenance"]} -AsHashTable -AsString
+            
 
-            If ($null -ne $vmMaintenanceHash["True"]) {
+            If ($vmCollection.Count -eq 0) { Write-Warning "No Session Hosts found enabled for maintenance!" }
+            Else {
+                $vmMaintenanceHash = $vmCollection | Group-Object -Property {$_.Tags["WVD-Maintenance"]} -AsHashTable -AsString
                 # prevent this prompt by using -Confirm $false
                 If ($PSCmdlet.ShouldProcess(("{0} WVD Session Hosts" -f $vmMaintenanceHash["True"].Count),"DISABLE maintenace")) {
                     # loop through each vm in the collection, update the maintenance/dsc tag and turn off drain mode
@@ -615,7 +759,6 @@ Function Disable-AzWvdMaintanence {
                 }
                 Else { Write-Warning "User aborted WVD Maintenance operation!" }
             }
-            Else { Write-Warning "No Session Hosts found with Maintenance Tag set to True"}
         }
         catch { $PSCmdlet.ThrowTerminatingError($PSItem) }
     }
@@ -668,7 +811,8 @@ Function Remove-AzWvdResources {
             }
             PROCESS {
                 try {
-                    $objectDeletionContent = ((Invoke-WebRequest -Method Get -Headers @{"Authorization" = "Bearer " + $azAccessToken} -Uri $objectDeletionURI).Content | ConvertFrom-Json)
+                    Write-Progress -ParentId 42 -Activity ("Verifying Azure Delete Operation") -Status $objectDeletionURI -CurrentOperation ("Succeeded: {0} | Failed: {1} | InProgress: {2} | Unknown: {3}" -f $objectDeletionCounter.Succeeded,$objectDeletionCounter.Failed.Count,$objectDeletionCounter.InProgress,$objectDeletionCounter.Unknown)
+                    $objectDeletionContent = ((Invoke-WebRequest -Method Get -Headers @{"Authorization" = "Bearer " + $azAccessToken} -Uri $objectDeletionURI -Verbose:$false).Content | ConvertFrom-Json)
                 }
                 catch {
                     [System.Console]::ForegroundColor = "Red"
@@ -679,7 +823,6 @@ Function Remove-AzWvdResources {
                         $objectDeletionURI
                     )
                     [System.Console]::ResetColor()
-                    #Continue
                 }
                 
                 Switch ($objectDeletionContent.Status) {
@@ -712,6 +855,7 @@ Function Remove-AzWvdResources {
                         Write-Warning $objectDeletionContent.Status
                     }
                 }
+                Start-Sleep -Milliseconds 2500
             }
             END {
                 return $objectDeletionCounter
@@ -721,18 +865,14 @@ Function Remove-AzWvdResources {
     PROCESS {
         try {
             # collection the virtual machines based on WVD-Group tag
-            if($SessionHostGroup -eq "ALL") {
-                $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status
-            }
-            else {
-                $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object {$_.Tags["WVD-Group"] -eq $SessionHostGroup}
-            }
+            If($SessionHostGroup -eq "ALL") { $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status }
+            Else { $vmCollection = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object {$_.Tags["WVD-Group"] -eq $SessionHostGroup} }
             
             # loop through the virtual machines and add the session host information to the vm object
             $i = 0
             $sessionHostCount = 0
             Foreach ($virtualMachine in $vmCollection) {
-                Write-Progress -Activity ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup.ToUpper()) -Status ("Session Hosts Collected: {0}" -f $sessionHostCount) -CurrentOperation $virtualMachine.Name -PercentComplete (($i / $vmCollection.Count) * 100)
+                Write-Progress -Activity ("[{0}] Gathering Session Hosts from Group {1}" -f $HostPoolName,$SessionHostGroup.ToUpper()) -Status ("Virtual Machines Collected: {0}" -f $i) -CurrentOperation $virtualMachine.Name -PercentComplete (($i / $vmCollection.Count) * 100)
                 $sessionHost = Get-AzWvdSessionHost -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName | Where-Object {$_.ResourceId -eq $virtualMachine.Id}
                 
                 If ($sessionHost) {
@@ -756,27 +896,19 @@ Function Remove-AzWvdResources {
                 [System.Collections.Generic.List[System.Object]]$attachedResourcesDeletionURIs = @()
                 [System.Collections.Generic.List[System.Object]]$vmDeletionURIs = @()
                 Foreach ($virtualMachine in $vmCollection) {
-                    Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Removing Session Host from Host Pool") -PercentComplete (($i / $vmCollection.Count) * 100)
-                    try {
+                    Write-Progress -Activity "Windows Virtual Desktop - Azure Resource Clean Up" -Status ("Virtual Machine: {0} ({1} of {2})" -f $virtualMachine.Name,$i,$vmCollection.Count) -CurrentOperation ("Removing Session Host from Host Pool") -PercentComplete (($i / $vmCollection.Count) * 100)
+                    If ($virtualMachine.SessionHost) {
+                        Write-Verbose ("[{0}] Removing Session Host object from Host Pool")
                         Remove-AzWvdSessionHost -Name $virtualMachine.SessionHost.Name.Split("/")[-1] -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -Force | Out-Null
                     }
-                    catch {
-                        [System.Console]::ForegroundColor = "Red"
-                        [System.Management.Automation.ErrorRecord]::new(
-                            [System.SystemException]::new("Failed to remove the WVD Session Host from the Host Pool"),
-                            "SessionHostRemovalFailed",
-                            [System.Management.Automation.ErrorCategory]::ObjectNotFound,
-                            $virtualMachine.Name
-                        )
-                        [System.Console]::ResetColor()
-                        Continue
-                    }
+                    Else { Write-Warning ("[{0}] Virtual Machine does not have a Session Host object" -f $virtualMachine.Name) }
+
                     $virtualMachine.NetworkProfile.NetworkInterfaces | ForEach-Object { $attachedResources.Add($_.Id) }
                     $attachedResources.Add( $virtualMachine.StorageProfile.OsDisk.ManagedDisk.Id )      
                     
                     try {
-                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: {0} ({1} of {2})" -f $virtualMachine.SessionHost.Name,$i,$vmCollection.Count) -CurrentOperation ("Deleting Azure Virtual Machine") -PercentComplete (($i / $vmCollection.Count) * 100)
-                        $vmDeletion = Invoke-WebRequest -Method Delete -Headers @{"Authorization" = "Bearer " + $accessToken} -Uri ("https://management.azure.com{0}?api-version=2020-06-01" -f $virtualMachine.Id)
+                        Write-Progress -Activity "Windows Virtual Desktop - Azure Resource Clean Up" -Status ("Virtual Machine: {0} ({1} of {2})" -f $virtualMachine.Name,$i,$vmCollection.Count) -CurrentOperation ("Removing Virutal Machine") -PercentComplete (($i / $vmCollection.Count) * 100)
+                        $vmDeletion = Invoke-WebRequest -Method Delete -Headers @{"Authorization" = "Bearer " + $accessToken} -Uri ("https://management.azure.com{0}?api-version=2020-06-01" -f $virtualMachine.Id) -Verbose:$false
                         $vmDeletionURIs.Add(($vmDeletion.RawContent.Split("`n") | Select-String -Pattern "Azure-AsyncOperation").Line.split(" ")[-1])
                     }
                     catch {
@@ -788,13 +920,13 @@ Function Remove-AzWvdResources {
                             $virtualMachine.Name
                         )
                         [System.Console]::ResetColor()
-                        Continue
                     }
                     $i++
                 }
+
                 while ($true) {
+                    Write-Progress -Id 42 -Activity "Windows Virtual Desktop - Validate Azure Resource Deletion" -Status ("Virutal Machine: ({0} of {1})" -f $deletionResults.Succeeded,$vmDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Virtual Machine(s)") -PercentComplete (($deletionResults.Succeeded / $vmDeletionURIs.Count) * 100)
                     $deletionResults = $vmDeletionURIs | _CheckDeletionStatus -azAccessToken $accessToken
-                    Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Session Host: ({0} of {1})" -f $deletionResults.Succeeded,$vmDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Virtual Machine(s)") -PercentComplete (($deletionResults.Succeeded / $vmDeletionURIs.Count) * 100)
                     If($deletionResults.Failed.Count -gt 0) { $deletionResults.Failed | ForEach-Object { $vmDeletionURIs.Remove($_) | Out-Null } }
                     If($deletionResults.Succeeded -eq $vmDeletionURIs.Count) { break }
                     Start-Sleep -Seconds 2
@@ -805,7 +937,7 @@ Function Remove-AzWvdResources {
                     $x = 0
                     foreach ($attachedResource in $attachedResources) {
                         try {
-                            Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Attached Resource: ({0} of {1})" -f $x,$attachedResources.Count) -CurrentOperation ("Deleting Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($x / $attachedResources.Count) * 100)
+                            Write-Progress -Activity "Windows Virtual Desktop - Azure Resource Clean Up" -Status ("Attached Resource: ({0} of {1})" -f $x,$attachedResources.Count) -CurrentOperation ("Deleting Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($x / $attachedResources.Count) * 100)
                             $attachedResourceDeletion = Invoke-WebRequest -Method Delete -Headers @{"Authorization" = "Bearer " + $accessToken} -Uri ("https://management.azure.com{0}?api-version=2019-07-01" -f $attachedResource)
                             $attachedResourcesDeletionURIs.Add( ($attachedResourceDeletion.RawContent.Split("`n") | Select-String -Pattern "Azure-AsyncOperation").Line.split(" ")[-1] )
                         }
@@ -823,16 +955,15 @@ Function Remove-AzWvdResources {
                         $x++
                     }
                     while ($true) {
+                        Write-Progress -Id 42 -Activity "Windows Virtual Desktop - Validate Azure Resource Deletion" -Status ("Attached Resource: ({0} of {1})" -f $deletionResults.Succeeded,$attachedResourcesDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($deletionResults.Succeeded / $attachedResourcesDeletionURIs.Count) * 100)
                         $deletionResults = $attachedResourcesDeletionURIs | _CheckDeletionStatus -azAccessToken $accessToken
-                        Write-Progress -Activity "WVD Session Host(s) Clean Up Operation" -Status ("Attached Resource: ({0} of {1})" -f $deletionResults.Succeeded,$attachedResourcesDeletionURIs.Count) -CurrentOperation ("Waiting on deletion of Azure Disk(s) and Virtual Network Interface(s)") -PercentComplete (($deletionResults.Succeeded / $attachedResourcesDeletionURIs.Count) * 100)
                         If($deletionResults.Failed.Count -gt 0) { $deletionResults.Failed | ForEach-Object { $attachedResourcesDeletionURIs.Remove($_) | Out-Null } }
                         If($deletionResults.Succeeded -eq $attachedResourcesDeletionURIs.Count) { break }
-                        Start-Sleep -Seconds 2                    }
+                        Start-Sleep -Seconds 2                  }
                 }
-                Write-Progress -Activity "WVD Session Host(s) Clean Up Operation"  -Completed
+                Write-Progress -Activity "Progress Complete"  -Completed
                 
                 Write-Host ("`n`r")
-=
                 Write-Host ("-" * 120) -ForegroundColor Green
                 Write-Host ("-- Attempted to REMOVE and DELETE {0} WVD Virtual Machines and associated objects. Please validate using PowerShell or Azure Portal." -f $vmCollection.Count) -ForegroundColor Green
                 Write-Host ("-" * 120) -ForegroundColor Green
@@ -926,10 +1057,10 @@ Function New-AzWvdDeployment {
 
         Write-Host ("[{0}] Generating Storage SAS Tokens and fetching various URL(s)..." -f (Get-Date))
         $stgAccountContext = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroup -DefaultProfile $coreContext).Context
-        $wvdHostPoolTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Deploy-WVD-HostPool.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdHostPoolTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-HostPool.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
         
         $wvdContext = Set-AzContext -Subscription $subscriptionName
@@ -1217,13 +1348,13 @@ Function Expand-AzWvdHostPool {
         }
         Else { Throw "Unable to locate Storage Account" }
         
-        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $wvdHostPoolExpansionTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Expand-WVD-HostPool.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $wvdHostPoolExpansionParamUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Expand-WVD-HostPool.parameters.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdHostPoolExpansionTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Expand-WVD-HostPool.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdHostPoolExpansionParamUri = New-AzStorageBlobSASToken -Container templates -Blob "Expand-WVD-HostPool.parameters.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         (New-Object System.Net.WebClient).DownloadFile($wvdHostPoolExpansionParamUri,("{0}\wvd.parameters.json" -f $env:TEMP))
         
-        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
 
         $wvdContext = Set-AzContext -Subscription $subscriptionName
@@ -1306,67 +1437,124 @@ Function New-AzWvdSessionHosts {
     [CmdletBinding(SupportsShouldProcess,ConfirmImpact="High")]
     Param (
         [Parameter(Mandatory=$true)]
+        [ArgumentCompleter({
+            Param($CommandName,$ParameterName,$WordsToComplete,$CommandAst,$FakeBoundParameters)
+            Get-AzSubscription | Where-Object {$_.Name -like "$WordsToComplete*"} | Select-Object -ExpandProperty Name
+        })]
         [System.String]$SubscriptionName,
 
         [Parameter(Mandatory=$true)]
+        [ArgumentCompleter({
+            Param($CommandName,$ParameterName,$WordsToComplete,$CommandAst,$FakeBoundParameters)
+            Get-AzSubscription | Where-Object {$_.Name -like "$WordsToComplete*"} | Select-Object -ExpandProperty Name
+        })]
+        [System.String]$StorageAccountSubscription,
+
+        # Name of the Resource Group of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
         [System.String]$ResourceGroupName,
 
+        # Name of the WVD Host Pool (supports tab completion)
         [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.DesktopVirtualization/hostpools","ResourceGroupName")]
         [System.String]$HostPoolName,
 
+        # Group of Session Hosts to target (A or B)
         [Parameter(Mandatory=$true)]
-        [System.String]$SessionHostGroup,
+        [ValidateSet("A","B","ALL")]
+        [String]$SessionHostGroup,
 
         [Parameter(Mandatory=$true)]
-        [Int]$NumberOfInstances
+        [Int]$NumberOfInstances,
+
+        # Name of the Resource Group of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
+        [System.String]$StorageAccountResourceGroup,
+
+        # Name of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.Storage/storageAccount","StorageAccountResourceGroup")]
+        [System.String]$StorageAccountName,
+
+        # Name of the Resource Group of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
+        [System.String]$VirtualNetworkResourceGroup,
+
+        # Name of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.Storage/storageAccount","StorageAccountResourceGroup")]
+        [System.String]$VirtualNetworkName,
+
+        # Name of the Resource Group of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceGroupCompleterAttribute()]
+        [System.String]$LogAnalyticsResourceGroup,
+
+        # Name of the WVD Host Pool (supports tab completion)
+        [Parameter(Mandatory=$true)]
+        [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.OperationalInsights/Workspace","LogAnalyticsResourceGroup")]
+        [System.String]$LogAnalyticsWorkspace
     )
     BEGIN {
-        # Static Variables
-        $StorageAccountResourceGroup  = ""
-        $StorageAccountSubscription = ""
-        $StorageAccountName = ""
-        $VirtualNetworkResourceGroup = ""
-        $VirtualNetworkName = ""
+        $azContext = Get-AzContext
+        
+        If ($azContext) {
+            Write-Host ("[{0}] Connecting to Azure Cloud..." -f (Get-Date))
+            $coreContext = Set-AzContext -Subscription $StorageAccountSubscription
+            Write-Host ("`tConnected to: {0}, using {1}" -f $coreContext.Name.Split(" ")[0],$coreContext.Account.Id)
+        }
+        Else {
+            $coreContext = Connect-AzAccount -Subscription $StorageAccountSubscription
+            Write-Host ("`tConnected to: {0}, using {1}" -f $coreContext.Context.Subscription.Name,$coreContext.Context.Account.Id)
+        }
+
+        $userName = ("{0} ({1})" -f $azContext.Account.Id,$azContext.Account.Type)
     }
     PROCESS {
         Write-Host ("[{0}] Setting up inital variables..." -f (Get-Date))
-        $expirationTime = (Get-Date).AddHours(24)
+        $expirationTime = (Get-Date).AddHours(24)        
 
-        Write-Host ("[{0}] Connecting to Azure Cloud..." -f (Get-Date))
-        #Add-AzAccount -Identity -Subscription $StorageAccountSubscription | Out-Null
-        Set-AzContext -Subscription $StorageAccountSubscription | Out-Null
+        Write-Host ("[{0}] Generating Storage SAS Tokens and fetching various URL(s)..." -f (Get-Date))
+        $stgAccountContext = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroup -DefaultProfile $coreContext).Context
         
-        $coreContext = Get-AzContext
-        Write-Host ("`tConnected to: {0}, using {1}" -f $coreContext.Name.Split("(")[0].Trim(" "),$coreContext.Account.Id)
-
-        Write-Host ("[{0}] Generating Storage SAS Tokens and fetching various URL(s)..." -f (Get-Date))  
-        
-        If (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroup) {
-            $stgAccountContext = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroup -DefaultProfile $coreContext).Context
-        }
-        Else { Throw "Unable to locate Storage Account" }
-        
-        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $wvdSessionHostTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob "WindowsVirtualDesktop/Deploy-WVD-SessionHosts.parameters.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        #Invoke-WebRequest $wvdSessionHostTemplateParamUri | Select-Object -ExpandProperty Content | Out-File $env:TEMP\WvdParams.json -Force
+        $wvdSessionHostTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $wvdSessionHostTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob "Deploy-WVD-SessionHosts.parameters.json" -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         (New-Object System.Net.WebClient).DownloadFile($wvdSessionHostTemplateParamUri,("{0}\wvd.parameters.json" -f $env:TEMP))
         
-        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-        #Invoke-WebRequest $DscTemplateParamUri | Select-Object -ExpandProperty Content | Out-File $env:TEMP\DscConfigParams.json -Force
+        $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+        $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
         (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
 
         $wvdContext = Set-AzContext -Subscription $subscriptionName
         Write-Host ("`tConnected to: {0}, using {1}" -f $wvdContext.Name.Split("(")[0].Trim(" "),$wvdContext.Account.Id)
+        $azLogAnalyticsId = (Get-AzOperationalInsightsWorkspace -ResourceGroupName $LogAnalyticsResourceGroup -Name $LogAnalyticsWorkspace -WarningAction SilentlyContinue).CustomerId.ToString()
+        $azLogAnalyticsKey = (Get-AzOperationalInsightsWorkspaceSharedKey -ResourceGroupName $LogAnalyticsResourceGroup -Name $LogAnalyticsWorkspace -WarningAction SilentlyContinue).PrimarySharedKey
 
         $HostPool = Get-AzWvdHostPool -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName
-        $Properties = $hostPool.Description.replace("\","\\") | ConvertFrom-Json
         $vmTemplate = $HostPool.VMTemplate | ConvertFrom-Json
-        $subnetId = Get-AzVirtualNetwork -Name $VirtualNetworkName -ResourceGroupName $VirtualNetworkResourceGroup | Get-AzVirtualNetworkSubnetConfig -Name ("N2-Subnet-{0}" -f $HostPoolName.Split("-")[-1]) | Select-Object -ExpandProperty Id
-        
+        $subnetId = Get-AzVirtualNetwork -Name $VirtualNetworkName -ResourceGroupName $VirtualNetworkResourceGroup | Get-AzVirtualNetworkSubnetConfig -Name ("WVD-Subnet-{0}" -f $HostPoolName.Split("-")[-1]) | Select-Object -ExpandProperty Id
 
         Write-Host ("[{0}] Starting WVD Session Host Deployment..." -f (Get-Date))
-        $deploymentString = ([Guid]::NewGuid()).Guid.Split("-")[-1]
+        $correlationId = [Guid]::NewGuid()
+        $deploymentString = $correlationId.Guid.Split("-")[-1]
+
+        $logEntry = [PSCustomObject]@{
+            Timestamp = [DateTime]::UtcNow.ToString('o')
+            CorrelationId = $correlationId
+            Computer = $env:COMPUTERNAME
+            UserName = $userName
+            EntryType = "INFO"
+            Subscription = $subscriptionName
+            ResourceGroupName = $ResourceGroupName
+            DeploymentName = ("Deploy-WVD-SessionHosts-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString)
+            DeploymentStatus = "Starting"
+            HostPoolName = $HostPoolName
+        }
+        New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+
         $Results = New-AzResourceGroupDeployment `
             -Name ("Deploy-WVD-SessionHosts-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString) `
             -ResourceGroupName $ResourceGroupName `
@@ -1381,12 +1569,182 @@ Function New-AzWvdSessionHosts {
             -az_vmImageSKU $vmTemplate.galleryImageSku `
             -az_vmDiskType $vmTemplate.osDiskType `
             -wvd_groupReference $SessionHostGroup `
-            -wvd_buildVersion "1.2" `
+            -wvd_buildVersion $HostPool.Tag["WVD-Build"] `
             -wvd_subnetId $subnetId `
             -wvd_hostpoolName $HostPoolName `
 
-        If ($Results.ProvisioningState -eq "Succeeded") { Write-Host ("[{0}] WVD Session Host Deployment Succeeded!" -f $Results.Timestamp.ToLocalTime()) }
-        Else { Write-Host ("[{0}] WVD Session Host Deployment did not succeed - State: {1}" -f (Get-Date),$Results.ProvisioningState)}
+        If ($Results.ProvisioningState -eq "Succeeded") {
+            Write-Host ("[{0}] WVD Session Host Deployment Succeeded!" -f $Results.Timestamp.ToLocalTime())
+            $logEntry = [PSCustomObject]@{
+                Timestamp = [DateTime]::UtcNow.ToString('o')
+                CorrelationId = $correlationId
+                Computer = $env:COMPUTERNAME
+                UserName = $userName
+                EntryType = "INFO"
+                Subscription = $subscriptionName
+                ResourceGroupName = $ResourceGroupName
+                DeploymentName = ("Deploy-WVD-SessionHosts-Group-{0}-{1}" -f $SessionHostGroup,$deploymentString)
+                DeploymentStatus = $Results.ProvisioningState
+                HostPoolName = [System.String]::Empty
+            }
+            New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+            $vmNames = Get-AzVM -ResourceGroupName $ResourceGroupName -Status | Where-Object { $_.Tags["WVD-Group"] -eq $SessionHostGroup } | ForEach-Object { $_.Name }
+            $wvdDscConfigZipUrl = Get-LatestWVDConfigZip -OutputType Remote -Verbose:$false
+            $dscZipUri = New-AzStorageBlobSASToken -Container dsc -Blob $hostPool.Tag["WVD-DscConfiguration"] -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+
+            Write-Host ("[{0}] Host Pool: {1} | Generating Host Pool registration token..." -f (Get-Date), $HostPoolName)
+            $wvdHostPoolToken = New-AzWvdRegistrationInfo -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -ExpirationTime $expirationTime
+            
+            Write-Host ("[{0}] Host Pool: {1} | Starting WVD Session Host Configuration..." -f (Get-Date), $HostPoolName)
+            $logEntry = [PSCustomObject]@{
+                Timestamp = [DateTime]::UtcNow.ToString('o')
+                CorrelationId = $correlationId
+                Computer = $env:COMPUTERNAME
+                UserName = $userName
+                EntryType = "INFO"
+                Subscription = $subscriptionName
+                ResourceGroupName = $ResourceGroupName
+                DeploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                DeploymentStatus = "Starting"
+                HostPoolName = $HostPoolName
+            }
+            New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+
+            $templateParams = [Ordered]@{
+                Name = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                az_virtualMachineNames = $vmNames
+                wvd_dscConfigurationScript = $hostPool.Tag["WVD-DscConfiguration"].Trim(".zip")
+                wvd_dscConfigZipUrl = $wvdDscConfigZipUrl
+                wvd_deploymentType = $HostPool.Tag["WVD-Deployment"]
+                wvd_deploymentFunction = $HostPool.Tag["WVD-Function"]
+                wvd_fsLogixVHDLocation = $HostPool.Tag["WVD-FsLogixVhdLocation"]
+                wvd_ArtifactLocation = $HostPool.Tag["WVD-ArtifactLocation"]
+                wvd_hostPoolName = $HostPoolName
+                wvd_hostPoolToken = $wvdHostPoolToken.Token
+                wvd_sessionHostDSCModuleZipUri = $dscZipUri
+                ResourceGroupName = $ResourceGroupName
+                TemplateUri = $DscTemplateUri
+                TemplateParameterFile = ("{0}\dsc.parameters.json" -f $env:TEMP)
+            }
+            
+            $deploymentJob = New-AzResourceGroupDeployment @templateParams -AsJob
+            If ($deploymentJob) {
+                try {
+                    While ($true) {
+                        If (Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString) -ErrorAction SilentlyContinue) { Break }
+                        Else {
+                            Write-Verbose ("[{0}] Waiting for job: Deploy-WVD-DscConfiguration-{1}" -f (Get-Date),$deploymentString)
+                            Start-Sleep -Seconds 5
+                        }
+                    }
+
+                    $deploymentInfo = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                    $logEntry = [PSCustomObject]@{
+                        Timestamp = [DateTime]::UtcNow.ToString('o')
+                        CorrelationId = $correlationId
+                        Computer = $env:COMPUTERNAME
+                        UserName = $userName
+                        EntryType = "INFO"
+                        Subscription = $subscriptionName
+                        ResourceGroupName = $ResourceGroupName
+                        DeploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                        DeploymentStatus = $deploymentInfo.ProvisioningState
+                        HostPoolName = $HostPoolName
+                    }
+                    New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+                }
+                catch {
+                    Write-Warning ("WVD DSC Configuration Deployment encountered a problem")
+                    $logEntry = [PSCustomObject]@{
+                        Timestamp = [DateTime]::UtcNow.ToString('o')
+                        CorrelationId = $correlationId
+                        Computer = $env:COMPUTERNAME
+                        UserName = $userName
+                        EntryType = "ERROR"
+                        Subscription = $subscriptionName
+                        ResourceGroupName = $outputHash[$hostPool].resourceGroupName
+                        DeploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                        DeploymentStatus = $_.Exception.Message
+                        HostPoolName = $hostPool
+                    }
+                    New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+                    Return
+                }
+            }
+            Else {
+                Write-Warning ("WVD DSC Configuration Deployment failed to start")
+                $logEntry = [PSCustomObject]@{
+                    Timestamp = [DateTime]::UtcNow.ToString('o')
+                    CorrelationId = $correlationId
+                    Computer = $env:COMPUTERNAME
+                    UserName = $userName
+                    EntryType = "ERROR"
+                    Subscription = $subscriptionName
+                    ResourceGroupName = $ResourceGroupName
+                    DeploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                    DeploymentStatus = "NotStarted"
+                    HostPoolName = $HostPoolName
+                }
+                New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+                Return
+            }
+            
+            $currentTime = [DateTime]::UtcNow
+            $stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+            Do {
+                $i = 0
+                $job = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                
+                If ($job.ProvisioningState -eq "Running") {$i++}
+                
+                $elapsedTime = $job.TimeStamp.ToUniversalTime() - $currentTime.ToUniversalTime()
+                $objJob = [PSCustomObject][Ordered]@{
+                    Name = ("Deploy-WVD-DscConfiguration-{0}  " -f $deploymentString)
+                    ResourceGroup = ("{0}  " -f $ResourceGroupName)
+                    Status = ("{0}  " -f $job.ProvisioningState)
+                    Duration = ("{0:N0}.{1:N0}:{2:N0}:{3:N0}" -f $elapsedTime.Days, $elapsedTime.Hours, $elapsedTime.Minutes, $elapsedTime.Seconds)
+                }
+
+                If ($SelfHosted) { Write-Host "." -NoNewline }
+                Else {
+                    Show-Menu -Title ("Job Status") -DisplayOnly -Style Info -Color Cyan -ClearScreen
+                    $objJob | Format-Table -AutoSize
+                    
+                    Write-Host "`n`rNext refresh in " -NoNewline
+                    Write-Host "5" -ForegroundColor Magenta -NoNewline
+                    Write-Host " Seconds`r`n"
+                }
+                If ($stopWatch.Elapsed.TotalMinutes -gt 89) {
+                    Write-Warning ("The Deployment Job has exceeded a 90 minutes deployment time!")
+                    Break
+                }
+                Start-Sleep -Seconds 5
+
+            } Until ($i -eq 0)
+            Write-Host "Done!`n`r"
+
+            $job = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                
+            If ($job.ProvisioningState -eq "Succeeded") { $type = "INFO" }
+            ElseIf ($job.ProvisioningState -eq "Cancelled") { $type = "WARNING" }
+            Else { $type = "ERROR" }
+
+            $logEntry = [PSCustomObject]@{
+                Timestamp = [DateTime]::UtcNow.ToString('o')
+                CorrelationId = $correlationId
+                Computer = $env:COMPUTERNAME
+                UserName = $userName
+                EntryType = $type
+                Subscription = $subscriptionName
+                ResourceGroupName = $ResourceGroupName
+                DeploymentName = ("Deploy-WVD-DscConfiguration-{0}" -f $deploymentString)
+                DeploymentStatus = $job.ProvisioningState
+                HostPoolName = $HostPoolName
+            }
+            New-AzWvdLogEntry -customerId $azLogAnalyticsId -sharedKey $azLogAnalyticsKey -logName "WVD_AutomatedDeployments_CL" -logMessage $logEntry -Verbose:$false
+            Disable-AzWvdMaintanence -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -SessionHostGroup $SessionHostGroup -LogAnalyticsResourceGroup $LogAnalyticsResourceGroup -LogAnalyticsWorkspace $LogAnalyticsWorkspace -CorrelationId $correlationId
+        }
+        Else { Write-Host ("[{0}] WVD Session Host Deployment did not succeed {1}" -f (Get-Date),$Results.ProvisioningState)}
     }
 }
 
@@ -1452,8 +1810,8 @@ Function New-AzWvdSessionHostConfig {
             $FsLogixVhdLocation = $HPs[$HPChoice].Tag["WVD-FsLogixVhdLocation"]
             $Properties = $HPs[$HPChoice].Description.replace("\","\\") | ConvertFrom-Json
             $dscZipUri = New-AzStorageBlobSASToken -Container dsc -Blob $DscConfiguration -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-            $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
-            $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("WindowsVirtualDesktop/Deploy-WVD-BaselineConfig.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+            $DscTemplateUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
+            $DscTemplateParamUri = New-AzStorageBlobSASToken -Container templates -Blob ("Deploy-WVD-Config.parameters.json") -Protocol HttpsOnly -Permission r -StartTime (Get-Date) -ExpiryTime $expirationTime -Context $stgAccountContext -FullUri
             (New-Object System.Net.WebClient).DownloadFile($DscTemplateParamUri,("{0}\dsc.parameters.json" -f $env:TEMP))
             $wvdHostPoolToken = New-AzWvdRegistrationInfo -ResourceGroupName $HPs[$HPChoice].ResourceGroupName -HostPoolName $HPs[$HPChoice].Name -ExpirationTime $expirationTime
             If ($SessionHostGroup -eq "A") {
