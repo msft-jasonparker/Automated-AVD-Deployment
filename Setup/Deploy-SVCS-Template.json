@@ -40,7 +40,7 @@
     "resources": [
         // Creates minimum storage account for wvd artifacts with 2 containers
         {
-            "name": "[concat(parameters('wvdStorageAccountName'),'-',uniqueString(subscription().id))]",
+            "name": "[parameters('wvdStorageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "location": "[resourceGroup().location]",
