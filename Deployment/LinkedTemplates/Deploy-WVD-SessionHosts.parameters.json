@@ -2,20 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "az_vmAdminAccount": {
+        "dj_adminAccountUPN": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "## dj_adminAccountUPN ##"
                 },
-                "secretName": "WVD-VM-Admin-Account"
+                "secretName": "WVD-VM-DomainJoin-Account"
             }
         },
-        "az_vmAdminAccountPassword": {
+        "dj_adminAccountPassword": {
             "reference": {
                 "keyVault": {
-                "id": "<key-vault-resource-id>"
+                "id": "## dj_adminAccountPassword ##"
                 },
-                "secretName": "WVD-VM-Admin-Password"
+                "secretName": "WVD-VM-DomainJoin-Password"
             }
         }
     }
