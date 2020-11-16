@@ -27,7 +27,7 @@
         },
         "wvdStorageAccountName": {
             "type": "string",
-            "defaultValue": ">>> PROVIDE A NAME FOR THE STORAGE ACCOUNT <<<"
+            "defaultValue": ">>> Enter a name 3-24 alpha-numeric characters, all lowercase <<<"
         },
         "wvdKeyVaultName": {
             "type": "string",
