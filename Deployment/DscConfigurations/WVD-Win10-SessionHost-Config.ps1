@@ -77,11 +77,20 @@ Configuration WvdSessionHostConfig
                 else { return $false }
             }
             SetScript = {
-                $stopWatch = [system.diagnostics.stopwatch]::startnew()
-                Start-BitsTransfer -Source ($using:wvdArtifactLocation + "\wvd_packages.zip") -Destination ($env:TEMP + "\wvd_packages.zip")
-                If (Test-Path -Path ($env:TEMP + "\wvd_packages.zip")) { Expand-Archive -Path ($env:TEMP + "\wvd_packages.zip") -DestinationPath ($using:wvdConfigDataPath + "\DSC") -Force }
-                $stopwatch.stop()
-                $stopwatch.elapsed | out-file -path ("{0}\Logs\wvd_package.log" -f $using:wvdConfigDataPath)
+                If (Test-Path -Path ($using:wvdArtifactLocation + "\wvd_packages.zip")) {
+                    Start-BitsTransfer -Source ($using:wvdArtifactLocation + "\wvd_packages.zip") -Destination ($env:TEMP + "\wvd_packages.zip")
+                    If (Test-Path -Path ($env:TEMP + "\wvd_packages.zip")) { Expand-Archive -Path ($env:TEMP + "\wvd_packages.zip") -DestinationPath ($using:wvdConfigDataPath + "\DSC") -Force }
+                }
+                Else {
+                    Write-Warning ("Path not found: {0}\wvd_packages.zip" -f $using:wvdArtifactLocation)
+                    If (Test-Path -Path ("{0}\MissingWVDPackageReboot.txt" -f $using:wvdConfigDataPath)) {
+                        Throw [System.Exception]::new("WVD Packages zip not found post 2nd reboot","MissingWVDPackageReboot")
+                    }
+                    Else {
+                        New-Item -Path $using:wvdConfigDataPath -Name "MissingWVDPackageReboot.txt" -ItemType "file"
+                        $global:DSCMachineStatus = 1
+                    }
+                }
             }
             DependsOn = "[Script]LocalAdministratorsGroup"
         }
@@ -226,7 +235,7 @@ Configuration WvdSessionHostConfig
                         else { return $false }
                     }
                     SetScript = {
-                        try { & "$using:wvdConfigDataPath\DSC\Packages\VDIOptimize\Win10_VirtualDesktop_Optimize.ps1" -WindowsMediaPlayer -AppxPackages -ScheduledTasks -DefaultUserSettings -Autologgers -Services -NetworkOptimizations -LGPO -DiskCleanup -Verbose }
+                        try { & "$using:wvdConfigDataPath\DSC\Packages\VDIOptimize\Win10_VirtualDesktop_Optimize.ps1" -All -Verbose }
                         catch {
                             $ErrMsg = $PSItem | Format-List -Force | Out-String
                             throw [System.Exception]::new(("Error running VDI Script Resource: {0}" -f $ErrMsg),$PSItem.Exception)
