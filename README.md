@@ -1,10 +1,10 @@
 # Automated Deployment of Windows Virtual Desktop
 
-This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM templates, Azure ARM template parameter files and Desired State Configuration scripts.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
+This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM templates, Azure ARM template parameter files, and Desired State Configuration scripts.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
 
 > **WARNING:**
 > 
-> This repo assumes that you or your organization is already well established into Microsoft Azure. There are many dependancies required to make this repo / solution to work correctly. The requirements section below should outline what is required for this repo to be successfully deployed.
+> This repo assumes that you or your organization is already well established into Microsoft Azure. There are many dependencies required to make this repo / solution to work correctly. The requirements section below should outline what is required for this repo to be successfully deployed.
 
 ---
 
@@ -19,7 +19,7 @@ This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM temp
   - [Azure Setup - Greenfield Deployments](#azure-setup---greenfield-deployments)
   - [Getting Started](#getting-started)
   - [Deployment](#deployment)
-    - [PowerShell Module Dependancies](#powershell-module-dependancies)
+    - [PowerShell Module Dependencies](#powershell-module-dependencies)
     - [Scale Unit ARM Template](#scale-unit-arm-template)
       - [**Scale Unit Variables**](#scale-unit-variables)
       - [**Scale Unit Resources**](#scale-unit-resources)
@@ -48,8 +48,8 @@ Below are some of the minimum requirements to be able to use this repo in a Test
 
 ### Knowledge
 
-- Intermediate knowledge of PowerShell sytanx, scripts and modules (Advanced is preferred)
-- Intermediate knowledge of Azure infrastructure, networking, storage and automation
+- Intermediate knowledge of PowerShell syntax, scripts, and modules (Advanced is preferred)
+- Intermediate knowledge of Azure infrastructure, networking, storage, and automation
 - Strong understanding of ARM templates and parameters
 
 ---
@@ -160,7 +160,7 @@ Next, create the required Azure resources listed in the Requirements section. Th
 
 ---
 
-### PowerShell Module Dependancies
+### PowerShell Module Dependencies
 
  Before attempting to use this automated deployment process, ensure the following PowerShell modules have been installed and updated.
 
@@ -877,4 +877,4 @@ The WVD Configuration ARM template is a completely separated process from the in
 
 ## Desired State Configuration (Session Host Customization)
 
-There are many ways to perform a post Operating System configuration of a Session Host, however, this deployment guide is centered around using Desired State Configuration (DSC). There is a wealth of information avaiable for DSC on the [Microsoft Docs](https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview?view=powershell-7) website.
+There are many ways to perform a post Operating System configuration of a Session Host, however, this deployment guide is centered around using Desired State Configuration (DSC). There is a wealth of information available for DSC on the [Microsoft Docs](https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview?view=powershell-7) website.
