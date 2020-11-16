@@ -1,0 +1,38 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0",
+    "parameters": {
+        "accountName": {
+            "type": "String"
+        },
+        "accountLocation": {
+            "type": "String"
+        },
+        "Level0": {
+            "type": "Object"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "name": "[concat(parameters('accountName'), '/', parameters('Level0').Modules[copyIndex()].Name)]",
+            "location": "[parameters('accountLocation')]",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "contentLink": {
+                    "uri": "[parameters('Level0').Modules[copyIndex()].Uri]"
+                }
+            },
+            "copy": {
+                "name": "Level0ModulesInstall",
+                "count": "[length(parameters('Level0').Modules)]",
+                "mode": "Serial",
+                "batchSize": 1
+            }
+        }
+    ],
+    "outputs": {}
+}
