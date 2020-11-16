@@ -194,6 +194,9 @@
                     "wvd_fsLogixVhdLocation": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]"
                     },
+                    "wvd_artifactLocation": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdArtifactLocation]"
+                    },
                     "domain": {
                         "value": "[parameters('domain')]"
                     }
