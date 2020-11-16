@@ -38,7 +38,7 @@ Param (
     [System.String]$aaSubscriptionId,
     [System.String]$laWorkspaceId,
     [System.String]$laWorkspaceKey,
-    [System.String]$laComplianceLogName,
+    [System.String]$laComplianceLogName = "WVD_HostPoolCompliance_CL",
     [System.Int32]$TZOffSetFromGMT = 4,
     [System.String]$startPeakUsageTime = "07:00",
     [System.String]$endPeakUsageTime = "20:00",
@@ -116,7 +116,8 @@ Function Global:_WriteLALogEntry {
         $customerId,
         $sharedKey,
         $logName,
-        $logMessage
+        $logMessage,
+        [Switch]$PassThru
     )
 
     BEGIN {
@@ -144,27 +145,35 @@ Function Global:_WriteLALogEntry {
         }
     }
     PROCESS {
-        $logJSON = $logMessage | ConvertTo-Json
-        $body = ([System.Text.Encoding]::UTF8.GetBytes($logJSON))
-        $method = "POST"
-        $contentType = "application/json"
-        $resource = "/api/logs"
-        $rfc1123date = [DateTime]::UtcNow.ToString("r")
-        $contentLength = $body.Length
-        $signature = _GetLAAuthorization -customerId $customerId -sharedKey $sharedKey -date $rfc1123date -contentLength $contentLength -method $method -contentType $contentType -resource $resource 
-        $uri = "https://" + $customerId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-        $OMSheaders = @{
-            "Authorization"        = $signature;
-            "Log-Type"             = $logName;
-            "x-ms-date"            = $rfc1123date;
-            "time-generated-field" = "Timestamp";
+        If ($PassThru) {
+            If ($logMessage.Count -gt 1) {
+                $logMessage | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+            }
+            Else { Write-Host $logMessage -ForegroundColor Yellow }
         }
- 
-        try {
-            Invoke-WebRequest -Uri $uri -Method POST -ContentType $contentType -Headers $OMSheaders -Body $body -UseBasicParsing | Out-Null
-        }
-        catch {
-            Write-Warning $_.Exception.Message
+        Else {
+            $logJSON = $logMessage | ConvertTo-Json
+            $body = ([System.Text.Encoding]::UTF8.GetBytes($logJSON))
+            $method = "POST"
+            $contentType = "application/json"
+            $resource = "/api/logs"
+            $rfc1123date = [DateTime]::UtcNow.ToString("r")
+            $contentLength = $body.Length
+            $signature = _GetLAAuthorization -customerId $customerId -sharedKey $sharedKey -date $rfc1123date -contentLength $contentLength -method $method -contentType $contentType -resource $resource 
+            $uri = "https://" + $customerId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+            $OMSheaders = @{
+                "Authorization"        = $signature;
+                "Log-Type"             = $logName;
+                "x-ms-date"            = $rfc1123date;
+                "time-generated-field" = "Timestamp";
+            }
+    
+            try {
+                Invoke-WebRequest -Uri $uri -Method POST -ContentType $contentType -Headers $OMSheaders -Body $body -UseBasicParsing | Out-Null
+            }
+            catch {
+                Write-Warning $_.Exception.Message
+            }
         }
     }
 }
@@ -196,7 +205,8 @@ Function _GetSessionHostInfo {
     [CmdletBinding()]
     Param (
         $hostPoolName,
-        $resourceGroupName
+        $resourceGroupName,
+        [Switch]$PassThru
     )
     [System.Collections.ArrayList]$sessionHostInfo = @()
     $wvdshArray = Get-AzWvdSessionHost -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName
@@ -256,7 +266,8 @@ Function _GetSessionHostInfo {
                 -ComplianceTask 'SESSION-HOST-INFO' `
                 -ComplianceState 'UNKNOWN' `
                 -Message $message
-            _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+            If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+            Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         }
     }
     $message = ("[{0}] Collected session host and virtual machine information" -f $hostPoolName)
@@ -267,7 +278,8 @@ Function _GetSessionHostInfo {
         -ComplianceState 'UNKNOWN' `
         -SessionHostCount $sessionHostInfo.Count `
         -Message $message
-    _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+    If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+    Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
 
     Return $sessionHostInfo
 }
@@ -284,8 +296,8 @@ Function _GetMinimumSessionHosts {
         $PercentOfTotalSessionHosts = 5,
         $MinimumDefaultValue = 2
     )
-    $Groups = ($SessionHostInfo | Select-Object -Unique wvdGroup | Measure-Object).Count
-    $minSH = [math]::Ceiling($SessionHostInfo.Count * ($PercentOfTotalSessionHosts/100)/$Groups)
+    $Groups = ($SessionHosts | Select-Object -Unique wvdGroup | Measure-Object).Count
+    $minSH = [math]::Ceiling($SessionHosts.Count * ($PercentOfTotalSessionHosts/100)/$Groups)
     If ($minSH -lt $MinimumDefaultValue) { Return $MinimumDefaultValue }
     Else { Return $minSH }
 }
@@ -304,7 +316,8 @@ Function _GetHostPoolMetrics {
         [ValidateSet("OnPeak","OffPeak")]
         $timeOfDay = "OffPeak",
         $hostPoolSessionLimit,
-        [PSCustomObject]$sessionHosts
+        [PSCustomObject]$sessionHosts,
+        [Switch]$PassThru
     )
 
     $sessionHostsByGroup = $sessionHosts | Group-Object wvdGroup -AsHashTable -AsString
@@ -543,7 +556,8 @@ Function _GetHostPoolMetrics {
             }
         }
     
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceMessages
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceMessages -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceMessages }
     
         $metrics = [PSCustomObject]@{
             sessionHosts = $sessionHostsByGroup[$Key]
@@ -568,7 +582,10 @@ Function _GetHostPoolCompliance {
         Using the host pool group metrics, this function can determine if the host pool is: compliant, not-compliant, or needs-resources
     #>
     [CmdletBinding()]
-    Param ([PSCustomObject]$hostPoolData)
+    Param (
+        [PSCustomObject]$hostPoolData,
+        [Switch]$PassThru
+    )
 
     if ($hostPoolData.available -eq $hostPoolData.needed -and $hostPoolData.draining -eq 0 ) {
         $result = "COMPLIANT"
@@ -588,7 +605,8 @@ Function _GetHostPoolCompliance {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry 
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         Return $result
     }
@@ -610,7 +628,8 @@ Function _GetHostPoolCompliance {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry 
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         Return $result
     }
@@ -632,7 +651,8 @@ Function _GetHostPoolCompliance {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         Return $result
     }
@@ -646,7 +666,10 @@ Function _NewHostPoolCompliancePlan {
         This function will create a single compliance plan for a particular host pool group of session hosts. This plan should be all encompassing and will ensure the host pool group becomes compliant based on the time of day
     #>
     [CmdletBinding()]
-    Param ([PSCustomObject]$hostPoolData)
+    Param (
+        [PSCustomObject]$hostPoolData,
+        [Switch]$PassThru
+    )
 
     $hostPoolScaleInfo = [PSCustomObject]@{
         RemoveDrainMode = 0
@@ -674,7 +697,8 @@ Function _NewHostPoolCompliancePlan {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         return $hostPoolScaleInfo    
     }
@@ -702,7 +726,8 @@ Function _NewHostPoolCompliancePlan {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         Return $hostPoolScaleInfo
     }
@@ -725,7 +750,8 @@ Function _NewHostPoolCompliancePlan {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         return $hostPoolScaleInfo
     }
@@ -748,7 +774,8 @@ Function _NewHostPoolCompliancePlan {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         return $hostPoolScaleInfo
     }
@@ -769,7 +796,8 @@ Function _NewHostPoolCompliancePlan {
             -Sessions $hostPoolData.hostPoolSessions `
             -Load $hostPoolData.hostPoolLoad `
             -message $message
-        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry
+        If ($PassThru) { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry -PassThru }
+        Else { _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laComplianceLogName -logMessage $complianceLogEntry }
         $hostPoolData = $null
         return $hostPoolScaleInfo
     }
@@ -816,19 +844,19 @@ Else {
 
 #region Variables
 # Verify the Host-Pool-Scale-Optimizer runbook is published otherwise, it may not execute as desired
-$runbookState = (Get-AzAutomationRunbook -Name "HostPool-Scale-Optimizer" -ResourceGroupName $aaResourceGroupName -AutomationAccount $aaAccountName -DefaultProfile $AzAutomationContext).State 
+$runbookState = (Get-AzAutomationRunbook -Name "Optimize-HostPool" -ResourceGroupName $aaResourceGroupName -AutomationAccount $aaAccountName -DefaultProfile $AzAutomationContext).State 
 Switch ($runbookState) {
-    "Published" { Write-Output ("'HostPool-Scale-Optimizer' Automation Runbook State: Published") }
+    "Published" { Write-Output ("'Optimize-HostPool' Automation Runbook State: Published") }
     "Edit" {
-        Write-Output ("'HostPool-Scale-Optimizer' Automation Runbook is still open for editing and must be published")
-        Write-Error -Exception "Invalid Runbook State" -Message "Runbook is not yet published.  Publish the 'HostPool-Scale-Optimizer' runbook and try again." -Category "OperationStopped" -ErrorAction Stop
+        Write-Output ("'Optimize-HostPool' Automation Runbook is still open for editing and must be published")
+        Write-Error -Exception "Invalid Runbook State" -Message "Runbook is not yet published.  Publish the 'Optimize-HostPool' runbook and try again." -Category "OperationStopped" -ErrorAction Stop
     }
     "New" {
-        Write-Output ("'HostPool-Scale-Optimizer' Automation Runbook must be published after being newly created")
-        Write-Error -Exception "Invalid Runbook State" -Message "Runbook is not yet published.  Publish the 'HostPool-Scale-Optimizer' runbook and try again." -Category "OperationStopped" -ErrorAction Stop
+        Write-Output ("'Optimize-HostPool' Automation Runbook must be published after being newly created")
+        Write-Error -Exception "Invalid Runbook State" -Message "Runbook is not yet published.  Publish the 'Optimize-HostPool' runbook and try again." -Category "OperationStopped" -ErrorAction Stop
     }
     Default {
-        Write-Output ("'HostPool-Scale-Optimizer' Automation Runbook not found")
+        Write-Output ("'Optimize-HostPool' Automation Runbook not found")
         Write-Error -Exception "Invalid Runbook" -Message "Runbook was not found. Verify the runbook exists and try again." -Category "OperationStopped" -ErrorAction Stop
     }
 }
@@ -888,7 +916,7 @@ Foreach ($hostPool in $hostPools) {
         
         # Sets the minimum session hosts based on the number of groups found in the VM tags (default is 2)
         # Also looks at the percent of the total session hosts and will select a value depending
-        $minimumSessionHosts = _GetMinimumSessionHosts -SessionHosts $sessionHostInfo -PercentOfTotalSessionHosts 5 -MinimumDefaultValue 2
+        $minimumSessionHosts = _GetMinimumSessionHosts -SessionHosts $sessionHostInfo -PercentOfTotalSessionHosts 0 -MinimumDefaultValue 0
         Write-Output ("[{0}] Get Host Pool Metrics" -f $hostPoolName)
         $hostPoolMetrics = _GetHostPoolMetrics -hostPoolName $hostPoolName -resourceGroupName $hostPoolResourceGroup -timeOfDay $timeOfDay -sessionHosts $sessionHostInfo -hostPoolSessionLimit $maxSessionLimit
         Foreach ($Group in $hostPoolMetrics.Keys) {
@@ -896,7 +924,7 @@ Foreach ($hostPool in $hostPools) {
             $hostPoolAAVariable = Get-AzAutomationVariable -Name ("{0}-OptimizationJob-{1}" -f $hostPoolName,$Group) -AutomationAccountName $aaAccountName -ResourceGroupName $aaResourceGroupName -ErrorAction SilentlyContinue -DefaultProfile $AzAutomationContext
             If (-NOT $hostPoolAAVariable) { 
                 # Create the variable if it does not exist and store a new GUID
-                $hostPoolAAVariable = New-AzAutomationVariable -Name ("{0}-OptimizationJob-{1}" -f $hostPoolName,$Group) -Value ([Guid]::NewGuid().ToString()) -Description "HostPool-Scale-Optimizer Runbook Job Id" -Encrypted:$false -AutomationAccountName $aaAccountName -ResourceGroupName $aaResourceGroupName -DefaultProfile $AzAutomationContext
+                $hostPoolAAVariable = New-AzAutomationVariable -Name ("{0}-OptimizationJob-{1}" -f $hostPoolName,$Group) -Value ([Guid]::NewGuid().ToString()) -Description "Optimize-HostPool Runbook Job Id" -Encrypted:$false -AutomationAccountName $aaAccountName -ResourceGroupName $aaResourceGroupName -DefaultProfile $AzAutomationContext
                 If ($hostPoolAAVariable) { 
                     $optimizeHostPool = $true
                     $message = ("[{0}] Created Automation Variable for Optimization Job tracking ({1}]" -f $hostPoolName,$hostPoolAAVariable.Name)
@@ -919,7 +947,7 @@ Foreach ($hostPool in $hostPools) {
                 } # If created successfully, enable optimization to run
                 Else { 
                     $optimizeHostPool = $false
-                    Write-Output ("[Group-{0}] Unable to create Azure Automation Variable - Unable to run 'HostPool-Scale-Optimizer'" -f $Group)
+                    Write-Output ("[Group-{0}] Unable to create Azure Automation Variable - Unable to run 'Optimize-HostPool'" -f $Group)
                 } # Failure to create variable prevents optimization from running
             }
             Else {
@@ -956,7 +984,7 @@ Foreach ($hostPool in $hostPools) {
                             # Less than 30 minutes, the job is still valid and should continue to process
                             If ($jobRunTime.TotalMinutes -lt 30) { 
                                 $optimizeHostPool = $false
-                                $message = ("[Group-{0}] 'HostPool-Scale-Optimizer' automation job is running, {1:N0} minutes (max: 30 minutes))" -f $Group,$jobRunTime.TotalMinutes)
+                                $message = ("[Group-{0}] 'Optimize-HostPool' automation job is running, {1:N0} minutes (max: 30 minutes))" -f $Group,$jobRunTime.TotalMinutes)
                                 Write-Output $message
                                 $complianceLogEntry = Global:_NewComplianceLogEntry @complianceLogParams `
                                     -Entry 'WARNING' `
@@ -976,7 +1004,7 @@ Foreach ($hostPool in $hostPools) {
                             }
                             # Over 30 minutes and it's likely the job is stuck. Write an error to log analytics (trigger an alert)
                             Else {
-                                $message = ("[Group-{0}] 'HostPool-Scale-Optimizer' automation job has exceeded the maximum runtime ({1:N1} > 30 minutes)" -f $Group,$jobRunTime.TotalMinutes)
+                                $message = ("[Group-{0}] 'Optimize-HostPool' automation job has exceeded the maximum runtime ({1:N1} > 30 minutes)" -f $Group,$jobRunTime.TotalMinutes)
                                 Write-Output $message
                                 $complianceLogEntry = Global:_NewComplianceLogEntry @complianceLogParams `
                                     -Entry 'ERROR' `
@@ -1055,13 +1083,13 @@ Foreach ($hostPool in $hostPools) {
                     }
                     Else {
                         # Start the optimization runbook
-                        $runbookStatus = Start-AzAutomationRunbook -Name "HostPool-Scale-Optimizer" -ResourceGroupName $aaResourceGroupName -AutomationAccountName $aaAccountName -Parameters $runbookParams -DefaultProfile $AzAutomationContext
+                        $runbookStatus = Start-AzAutomationRunbook -Name "Optimize-HostPool" -ResourceGroupName $aaResourceGroupName -AutomationAccountName $aaAccountName -Parameters $runbookParams -DefaultProfile $AzAutomationContext
                         If ($runbookStatus) {
                             # Successfully starting the runbook will generate a job id that is stored in the automation variable for tracking purposes
                             $aaVariable = Set-AzAutomationVariable -Name $hostPoolAAVariable.Name -Value $runbookStatus.JobId.ToString() -Encrypted $false -AutomationAccountName $aaAccountName -ResourceGroupName $aaResourceGroupName -DefaultProfile $AzAutomationContext
                             If ($aaVariable) { Write-Output ("[Group-{0}] Successfully saved the optimization job id to: {1}" -f $Group,$hostPoolAAVariable.Name) } # Automation variable was saved
                             Else { Write-Output ("[Group-{0}] Failed saved the optimization job id to: {1}" -f $Group,$hostPoolAAVariable.Name) } # Automation variable was not saved
-                            $message = ("[Group-{0}] Calling 'HostPool-Scale-Optimizer' Runbook (id: {1})" -f $Group,$runbookStatus.JobId)
+                            $message = ("[Group-{0}] Calling 'Optimize-HostPool' Runbook (id: {1})" -f $Group,$runbookStatus.JobId)
                             Write-Output $message
                             $complianceLogEntry = Global:_NewComplianceLogEntry @complianceLogParams `
                                 -Entry 'INFO' `
@@ -1082,7 +1110,7 @@ Foreach ($hostPool in $hostPools) {
                         }
                         Else {
                             # No runbook status value indicates the runbook failed to execute, log the error (trigger alert)
-                            $message = ("[Group-{0}] 'HostPool-Scale-Optimizer' automation job did not execute" -f $Group)
+                            $message = ("[Group-{0}] 'Optimize-HostPool' automation job did not execute" -f $Group)
                             Write-Output $message
                             $complianceLogEntry = Global:_NewComplianceLogEntry @complianceLogParams `
                                 -Entry 'ERROR' `

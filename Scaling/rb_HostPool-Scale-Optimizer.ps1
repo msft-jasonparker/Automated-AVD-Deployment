@@ -187,6 +187,7 @@ Function Global:_WaitOnJobs {
         }
         Start-Sleep -Milliseconds 2500
     }
+    Return $Jobs
 }
 
 Function _SetWvdMaintenanceTag {
@@ -317,106 +318,106 @@ If ($scaleInfo.StartVMs -gt 0) {
     [Void]$logMessages.Add($logEntry) # Log entry added to an array
 
     # Loop through session hosts based on availability matrix and select random number of VM(s) to start (bring into service)
-    $sessionHostsToStart = $metrics.sessionHosts | 
-        Where-Object {$_.sessionHostStatus -eq "unavailable" -and $_.vmStatus -eq "vm deallocated" -and $_.wvdMaintenance -eq $false -and $_.wvdPostDscComplete -eq $true} |
-        Get-Random -Count $scaleInfo.StartVMs
+    [System.Collections.Generic.List[System.Object]]$sessionHostsToStart = @()
+    $metrics.sessionHosts | 
+        Where-Object {$_.sessionHostStatus -eq "Shutdown" -and $_.vmStatus -eq "vm deallocated" -and $_.wvdMaintenance -eq $false -and $_.wvdPostDscComplete -eq $true} |
+        Get-Random -Count $scaleInfo.StartVMs | 
+        ForEach-Object { $sessionHostsToStart.Add($_) } # Loops through each session host and adds to the vms to start collection if the where clause is met
 
-    [system.collections.ArrayList]$startVMJobs = @() # Empty array for background jobs
-    Foreach ($sessionHost in $sessionHostsToStart) {
-        # Start the VM as a job and store the job details into an array
-        $objJob = Start-AzVM -Name $sessionHost.vmName -ResourceGroupName $sessionHost.ResourceGroupName -Confirm:$false -AsJob
-        [Void]$startVMJobs.Add($objJob)
-        
-        $message = ("[{0}] Initiated '{1}' operation" -f $sessionHost.sessionHostName,$jobAction)
+    If ($null -eq $sessionHostsToStart) {
+        $message = ("[{0}] No Session Hosts found to complete {1} operations" -f $HostPoolName,$jobAction)
+        Write-Output $message
         $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-            -Entry 'INFO' `
-            -SessionHostName $sessionHost.sessionHostName `
-            -Operation $jobAction `
+            -Entry 'WARNING' `
+            -Operation 'SCALE-UP' `
             -Message $message
         [Void]$logMessages.Add($logEntry) # Log entry added to an array
     }
-    _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logMessages # Write the array of log events to Log Analytics
-    
-    $jobStatus = Global:_WaitOnJobs -Jobs $startVMJobs -maxDuration 10 # Wait for jobs to complete or maxDuration to expire
-
-    [System.Collections.ArrayList]$sessionHostsToValidate = @() # Empty array for jobs that completed successfully and need final validation to bring into service
-    Foreach ($job in $jobStatus) {
-        $jobName = $job.name.split(" ")[-1].Trim("'") # Get the name of the VM from the background job
-        If ($job.State -ne "Completed") {
-            # Start VM job was not completed, set session host into Maintenance
-            $objSessionHost = $sessionHostsToStart | Where-Object {$_.vmName -eq $jobName}
-            $message = ("[{0}] '{1}' operation did not complete ({2})" -f $objSessionHost.sessionHostName,$jobAction,$job.State)
+    Else {
+        Foreach ($sessionHost in $sessionHostsToStart) {
+            # Start the VM with -NoWait
+            Start-AzVM -Name $sessionHost.vmName -ResourceGroupName $sessionHost.ResourceGroupName -Confirm:$false -NoWait
+            
+            $message = ("[{0}] Initiated '{1}' operation" -f $sessionHost.sessionHostName,$jobAction)
             $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                -Entry 'WARNING' `
-                -SessionHostName $objSessionHost.sessionHostName `
+                -Entry 'INFO' `
+                -SessionHostName $sessionHost.sessionHostName `
                 -Operation $jobAction `
                 -Message $message
-            _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logEntry # Write the log entry to Log Analytics
-            $objSessionHost | _SetWvdMaintenanceTag -jobAction $jobAction
+            [Void]$logMessages.Add($logEntry) # Log entry added to an array
         }
-        Else {
-            # Start VM job was completed
-            $objSessionHost = $sessionHostsToStart | Where-Object {$_.vmName -eq $jobName}
-            [Void]$sessionHostsToValidate.Add($objSessionHost)
-        }
-    }
+        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logMessages # Write the array of log events to Log Analytics
 
-    [System.Collections.ArrayList]$logMessages = @() # Empty array to hold several logging events
-    $stopWatch = [System.Diagnostics.Stopwatch]::StartNew() # Create stopwatch to prevent long running validation loop
-    $vmStatusCheck = $true
-    While ($vmStatusCheck) {
-        If ($stopwatch.Elapsed.TotalMinutes -ge 10) {
-            # Assume any validation check exceeding 10 minutes is either stuck or indicates a problem
-            $message = ("[{0}] '{1}' validation exceeded the time allotted (10 minutes)" -f $hostPoolName,$jobAction)
-            $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                -Entry 'WARNING' `
-                -Operation 'SESSION-HOST-STATUS' `
-                -Message $message
-            _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logEntry # Write the log entry to Log Analytics
+        [System.Collections.ArrayList]$logMessages = @() # Empty array to hold several logging events
+        $stopWatch = [System.Diagnostics.Stopwatch]::StartNew() # Create stopwatch to prevent long running validation loop
+        $vmStatusCheck = $true
+        While ($vmStatusCheck) {
+            If ($stopwatch.Elapsed.TotalMinutes -ge 15) {
+                # Assume any validation check exceeding 10 minutes is either stuck or indicates a problem
+                $message = ("[{0}] '{1}' validation exceeded the time allotted (15 minutes)" -f $hostPoolName,$jobAction)
+                $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                    -Entry 'WARNING' `
+                    -Operation 'SESSION-HOST-STATUS' `
+                    -Message $message
+                _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logEntry # Write the log entry to Log Analytics
 
-            $sessionHostsToValidate | ForEach-Object {
-                # Any session host started that isn't reporting as 'available' is set to maintenance
-                $wvdStatus = Get-AzWvdSessionHost -HostPoolName $hostPoolName -ResourceGroupName $_.ResourceGroupName -Name $_.sessionHostName | ForEach-Object {$_.Status}
-                If ($wvdStatus -ne "Available") {
-                    $_ | _SetWvdMaintenanceTag -jobAction $jobAction
-                }
-                Else {
-                    # Any session host showing 'available' has drain mode disabled
-                    $message = ("[{0}] '{1}' operation completed successfully" -f $_.sessionHostName,$jobAction)
-                    $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                        -Entry 'INFO' `
-                        -SessionHostName $_.sessionHostName `
-                        -Operation $jobAction `
-                        -Message $message
-                    [Void]$logMessages.Add($logEntry) # Log entry added to an array
-                    Update-AzWvdSessionHost -Name $_.sessionHostName -HostPoolName $hostPoolName -ResourceGroupName $_.resourceGroupName -AllowNewSession:$true | Out-Null
-                }
-            }
-            $stopwatch.Stop()
-            $vmStatusCheck = $false
-        }
-        Else {
-            $sessionHostsComplete = 0 # Counts the session hosts that are available after a start event
-            $sessionHostsToValidate | ForEach-Object {
-                $wvdStatus = Get-AzWvdSessionHost -HostPoolName $hostPoolName -ResourceGroupName $_.ResourceGroupName -Name $_.sessionHostName | ForEach-Object {$_.Status}
-                If ($wvdStatus -eq "Available") { $sessionHostsComplete++ }
-            }
-            If ($sessionHostsToValidate.Count -eq $sessionHostsComplete) {
-                # Log and break loop if all session hosts report complete
-                $sessionHostsToValidate | ForEach-Object {
-                    $message = ("[{0}] '{1}' operation completed successfully" -f $_.sessionHostName,$jobAction)
-                    $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
-                        -Entry 'INFO' `
-                        -SessionHostName $_.sessionHostName `
-                        -Operation $jobAction `
-                        -Message $message
-                    [Void]$logMessages.Add($logEntry) # Log entry added to an array
-                    Update-AzWvdSessionHost -Name $_.sessionHostName -HostPoolName $hostPoolName -ResourceGroupName $_.resourceGroupName -AllowNewSession:$true | Out-Null
+                #$sessionHostsToValidate | ForEach-Object {
+                $sessionHostsToStart | ForEach-Object {
+                    # Any session host started that isn't reporting as 'available' is set to maintenance
+                    $wvdStatus = Get-AzWvdSessionHost -HostPoolName $hostPoolName -ResourceGroupName $_.ResourceGroupName -Name $_.sessionHostName | ForEach-Object {$_.Status}
+                    If ($wvdStatus -ne "Available") {
+                        $message = ("[{0}] '{1}' operation did not complete OR the session host is not 'available'" -f $_.sessionHostName,$jobAction)
+                        $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                            -Entry 'WARNING' `
+                            -SessionHostName $_.sessionHostName `
+                            -Operation $jobAction `
+                            -Message $message
+                        _WriteLALogEntry -customerId $laWorkspaceId -sharedKey $laWorkspaceKey -logName $laOptimizeLogName -logMessage $logEntry # Write the log entry to Log Analytics
+                        $_ | _SetWvdMaintenanceTag -jobAction $jobAction
+                        Stop-AzVM -ResourceGroupName $_.ResourceGroupName -Name $_.sessionHostName -NoWait -Force
+                    }
+                    Else {
+                        # Any session host showing 'available' has drain mode disabled
+                        $message = ("[{0}] '{1}' operation completed successfully" -f $_.sessionHostName,$jobAction)
+                        $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                            -Entry 'INFO' `
+                            -SessionHostName $_.sessionHostName `
+                            -Operation $jobAction `
+                            -Message $message
+                        [Void]$logMessages.Add($logEntry) # Log entry added to an array
+                        Update-AzWvdSessionHost -Name $_.sessionHostName -HostPoolName $hostPoolName -ResourceGroupName $_.resourceGroupName -AllowNewSession:$true | Out-Null
+                    }
                 }
                 $stopwatch.Stop()
                 $vmStatusCheck = $false
             }
-            Start-Sleep  -Milliseconds 2500
+            Else {
+                $sessionHostsComplete = 0 # Counts the session hosts that are available after a start event
+                $sessionHostsToStart | ForEach-Object {
+                    $wvdStatus = Get-AzWvdSessionHost -HostPoolName $hostPoolName -ResourceGroupName $_.ResourceGroupName -Name $_.sessionHostName | ForEach-Object {$_.Status}
+                    Write-Output ("[{0}] Session Host Status: {1}" -f $_.sessionHostName,$wvdStatus)
+                    If ($wvdStatus -eq "Available") { $sessionHostsComplete++ }
+                }
+                
+                Write-Output ("Session Hosts To Start: {0}" -f $sessionHostsToStart.Count)
+                Write-Output ("Session Hosts Complete: {0}" -f $sessionHostsComplete)
+                If ($sessionHostsToStart.Count -eq $sessionHostsComplete) {
+                    # Log and break loop if all session hosts report complete
+                    $sessionHostsToStart | ForEach-Object {
+                        $message = ("[{0}] '{1}' operation completed successfully" -f $_.sessionHostName,$jobAction)
+                        $logEntry = Global:_NewOptimizeLogEntry @optimizeLogParams `
+                            -Entry 'INFO' `
+                            -SessionHostName $_.sessionHostName `
+                            -Operation $jobAction `
+                            -Message $message
+                        [Void]$logMessages.Add($logEntry) # Log entry added to an array
+                        Update-AzWvdSessionHost -Name $_.sessionHostName -HostPoolName $hostPoolName -ResourceGroupName $_.resourceGroupName -AllowNewSession:$true | Out-Null
+                    }
+                    $stopwatch.Stop()
+                    $vmStatusCheck = $false
+                }
+                Start-Sleep  -Milliseconds 2500
+            }
         }
     }
     
@@ -441,7 +442,7 @@ If ($scaleInfo.DrainAndStopVMs -gt 0) {
         -Message $message
     [Void]$logMessages.Add($logEntry) # Log entry added to an array
 
-    # Loop through session hosts based on availability matrix, add an action property to the host object with drain as the default action
+        # Loop through session hosts based on availability matrix, add an action property to the host object with drain as the default action
     $shHashTable = $metrics.sessionHosts | Where-Object { 
         $_.sessionHostStatus -eq "available" -and 
         $_.vmStatus -eq "vm running" -and 
