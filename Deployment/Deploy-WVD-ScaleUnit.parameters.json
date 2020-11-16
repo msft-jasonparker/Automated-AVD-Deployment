@@ -78,7 +78,7 @@
             }
         },
         "wvd_keyVaultId": {
-            "value": "/subscriptions/821b4c05-31e6-4a50-9649-3daf54ec1e37/resourceGroups/WVD-SVCS-RG/providers/Microsoft.KeyVault/vaults/WVD-KV-01",
+            "value": "## wvd_keyVaultId ##",
             "metadata": {
                 "description": "Update this value to reflect the resource id of the KeyVault where the secrets are store for the deployment region."
             }
@@ -131,9 +131,9 @@
                     {
                         "deploymentType": "PROD",
                         "deploymentFunction": "VDI",
-                        "fsLogixVhdLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdfileshare\\Profiles\\%userdomain%",
+                        "fsLogixVhdLocation": "## \\\\SERVERNAME\\SHARE ##",
                         "dscConfiguration": "WVD-Win10-SessionHost-Config.ps1.zip",
-                        "wvdArtifactLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdfileshare\\wvdartifacts",
+                        "wvdArtifactLocation": "## \\\\SERVERNAME\\SHARE ##",
                         "azVmNumberOfInstances": 6,
                         "azVmStartingIncrement": 1
                     }
@@ -144,7 +144,7 @@
             }
         },
         "domain": {
-            "value": "prkrlabs.local",
+            "value": "## domain ##",
             "metadata": {
                 "description": "Domain name used for the VM template created for the Host Pools"
             }
