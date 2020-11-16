@@ -27,7 +27,7 @@
         },
         "wvdStorageAccountName": {
             "type": "string",
-            "defaultValue": "wvdartifactblobstore"
+            "defaultValue": "wvdartifacts"
         },
         "wvdKeyVaultName": {
             "type": "string",
