@@ -1,39 +1,44 @@
 # Automated Deployment of Windows Virtual Desktop
 
-This repo is comprised of a PowerShell module, scripts, Azure ARM templates, and ARM parameter files.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
+This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM templates, Azure ARM template parameter files and Desired State Configuration scripts.  The goal of this repo is to provide any organization looking to deploy Windows Virtual Desktop, an easy to use deployment model based on a set group of standards.
 
-**UPDATED**: Use these links to setup the foundational resources in your Azure subscription
+> **WARNING:**
+> 
+> This repo assumes that you or your organization is already well established into Microsoft Azure. There are many dependancies required to make this repo / solution to work correctly. The requirements section below should outline what is required for this repo to be successfully deployed.
 
-[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
-[![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+---
 
 ## Table of Contents
 
-- [Requirements](#Requirements)
-  - [Knowledge](#Knowledge)
-  - [Azure](#Azure)
-  - [Non-Azure](#Non-Azure)
-- [Getting Started](#Getting-Started)
-- [Deployment](#Deployment)
-  - [PowerShell Module Dependancies](#PowerShell-Module-Dependancies)
-  - [Scale Unit ARM Template](#Scale-Unit-ARM-Template)
-    - [Functions](#Scale-Unit-Functions)
-    - [Variables](#Scale-Unit-Variables)
-    - [Resources](#Scale-Unit-Resources)
-    - [Outputs](#Scale-Unit-Outputs)
-  - [Scale Unit Parameter File](#Scale-Unit-Parameter-File)
-  - [Host Pool ARM Template](#Host-Pool-ARM-Template)
-    - [Functions](#Host-Pool-Functions)
-    - [Variables](#Host-Pool-Variables)
-    - [Resources](#Host-Pool-Resources)
-    - [Outputs](#Host-Pool-Outputs)
-  - [Session Host ARM Template](#Session-Host-ARM-Template)
-    - [Functions](#Session-Host-Functions)
-    - [Variables](#Session-Host-Variables)
-    - [Resources](#Session-Host-Resources)
-    - [Outputs](#Session-Host-Outputs)
-- [Desired State Configuration](#Desired-State-Configuration-(Session-Host-Customization))
+- [Automated Deployment of Windows Virtual Desktop](#automated-deployment-of-windows-virtual-desktop)
+  - [Table of Contents](#table-of-contents)
+  - [Requirements](#requirements)
+    - [Knowledge](#knowledge)
+    - [Azure](#azure)
+    - [Non-Azure](#non-azure)
+  - [Azure Setup - Greenfield Deployments](#azure-setup---greenfield-deployments)
+  - [Getting Started](#getting-started)
+  - [Deployment](#deployment)
+    - [PowerShell Module Dependancies](#powershell-module-dependancies)
+    - [Scale Unit ARM Template](#scale-unit-arm-template)
+      - [**Scale Unit Variables**](#scale-unit-variables)
+      - [**Scale Unit Resources**](#scale-unit-resources)
+      - [**Scale Unit Outputs**](#scale-unit-outputs)
+    - [Scale Unit Parameter File](#scale-unit-parameter-file)
+    - [Host Pool ARM Template](#host-pool-arm-template)
+      - [**Host Pool Functions**](#host-pool-functions)
+      - [**Host Pool Variables**](#host-pool-variables)
+      - [**Host Pool Resources**](#host-pool-resources)
+      - [**Host Pool Outputs**](#host-pool-outputs)
+    - [Session Host ARM Template](#session-host-arm-template)
+      - [**Session Host Functions**](#session-host-functions)
+      - [**Session Host Variables**](#session-host-variables)
+      - [**Session Host Resources**](#session-host-resources)
+      - [**Session Host Outputs**](#session-host-outputs)
+    - [WVD Configuration ARM Template](#wvd-configuration-arm-template)
+      - [**Configuration Variables**](#configuration-variables)
+      - [**Configuration Resources**](#configuration-resources)
+  - [Desired State Configuration (Session Host Customization)](#desired-state-configuration-session-host-customization)
 
 ## Requirements
 
@@ -51,7 +56,7 @@ Below are some of the minimum requirements to be able to use this repo in a Test
 
 ### Azure
 
-The following resources are considered to be the minimum resources needed to ensure successful deployments along with dynamic scaling.
+The following resources are considered to be the minimum resources needed to ensure successful deployments along with dynamic scaling. Manually create the required components or use the [Azure Setup](#azure-setup---greenfield-deployments) templates
 
 - Subscription(s)
   - 1 or more Subscriptions (e.g. Core sub, EastUS sub)
@@ -98,14 +103,50 @@ While these requirements are listed as non-Azure, they could easily be created i
 
 ---
 
+## Azure Setup - Greenfield Deployments
+
+If you are looking to test this repo in a dev / test environment, use the links below to create the framework required for a successful deployment.
+
+Creates the following Azure Components:
+  - Resource Groups:
+    - WVD-NET-RG (Networking Resources)
+    - WVD-SVCS-RG (Shared Services Resources)
+    - WVD-POOL-RG-01 (Host Pool Resources)
+    - WVD-POOL-RG-02 (Host Pool Resources)
+  - Resources:
+    - WVD-VNET (Virtual Network - 192.168.0.0/16)
+      - WVD-Subnet-00 (Shared Services subnet - 192.168.0.0/24)
+      - WVD-Subnet-01 (Host Pool 01 subnet - 192.168.1.0/24)
+      - WVD-Subnet-02 (Host Pool 02 subnet - 192.168.2.0/24)
+    - WVD-KV-(uniqueString)
+      - Secrets:
+        - WVD-VM-Admin-Account
+        - WVD-VM-Admin-Password
+        - WVD-LA-WorkspaceId
+        - WVD-LA-WorkspaceKey
+        - WVD-VM-DomainJoin-Account
+        - WVD-VM-DomainJoin-Password
+        - WVD-SessionHost-OU
+    - WVD-AA-(uniqueString) (Automation Account)
+    - WVD-LA-(uniqueString) (Log Analytics Workspace)
+    - wvdartifacts(uniquestring) (Storage Account)
+      - Blob container(s): dsc,templates
+
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+[![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+
+---
+
 ## Getting Started
 
 To use this repository, first clone or download to your own repository. This will allow your organization to customize the deployment code to suit your specific needs. Alternative, the repository could also be forked in the event updates to this repository need to flow to other repositories.
 
+Open a PowerShell console and navigate to the '*Scripts*' sub-directory of the repository.  If not already done, run ```Set-ExecutionPolicy Bypass``` from an administrator console. From the '*Scripts*' sub-directory run the ```CopyToPSPath.ps1``` script which will copy the Az.WvdOperations Module into your modules directory (All Users) and then imports the module to your PowerShell session. Discover the commands in the function by typing, ```Get-Command -Module Az.WvdOperations```. If you need more information about a specific command, use ```Get-Help <cmd> -Detailed```.
+
 Next, create the required Azure resources listed in the Requirements section. This should include not only the creation of the resources, but also the configuration of these resources. For example:
 
 - Upload the ARM template and parameter files to the templates container in the Storage Account
-- Package the DSC configuration script into an archive
+- Package the DSC configuration script into an archive and upload to a Storage Account
 - Upload the DSC configuration archive to the dsc container in the Storage Account
 - Import or create the runbooks for Dynamic Scaling
 
@@ -127,8 +168,6 @@ Next, create the required Azure resources listed in the Requirements section. Th
 - Az.DesktopVirtualization (should be installed with the Az module)
 - Az.WvdOperations.psm1 (located in the Operations folder)
 
-The Az.WvdOperations module was created to be used with this deployment process.  Located in the .\Scripts directory is a script called 'CopyToPSPath.ps1'.  Run this script to copy the module to your path and import to your session.
-
 ---
 
 ### Scale Unit ARM Template
@@ -143,7 +182,7 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 "copy": [{
   "name": "wvdAppGroupArray",
   "count": "[length(parameters('wvd_hostPoolConfig').configs)]",
-  "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray'))),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
+  "input": "[resourceId(concat(parameters('wvd_hostPoolResourceGroupPrefix'),padleft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0')),'Microsoft.DesktopVirtualization/applicationgroups/',concat(parameters('az_cloudResourcePrefix'),'-wvd-hostpool-',padLeft(add(parameters('wvd_hostPoolInitialValue'),copyIndex('wvdAppGroupArray')),2,'0'),'-DAG'))]"
 }],
 "wvdResourceLocation": "[resourceGroup().location]",
 "wvdWorkspaceName": "[concat(parameters('az_cloudResourcePrefix'),'-wvd-workspace')]",
@@ -153,9 +192,13 @@ A "scale unit" is the term used in reference to a group of Host Pools and Sessio
 - **wvdAppGroupArray**: This variable is a construct of the *to be* created Desktop Application Groups (DAG).  This is required because if you have any existing DAG(s), writing this array to the WVD workspace will override any previous DAG(s). Later in the template, we'll add this variable to the reference of the existing properties.
 - **wvdWorkspaceName**: This variable uses the *az_cloudResourcePrefix* parameter to construct the WVD workspace name. Adjust this variable as needed.
 
+> IMPORTANT!
+>
+> The Windows Virtual Desktop Workspace **must** exist prior to any Scale Unit deployment.
+
 #### **Scale Unit Resources**
 
-The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which are addition deployments. The first is the Host Pool deployment and the last is the Workspace deployment. The Host Pool deployment uses a linked template URI as the based template and the parameters are defined in line. The Workspace deployment defines the WVD Workspace resource and contains the property section below which defines the DAG(s) linked to it.
+The Deploy-WVD-ScaleUnit.json ARM template contains 2 resources, both of which are deployments and not direct resources. The first is the Host Pool deployment and the last is the Workspace deployment. The Host Pool deployment uses a linked template URI as the based template and the parameters are defined in line. The Workspace deployment defines the WVD Workspace resource and contains the property section below which defines the DAG(s) linked to it.
 
 ```JSON
 "properties": {
@@ -194,7 +237,7 @@ The outputs from this template are important as they provide critical informatio
   - deploymentFunction
   - dscConfiguration
   - fsLogixVhdLocation
-  - sessionHostNames
+  - sessionHostNames (broken)
 
 ---
 
@@ -209,18 +252,22 @@ The parameter file is the main engine which drives the deployment of the "scale 
   "value": {
     "configs": [
       {
-        "deploymentType": "<deployment-type>",
-        "deploymentFunction": "<deployment-function>",
-        "fsLogixVhdLocation": "\\\\servername\\sharename",
-        "dscConfiguration": "DscConfiguration.ps1.zip",
-        "azVmNumberOfInstances": 20
+        "deploymentType": "PROD",
+        "deploymentFunction": "VDI",
+        "fsLogixVhdLocation": "\\\\<SERVERNAME>\\<SHARENAME>\\%userdomain%",
+        "dscConfiguration": "WVD-Win10-SessionHost-Config.ps1.zip",
+        "wvdArtifactLocation": "\\\\<SERVERNAME>\\<SHARENAME>\\wvdartifacts",
+        "azVmNumberOfInstances": 6,
+        "azVmStartingIncrement": 1
       },
       {
-        "deploymentType": "<deployment-type>",
-        "deploymentFunction": "<deployment-function>",
-        "fsLogixVhdLocation": "\\\\servername\\sharename",
-        "dscConfiguration": "DscConfiguration.ps1.zip",
-        "azVmNumberOfInstances": 20
+        "deploymentType": "PROD",
+        "deploymentFunction": "VDI",
+        "fsLogixVhdLocation": "\\\\<SERVERNAME>\\<SHARENAME>\\%userdomain%",
+        "dscConfiguration": "WVD-Win10-SessionHost-Config.ps1.zip",
+        "wvdArtifactLocation": "\\\\<SERVERNAME>\\<SHARENAME>\\wvdartifacts",
+        "azVmNumberOfInstances": 6,
+        "azVmStartingIncrement": 1
       }
     ]
   },
