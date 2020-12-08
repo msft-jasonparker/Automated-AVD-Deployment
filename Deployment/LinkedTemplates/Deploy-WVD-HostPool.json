@@ -27,6 +27,10 @@
         "az_vmNumberOfInstances": {
             "type": "int"
         },
+        "az_vmStartingIncrement": {
+            "type": "int",
+            "defaultValue": 1
+        },
         "az_vmImageOffer": {
             "type": "string"
         },
@@ -82,9 +86,6 @@
             "type": "string"
         },
         "wvd_fsLogixVhdLocation": {
-            "type": "string"
-        },
-        "wvd_artifactLocation": {
             "type": "string"
         },
         "domain": {
@@ -179,12 +180,19 @@
                 "WVD-Deployment": "[parameters('wvd_deploymentType')]",
                 "WVD-Function": "[parameters('wvd_deploymentFunction')]",
                 "WVD-DscConfiguration": "[parameters('wvd_dscConfiguration')]",
-                "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]",
-                "WVD-ArtifactLocation": "[parameters('wvd_artifactLocation')]"
+                "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]"
             },
             "properties": {
                 "friendlyName": "[concat('WVD Host Pool ',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),' (',toUpper(parameters('wvd_deploymentType')),' v',parameters('wvd_buildVersion'),')')]",
                 "hostpoolType": "Pooled",
+                "description": "[concat(
+                    '{\"DscConfiguration\":\"',
+                    parameters('wvd_dscConfiguration'),
+                    '\",\"FsLogixVhdLocation\":\"',
+                    parameters('wvd_fsLogixVhdLocation'),
+                    '\",\"ImagePublisher\":\"',
+                    parameters('az_vmImagePublisher'),'\"}'
+                )]",
                 "customRdpProperty": "[parameters('wvd_customRdpProperty')]",
                 "maxSessionLimit": "[parameters('wvd_maxSessionLimit')]",
                 "loadBalancerType": "[parameters('wvd_loadBalancerType')]",
@@ -257,6 +265,9 @@
                     },
                     "az_vmNumberOfInstances": {
                         "value": "[variables('wvdSessionHostInstances')]"
+                    },
+                    "az_vmStartingIncrement": {
+                        "value": "[parameters('az_vmStartingIncrement')]"
                     },
                     "az_vmNamePrefix": {
                         "value": "[variables('wvdshPrefix')]"
