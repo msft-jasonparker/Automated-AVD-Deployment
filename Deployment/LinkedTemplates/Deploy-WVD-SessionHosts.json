@@ -6,19 +6,13 @@
       "type": "string",
       "defaultValue": "[utcNow()]"
     },
-    "az_vmAdminAccount": {
-      "type": "string"
-    },
-    "az_vmAdminAccountPassword": {
-      "type": "securestring"
-    },
     "az_vmSize": {
       "type": "string"
     },
     "az_vmNumberOfInstances": {
       "type": "int"
     },
-     "az_vmStartingIncrement": {
+    "az_vmStartingIncrement": {
       "type": "int"
     },
     "az_vmNamePrefix": {
@@ -47,10 +41,17 @@
     },
     "wvd_hostpoolName": {
       "type": "string"
+    },
+    "dj_adminAccountUPN": {
+      "type": "string"
+    },
+    "dj_adminAccountPassword": {
+      "type": "securestring"
     }
   },
   "variables": {
     "azVmAvSetName": "[concat(parameters('wvd_hostpoolName'),'-AVSet-',parameters('wvd_groupReference'))]",
+    "existingDomainUsername": "[first(split(parameters('dj_adminAccountUPN'), '@'))]",
     "storageAccountType": "[parameters('az_vmDiskType')]",
     "wvdResourceLocation": "[resourceGroup().location]",
     "wvdshOffSet": "[if(equals(parameters('wvd_groupReference'),'A'),parameters('az_vmStartingIncrement'),add(parameters('az_vmNumberOfInstances'),parameters('az_vmStartingIncrement')))]"
@@ -113,16 +114,16 @@
       "location": "[variables('wvdResourceLocation')]",
       "tags": {
         "WVD-Maintenance": "True",
-        "WVD-PostDscComplete": "False",
         "WVD-Build": "[parameters('wvd_buildVersion')]",
-        "WVD-Group": "[parameters('wvd_groupReference')]"
+        "WVD-Group": "[parameters('wvd_groupReference')]",
+        "WVD-PostDscComplete": "False"
       },
       "copy": {
         "name": "WVD-SH-VM-Loop",
         "count": "[parameters('az_vmNumberOfInstances')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -130,11 +131,8 @@
         },
         "osProfile": {
           "computerName": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
-          "adminUsername": "[parameters('az_vmAdminAccount')]",
-          "adminPassword": "[parameters('az_vmAdminAccountPassword')]",
-          "windowsConfiguration": {
-            "timeZone": "Eastern Standard Time"
-          }
+          "adminUsername": "[variables('existingDomainUsername')]",
+          "adminPassword": "[parameters('dj_adminAccountPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -175,7 +173,7 @@
       "type": "array",
       "copy": {
         "count": "[parameters('az_vmNumberOfInstances')]",
-        "input": "[reference(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))))]"
+        "input": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]"
       }
     }
   }
