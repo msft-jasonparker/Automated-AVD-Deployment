@@ -42,16 +42,15 @@
     "wvd_hostpoolName": {
       "type": "string"
     },
-    "dj_adminAccountUPN": {
+    "az_vmAdminAccount": {
       "type": "string"
     },
-    "dj_adminAccountPassword": {
+    "az_vmAdminAccountPassword": {
       "type": "securestring"
     }
   },
   "variables": {
     "azVmAvSetName": "[concat(parameters('wvd_hostpoolName'),'-AVSet-',parameters('wvd_groupReference'))]",
-    "existingDomainUsername": "[first(split(parameters('dj_adminAccountUPN'), '@'))]",
     "storageAccountType": "[parameters('az_vmDiskType')]",
     "wvdResourceLocation": "[resourceGroup().location]",
     "wvdshOffSet": "[if(equals(parameters('wvd_groupReference'),'A'),parameters('az_vmStartingIncrement'),add(parameters('az_vmNumberOfInstances'),parameters('az_vmStartingIncrement')))]"
@@ -131,8 +130,8 @@
         },
         "osProfile": {
           "computerName": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
-          "adminUsername": "[variables('existingDomainUsername')]",
-          "adminPassword": "[parameters('dj_adminAccountPassword')]"
+          "adminUsername": "[parameters('az_vmAdminAccount')]",
+          "adminPassword": "[parameters('az_vmAdminAccountPassword')]"
         },
         "storageProfile": {
           "imageReference": {
