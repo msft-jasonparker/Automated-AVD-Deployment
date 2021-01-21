@@ -51,11 +51,11 @@
         },
         "wvdSvcsTemplateUri": {
             "type": "string",
-            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-SVCS-Template.json"
+            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-SVCS-Template.json?sp=rl&st=2021-01-21T22:10:47Z&se=2021-02-01T22:10:00Z&sv=2019-12-12&sr=c&sig=bSd%2F5qLoMu420%2FeUMNGudmnSxzeYDKYEXp4MXY9hMz8%3D"
         },
         "wvdNetTemplateUri": {
             "type": "string",
-            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-NET-Template.json"
+            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-NET-Template.json?sp=rl&st=2021-01-21T22:10:47Z&se=2021-02-01T22:10:00Z&sv=2019-12-12&sr=c&sig=bSd%2F5qLoMu420%2FeUMNGudmnSxzeYDKYEXp4MXY9hMz8%3D"
         }
     },
     "functions": [],
