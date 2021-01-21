@@ -27,13 +27,13 @@
             "accessTier": "Hot"
         },
         "keyVaultConfig": {
-            "secretVMAdminAccount": "WVD-VM-Admin-Account",
-            "secretVMAdminPassword": "WVD-VM-Admin-Password",
-            "secretLAWorkspaceId": "WVD-LA-WorkspaceId",
-            "secretLAWorkspaceKey": "WVD-LA-WorkspaceKey",
-            "secretVMDomainJoinAccount": "WVD-VM-DomainJoin-Account",
-            "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
-            "secretVMDomainJoinOU": "WVD-SessionHost-OU",
+            "secretVMAdminAccount": "VA-VM-Admin-Account",
+            "secretVMAdminPassword": "VA-VM-Admin-Password",
+            "secretLAWorkspaceId": "VA-LA-WorkspaceId",
+            "secretLAWorkspaceKey": "VA-LA-WorkspaceKey",
+            "secretVMDomainJoinAccount": "VA-VM-DomainJoin-Account",
+            "secretVMDomainJoinPassword": "VA-VM-DomainJoin-Password",
+            "secretVMDomainJoinOU": "VA-SessionHost-OU",
             "accessPolicyObjectId": "[parameters('kvAccessObjectId')]"
         }
     },

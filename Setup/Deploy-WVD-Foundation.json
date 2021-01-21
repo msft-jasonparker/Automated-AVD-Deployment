@@ -4,46 +4,46 @@
     "parameters": {
         "location": {
             "type": "string",
-            "defaultValue": "westus"
+            "defaultValue": "North Central US"
         },
         "kvAccessObjectId": {
             "type": "string",
-            "defaultValue": ">>> YOU MUST PROVIDE AN AZURE AD OBJECT ID <<<",
+            "defaultValue": "91cbab2d-c57d-4b85-8027-7782ed88616c",
             "metadata": {
-                "description": "REQUIRED! Provide the ObjectId of the Azure AD user or group with access to Key Vault secrets"
+                "description": "REQUIRED! Provide the ObjectId of the Azure AD user(hitecwiz) or group with access to Key Vault secrets"
             }
         },
         "hostPoolRgPrefix": {
             "type": "string",
-            "defaultValue": "WVD-POOL-RG-"
+            "defaultValue": "VA-POOL-RG-"
         },
         "svcRgName": {
             "type": "string",
-            "defaultValue": "WVD-SVCS-RG"
+            "defaultValue": "VA-SVCS-RG"
         },
         "netRgName": {
             "type": "string",
-            "defaultValue": "WVD-NET-RG"
+            "defaultValue": "VA-NET-RG"
         },
         "wvdStorageAccountName": {
             "type": "string",
-            "defaultValue": ">>> Enter a name 3-24 alpha-numeric characters, all lowercase <<<"
+            "defaultValue": "vawvdstgacct"
         },
         "wvdKeyVaultName": {
             "type": "string",
-            "defaultValue": "WVD-KV"
+            "defaultValue": "VA-KV"
         },
         "wvdAutomationAccountName": {
             "type": "string",
-            "defaultValue": "WVD-AA"
+            "defaultValue": "VA-AA"
         },
         "wvdLogAnalyticsWorkspaceName": {
             "type": "string",
-            "defaultValue": "WVD-LA"
+            "defaultValue": "VA-LA"
         },
         "wvdVirtualNetworkName": {
             "type": "string",
-            "defaultValue": "WVD-VNET"
+            "defaultValue": "VA-VNET"
         },
         "wvdMinHostPools": {
             "type": "int",
@@ -51,11 +51,11 @@
         },
         "wvdSvcsTemplateUri": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-SVCS-Template.json"
+            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-SVCS-Template.json"
         },
         "wvdNetTemplateUri": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-NET-Template.json"
+            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-NET-Template.json"
         }
     },
     "functions": [],
