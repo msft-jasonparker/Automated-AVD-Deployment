@@ -55,7 +55,7 @@
         },
         "wvdNetTemplateUri": {
             "type": "string",
-            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-NET-Template.json?sp=rl&st=2021-01-22T21:10:45Z&se=2021-04-04T21:10:00Z&sv=2019-12-12&sr=b&sig=2LO4C9rk%2F9cqFAt9J1NMV%2Fk0zhX2i1nHcQ97flGofWk%3D"
+            "defaultValue": "https://vawvdfoundation.blob.core.windows.net/wvdfoundation/Deploy-NET-Template.json?sp=rl&st=2021-01-22T21:32:53Z&se=2021-03-23T21:32:00Z&sv=2019-12-12&sr=b&sig=ihWjnIk1W%2F%2FeuP2cK6oWHdqiAcfWBZ5TCnFuuGyel%2Bk%3D"
         }
     },
     "functions": [],
