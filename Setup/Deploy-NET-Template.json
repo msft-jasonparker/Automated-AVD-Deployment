@@ -10,7 +10,7 @@
         "virtualNetworkConfig": {
             "addressSpace": "192.168.0.0/16",
             "subnetAddressPrefix": "192.168.0.0/24",
-            "subnetCount": 2,
+            "subnetCount": 1,
             "subnetPrefix": "VA-Subnet-"
         }
     },
