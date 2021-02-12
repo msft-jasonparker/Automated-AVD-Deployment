@@ -109,14 +109,14 @@
         },
         "ServicesTemplateUri": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-SVCS-Template.json",
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-SVCS-Template.json",
             "metadata": {
                 "description": "NOTE: This uri is used to call a linked Resource Group Deployment for the shared service resources"
             }
         },
         "NetworkTemplateUri": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-NET-Template.json",
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-NET-Template.json",
             "metadata": {
                 "description": "NOTE: This uri is used to call a linked Resource Group deployment for the network resources"
             }
