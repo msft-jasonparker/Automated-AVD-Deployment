@@ -2,35 +2,47 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "wvdVirtualNetworkName": {
+        "VirtualNetworkName": {
+            "type": "string"
+        },
+        "VirtualNetworkAddressSpace": {
+            "type": "string"
+        },
+        "VirtualNetworkSubnetAddress": {
+            "type": "string"
+        },
+        "VirtualNetworkSubnetCount": {
+            "type": "int"
+        },
+        "VirtualNetworkSubnetPrefix": {
             "type": "string"
         }
     },
     "variables": {
-        "virtualNetworkConfig": {
-            "addressSpace": "192.168.0.0/16",
-            "subnetAddressPrefix": "192.168.0.0/24",
-            "subnetCount": 2,
-            "subnetPrefix": "WVD-Subnet-"
-        }
+        "subnetpart1": "[split(parameters('VirtualNetworkSubnetAddress'),'.')]",
+        "copy": [{
+            "name": "subnetArray",
+            "count": "[parameters('VirtualNetworkSubnetCount')]",
+            "input": "[concat(variables('subnetpart1')[0],'.',variables('subnetpart1')[1],'.',copyIndex(1),',',variables('subnetpart1')[3])]"
+        }]
     },
     "resources": [
         {
-            "name": "[parameters('wvdVirtualNetworkName')]",
+            "name": "[parameters('VirtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[variables('virtualNetworkConfig').addressSpace]"
+                        "[parameters('VirtualNetworkAddressSpace')]"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[concat(variables('virtualNetworkConfig').subnetPrefix,padLeft('0',2,'0'))]",
+                        "name": "[concat(parameters('VirtualNetworkSubnetPrefix'),padLeft('0',2,'0'))]",
                         "properties": {
-                            "addressPrefix": "[variables('virtualNetworkConfig').subnetAddressPrefix]"
+                            "addressPrefix": "[parameters('VirtualNetworkSubnetAddress')]"
                         }
                     }
                 ]
@@ -40,18 +52,18 @@
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
             "location": "[resourceGroup().location]",
-            "name": "[concat(parameters('wvdVirtualNetworkName'),'/',variables('virtualNetworkConfig').subnetPrefix,padLeft(copyIndex(1),2,'0'))]",
+            "name": "[concat(parameters('VirtualNetworkName'),'/',parameters('VirtualNetworkSubnetPrefix'),padLeft(copyIndex(1),2,'0'))]",
             "copy": {
                 "name": "SubnetCopy",
-                "count": "[variables('virtualNetworkConfig').subnetCount]",
+                "count": "[parameters('VirtualNetworkSubnetCount')]",
                 "batchSize": 1,
                 "mode": "Serial"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/',parameters('wvdVirtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/',parameters('VirtualNetworkName'))]"
             ],
             "properties": {
-                "addressPrefix": "[concat('192.168.', copyIndex(1), '.0/24')]"
+                "addressPrefix": "[variables('subnetArray')[copyIndex()]]"
             }
         }
     ],

@@ -2,19 +2,19 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "wvdStorageAccountName": {
+        "StorageAccountPrefix": {
             "type": "string"
         },
-        "wvdKeyVaultName": {
+        "KeyVaultNamePrefix": {
             "type": "string"
         },
-        "kvAccessObjectId": {
+        "KeyVaultAccessObjectId": {
             "type": "string"
         },
-        "wvdAutomationAccountName": {
+        "AutomationAccountNamePrefix": {
             "type": "string"
         },
-        "wvdLogAnalyticsWorkspaceName": {
+        "LogAnalyticsWorkspaceNamePrefix": {
             "type": "string"
         }
     },
@@ -22,25 +22,31 @@
         "storageAccountConfig": {
             "dscContainer": "dsc",
             "templateContainer": "templates",
+            "fileShare": {
+                "name": "wvdprofiles",
+                "quota": "1024",
+                "tier": "TransactionOptimized",
+                "protocols": "SMB"
+            },
             "tier": "Standard",
             "replication": "Standard_RAGRS",
             "accessTier": "Hot"
         },
         "keyVaultConfig": {
-            "secretVMAdminAccount": "WVD-VM-Admin-Account",
-            "secretVMAdminPassword": "WVD-VM-Admin-Password",
+            "secretVMAdminAccount": "WVD-VM-LocalAdmin-Account",
+            "secretVMAdminPassword": "WVD-VM-LocalAdmin-Password",
             "secretLAWorkspaceId": "WVD-LA-WorkspaceId",
             "secretLAWorkspaceKey": "WVD-LA-WorkspaceKey",
             "secretVMDomainJoinAccount": "WVD-VM-DomainJoin-Account",
             "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
             "secretVMDomainJoinOU": "WVD-SessionHost-OU",
-            "accessPolicyObjectId": "[parameters('kvAccessObjectId')]"
+            "accessPolicyObjectId": "[parameters('KeyVaultAccessObjectId')]"
         }
     },
     "resources": [
         // Creates minimum storage account for wvd artifacts with 2 containers
         {
-            "name": "[concat(parameters('wvdStorageAccountName'),'-',uniqueString(subscription().id))]",
+            "name": "[concat(parameters('StorageAccountPrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "location": "[resourceGroup().location]",
@@ -55,7 +61,7 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
                     "dependsOn": [
-                        "[parameters('wvdStorageAccountName')]"
+                        "[parameters('StorageAccountPrefix')]"
                     ]
                 },
                 {
@@ -63,7 +69,20 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
                     "dependsOn": [
-                        "[parameters('wvdStorageAccountName')]"
+                        "[parameters('StorageAccountPrefix')]"
+                    ]
+                },
+                {
+                    "type": "shares",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/',variables('storageAccountConfig').fileShare.name)]",
+                    "properties": {
+                        "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
+                        "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
+                        "enabledProtocols": "[variables('storageAccountConfig').fileShare.protocols]"
+                    },
+                    "dependsOn": [
+                        "[parameters('StorageAccountPrefix')]"
                     ]
                 }
             ],
@@ -73,7 +92,7 @@
         },
         // Creates a Key Vault used for storing secrets needed during deployment
         {
-            "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]",
+            "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2019-09-01",
             "location": "[resourceGroup().location]",
@@ -213,7 +232,7 @@
         },
         // Creates Automation Account needed for Dynamic Scaling runbooks
         {
-            "name": "[concat(parameters('wvdAutomationAccountName'),'-',uniqueString(subscription().id))]",
+            "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.Automation/automationAccounts",
             "apiVersion": "2015-10-31",
             "location": "[resourceGroup().location]",
@@ -225,7 +244,7 @@
         },
         // Creates Log Analytics Workspace
         {
-            "name": "[concat(parameters('wvdLogAnalyticsWorkspaceName'),'-',uniqueString(subscription().id))]",
+            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.OperationalInsights/workspaces",
             "apiVersion": "2015-11-01-preview",
             "location": "[resourceGroup().location]",

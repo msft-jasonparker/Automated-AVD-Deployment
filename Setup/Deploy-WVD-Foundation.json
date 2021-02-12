@@ -2,60 +2,124 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
+        "Region": {
             "type": "string",
-            "defaultValue": "westus"
-        },
-        "kvAccessObjectId": {
-            "type": "string",
-            "defaultValue": ">>> YOU MUST PROVIDE AN AZURE AD OBJECT ID <<<",
+            "defaultValue": "westus2",
             "metadata": {
-                "description": "REQUIRED! Provide the ObjectId of the Azure AD user or group with access to Key Vault secrets"
+                "description": "NOTE: Select a region that supports Availability Zones"
             }
         },
-        "hostPoolRgPrefix": {
+        "KeyVaultAccessObjectId": {
             "type": "string",
-            "defaultValue": "WVD-POOL-RG-"
+            "defaultValue": "37382197-2e86-4077-afd4-67a49734ceb8",
+            "metadata": {
+                "description": "NOTE: Provide the ObjectId of the Azure AD user or group that will be given access to the Key Vault secrets"
+            }
         },
-        "svcRgName": {
+        "HostPoolResourceGroupPrefix": {
             "type": "string",
-            "defaultValue": "WVD-SVCS-RG"
+            "defaultValue": "WVD-POOL-RG-",
+            "metadata": {
+                "description": "NOTE: This solution assumes Host Pools will be contained in their own Resource Groups"
+            }
         },
-        "netRgName": {
+        "ServicesResourceGroupName": {
             "type": "string",
-            "defaultValue": "WVD-NET-RG"
+            "defaultValue": "WVD-SVCS-RG",
+            "metadata": {
+                "description": "NOTE: The Services Resource Group is created for non-WVD resources"
+            }
         },
-        "wvdStorageAccountName": {
+        "NetworkResourceGroupName": {
             "type": "string",
-            "defaultValue": "wvdartifacts"
+            "defaultValue": "WVD-NET-RG",
+            "metadata": {
+                "description": "NOTE: The Network Resource Group is created for all network resources"
+            }
         },
-        "wvdKeyVaultName": {
+        "StorageAccountPrefix": {
             "type": "string",
-            "defaultValue": "WVD-KV"
+            "defaultValue": "wvdartifacts",
+            "metadata": {
+                "description": "NOTE: This storage account will contain blob containers for DSC configuration, ARM templates, and file shares for WVD profiles"
+            }
         },
-        "wvdAutomationAccountName": {
+        "KeyVaultNamePrefix": {
             "type": "string",
-            "defaultValue": "WVD-AA"
+            "defaultValue": "WVD-KV",
+            "metadata": {
+                "description": "NOTE: The full name for the Key Vault resource will include a unique string appended to the end"
+            }
         },
-        "wvdLogAnalyticsWorkspaceName": {
+        "AutomationAccountNamePrefix": {
             "type": "string",
-            "defaultValue": "WVD-LA"
+            "defaultValue": "WVD-AA",
+            "metadata": {
+                "description": "NOTE: The full name for the Automation Account resource will include a unique string appended to the end"
+            }
         },
-        "wvdVirtualNetworkName": {
+        "LogAnalyticsWorkspaceNamePrefix": {
             "type": "string",
-            "defaultValue": "WVD-VNET"
+            "defaultValue": "WVD-LA",
+            "metadata": {
+                "description": "NOTE: The full name for the Log Analytics resource will include a unique string appended to the end"
+            }
         },
-        "wvdMinHostPools": {
+        "VirtualNetworkName": {
+            "type": "string",
+            "defaultValue": "WVD-VNET",
+            "metadata": {
+                "description": "NOTE: This solution only creates a single Virtual Network, update the AddressSpace parameter to use an alternate address"
+            }
+        },
+        "VirtualNetworkAddressSpace": {
+            "type": "string",
+            "defaultValue": "172.20.0.0/16",
+            "metadata": {
+                "description": "NOTE: Class B Network Address Space, update to any private IP address space"
+            }
+        },
+        "VirtualNetworkSubnetAddress": {
+            "type": "string",
+            "defaultValue": "172.20.0.0/24",
+            "metadata": {
+                "description": "NOTE: Class C Subnet address space, update to any private IP address space"
+            }
+        },
+        "VirtualNetworkSubnetCount": {
             "type": "int",
-            "defaultValue": 2
+            "defaultValue": "2",
+            "metadata": {
+                "description": "NOTE: Number of subnets to create, be sure that the VNET and Subnets fit correctly. Additional subnets will be incremented numerically."
+            }
         },
-        "wvdSvcsTemplateUri": {
+        "VirtualNetworkSubnetPrefix": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-SVCS-Template.json"
+            "defaultValue": "WVD-Subnet-",
+            "metadata": {
+                "description": "NOTE: Each Subnet will have this prefix and have an incremented 2-digit numeric value assigned (i.e. 01, 02, 03, etc.)"
+            }
         },
-        "wvdNetTemplateUri": {
+        "HostPoolResourceGroupsToCreate": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "NOTE: This numeric value specifies the number of Resource Groups to create based on the number of Host Pool you plan to deploy"
+            }
+        },
+        "ServicesTemplateUri": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-NET-Template.json"
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-SVCS-Template.json",
+            "metadata": {
+                "description": "NOTE: This uri is used to call a linked Resource Group Deployment for the shared service resources"
+            }
+        },
+        "NetworkTemplateUri": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/master/Setup/Deploy-NET-Template.json",
+            "metadata": {
+                "description": "NOTE: This uri is used to call a linked Resource Group deployment for the network resources"
+            }
         }
     },
     "functions": [],
@@ -63,67 +127,67 @@
     "resources": [
         // Creates SVCS Resource Group
         {
-            "name": "[parameters('svcRgName')]",
+            "name": "[parameters('ServicesResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('location')]",
+            "location": "[parameters('Region')]",
             "dependsOn": [],
             "properties": {}
         },
         // Creates NET Resource Group
         {
-            "name": "[parameters('netRgName')]",
+            "name": "[parameters('NetworkResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('location')]",
+            "location": "[parameters('Region')]",
             "dependsOn": [],
             "properties": {}
         },
-        // Creates Host Pool Resource Group(s) based on wvdMinHostPools
+        // Creates Host Pool Resource Group(s) based on HostPoolResourceGroupsToCreate
         {
-            "name": "[concat(parameters('hostPoolRgPrefix'),padleft(add(copyIndex(),1),2,'0'))]",
+            "name": "[concat(parameters('HostPoolResourceGroupPrefix'),padleft(add(copyIndex(),1),2,'0'))]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('location')]",
+            "location": "[parameters('Region')]",
             "dependsOn": [],
             "copy": {
-                "name": "Pool-Rgs",
-                "count": "[parameters('wvdMinHostPools')]"
+                "name": "Host-Pool-Resource-Groups",
+                "count": "[parameters('HostPoolResourceGroupsToCreate')]"
             },
             "properties": {}
         },
-        // Resource Group deployment for SVCS resources, depends on SVCS RG
+        // Resource Group deployment for SVCS resources, depends on SVCS Resource Group
         {
             "name": "Create-Services-Resources",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "resourceGroup": "[parameters('svcRgName')]",
+            "resourceGroup": "[parameters('ServicesResourceGroupName')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[parameters('wvdSvcsTemplateUri')]",
+                    "uri": "[parameters('ServicesTemplateUri')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "wvdStorageAccountName": {
-                        "value": "[parameters('wvdStorageAccountName')]"
+                    "StorageAccountPrefix": {
+                        "value": "[parameters('StorageAccountPrefix')]"
                     },
-                    "wvdKeyVaultName": {
-                        "value": "[parameters('wvdKeyVaultName')]"
+                    "KeyVaultNamePrefix": {
+                        "value": "[parameters('KeyVaultNamePrefix')]"
                     },
-                    "kvAccessObjectId": {
-                        "value": "[parameters('kvAccessObjectId')]"
+                    "KeyVaultAccessObjectId": {
+                        "value": "[parameters('KeyVaultAccessObjectId')]"
                     },
-                    "wvdAutomationAccountName": {
-                        "value": "[parameters('wvdAutomationAccountName')]"
+                    "AutomationAccountNamePrefix": {
+                        "value": "[parameters('AutomationAccountNamePrefix')]"
                     },
-                    "wvdLogAnalyticsWorkspaceName": {
-                        "value": "[parameters('wvdLogAnalyticsWorkspaceName')]"
+                    "LogAnalyticsWorkspaceNamePrefix": {
+                        "value": "[parameters('LogAnalyticsWorkspaceNamePrefix')]"
                     }
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups',parameters('svcRgName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('ServicesResourceGroupName'))]"
             ]
         },
         // Resource Group deployment for NET resources, depends on NET RG
@@ -131,21 +195,33 @@
             "name": "Create-Network-Resources",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
-            "resourceGroup": "[parameters('netRgName')]",
+            "resourceGroup": "[parameters('NetworkResourceGroupName')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[parameters('wvdNetTemplateUri')]",
+                    "uri": "[parameters('NetworkTemplateUri')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "wvdVirtualNetworkName": {
-                        "value": "[parameters('wvdVirtualNetworkName')]"
-                    }
+                    "VirtualNetworkName": {
+                        "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "VirtualNetworkAddressSpace": {
+                        "value": "[parameters('VirtualNetworkAddressSpace')]"
+                    },
+                    "VirtualNetworkSubnetAddress": {
+                        "value": "[parameters('VirtualNetworkSubnetAddress')]"
+                    },
+                    "VirtualNetworkSubnetCount": {
+                        "value": "[parameters('VirtualNetworkSubnetCount')]"
+                    },
+                    "VirtualNetworkSubnetPrefix": {
+                        "value": "[parameters('VirtualNetworkSubnetPrefix')]"
+                    }    
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups',parameters('netRgName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups',parameters('NetworkResourceGroupName'))]"
             ]
         }
     ],
