@@ -132,8 +132,8 @@ Creates the following Azure Components:
     - wvdartifacts(uniquestring) (Storage Account)
       - Blob container(s): dsc,templates
 
-[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
-[![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fmaster%2FSetup%2FDeploy-WVD-Foundation.json)
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fdev-test%2FSetup%2FDeploy-WVD-Foundation.json)
+[![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fdev-test%2FSetup%2FDeploy-WVD-Foundation.json)
 
 ---
 
