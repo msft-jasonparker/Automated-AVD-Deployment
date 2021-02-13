@@ -61,7 +61,7 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
                     "dependsOn": [
-                        "[parameters('StorageAccountPrefix')]"
+                        "[concat(parameters('StorageAccountPrefix'),'-',uniqueString(subscription().id))]"
                     ]
                 },
                 {
@@ -69,26 +69,26 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
                     "dependsOn": [
-                        "[parameters('StorageAccountPrefix')]"
-                    ]
-                },
-                {
-                    "type": "shares",
-                    "apiVersion": "2019-06-01",
-                    "name": "[concat('default/',variables('storageAccountConfig').fileShare.name)]",
-                    "properties": {
-                        "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
-                        "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
-                        "enabledProtocols": "[variables('storageAccountConfig').fileShare.protocols]"
-                    },
-                    "dependsOn": [
-                        "[parameters('StorageAccountPrefix')]"
+                        "[concat(parameters('StorageAccountPrefix'),'-',uniqueString(subscription().id))]"
                     ]
                 }
             ],
             "properties": {
                 "accessTier": "[variables('storageAccountConfig').accessTier]"
             }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('StorageAccountPrefix'), '-', uniqueString(subscription().id), '/default/', variables('storageAccountConfig').fileShare.name)]",
+            "properties": {
+                "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
+                "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
+                "enabledProtocols": "[variables('storageAccountConfig').fileShare.protocols]"
+            },
+            "dependsOn": [
+                "[resourceid('Microsoft.Storage/storageAccounts',concat(parameters('StorageAccountPrefix'),'-',uniqueString(subscription().id)))]"
+            ]
         },
         // Creates a Key Vault used for storing secrets needed during deployment
         {
