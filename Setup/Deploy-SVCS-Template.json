@@ -244,7 +244,7 @@
         },
         // Creates Log Analytics Workspace
         {
-            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().id))]",
+            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))]",
             "type": "Microsoft.OperationalInsights/workspaces",
             "apiVersion": "2015-11-01-preview",
             "location": "[resourceGroup().location]",

@@ -23,7 +23,7 @@
         "copy": [{
             "name": "subnetArray",
             "count": "[parameters('VirtualNetworkSubnetCount')]",
-            "input": "[concat(variables('subnetpart1')[0],'.',variables('subnetpart1')[1],'.',copyIndex('subnetArray', 1),',',variables('subnetpart1')[3])]"
+            "input": "[concat(variables('subnetpart1')[0],'.',variables('subnetpart1')[1],'.',copyIndex('subnetArray', 1),'.',variables('subnetpart1')[3])]"
         }]
     },
     "resources": [
