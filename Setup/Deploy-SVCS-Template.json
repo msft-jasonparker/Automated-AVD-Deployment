@@ -80,7 +80,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
             "apiVersion": "2019-06-01",
-            "name": "[concat(parameters('StorageAccountName'), uniqueString(subscription().id), '/default/', variables('storageAccountConfig').fileShare.name)]",
+            "name": "[concat(parameters('StorageAccountName'), '/default/', variables('storageAccountConfig').fileShare.name)]",
             "properties": {
                 "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
                 "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
