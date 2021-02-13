@@ -11,6 +11,12 @@
         "KeyVaultAccessObjectId": {
             "type": "string"
         },
+        "KeyVaultSecretVMLocalAdminAccount": {
+            "type": "string"
+        },
+        "KeyVaultSecretVMLocalAdminPassword": {
+            "type": "securestring"
+        },
         "AutomationAccountNamePrefix": {
             "type": "string"
         },
@@ -151,7 +157,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[parameters('KeyVaultSecretVMLocalAdminAccount')]"
                     }
                 },
                 {
@@ -166,7 +172,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[parameters('KeyVaultSecretVMLocalAdminPassword')]"
                     }
                 },
                 {

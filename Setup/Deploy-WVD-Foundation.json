@@ -16,6 +16,20 @@
                 "description": "NOTE: Provide the ObjectId of the Azure AD user or group that will be given access to the Key Vault secrets"
             }
         },
+        "KeyVaultSecretVMLocalAdminAccount": {
+            "type": "string",
+            "defaultValue": "<<< ENTER THE LOCAL ADMINISTRATOR ACCOUNT NAME >>>",
+            "metadata": {
+                "description": "NOTE: "
+            }
+        },        
+        "KeyVaultSecretVMLocalAdminPassword": {
+            "type": "securestring",
+            "defaultValue": "<<< ENTER THE LOCAL ADMINISTRATOR PASSWORD >>>",
+            "metadata": {
+                "description": "NOTE: "
+            }
+        },
         "HostPoolResourceGroupPrefix": {
             "type": "string",
             "defaultValue": "WVD-POOL-RG-",
@@ -177,6 +191,12 @@
                     },
                     "KeyVaultAccessObjectId": {
                         "value": "[parameters('KeyVaultAccessObjectId')]"
+                    },
+                    "KeyVaultSecretVMLocalAdminAccount": {
+                        "value": "[parameters('KeyVaultSecretVMLocalAdminAccount')]"
+                    },
+                    "KeyVaultSecretVMLocalAdminPassword": {
+                        "value": "[parameters('KeyVaultSecretVMLocalAdminPassword')]"
                     },
                     "AutomationAccountNamePrefix": {
                         "value": "[parameters('AutomationAccountNamePrefix')]"
