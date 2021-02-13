@@ -57,7 +57,7 @@
             },
             "resources": [
                 {
-                    "type": "containers",
+                    "type": "blobServices/containers",
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
                     "dependsOn": [
@@ -65,7 +65,7 @@
                     ]
                 },
                 {
-                    "type": "containers",
+                    "type": "blobServices/containers",
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
                     "dependsOn": [
