@@ -44,6 +44,21 @@
         }
     },
     "resources": [
+        // Creates Log Analytics Workspace
+        {
+            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2015-11-01-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "features": {
+                    "searchVersion": 1
+                }
+            }
+        },
         // Creates minimum storage account for wvd artifacts with 2 containers
         {
             "name": "[parameters('StorageAccountName')]",
@@ -77,6 +92,7 @@
                 "accessTier": "[variables('storageAccountConfig').accessTier]"
             }
         },
+        // Creates file share in the storage account - setting are in variables section
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
             "apiVersion": "2019-06-01",
@@ -210,7 +226,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))),'2020-08-01').customerId]"
                     }
                 },
                 {
@@ -225,7 +241,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))),'2020-08-01').primarySharedKey]"
                     }
                 }
             ]
@@ -239,21 +255,6 @@
             "properties": {
                 "sku": {
                     "name": "Basic"
-                }
-            }
-        },
-        // Creates Log Analytics Workspace
-        {
-            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))]",
-            "type": "Microsoft.OperationalInsights/workspaces",
-            "apiVersion": "2015-11-01-preview",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "sku": {
-                    "name": "PerGB2018"
-                },
-                "features": {
-                    "searchVersion": 1
                 }
             }
         }
