@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "StorageAccountPrefix": {
+        "StorageAccountName": {
             "type": "string"
         },
         "KeyVaultNamePrefix": {
@@ -46,7 +46,7 @@
     "resources": [
         // Creates minimum storage account for wvd artifacts with 2 containers
         {
-            "name": "[concat(parameters('StorageAccountPrefix'),uniqueString(subscription().id))]",
+            "name": "[parameters('StorageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "location": "[resourceGroup().location]",
@@ -61,7 +61,7 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
                     "dependsOn": [
-                        "[concat(parameters('StorageAccountPrefix'),uniqueString(subscription().id))]"
+                        "[parameters('StorageAccountName')]"
                     ]
                 },
                 {
@@ -69,7 +69,7 @@
                     "apiVersion": "2019-06-01",
                     "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
                     "dependsOn": [
-                        "[concat(parameters('StorageAccountPrefix'),uniqueString(subscription().id))]"
+                        "[parameters('StorageAccountName')]"
                     ]
                 }
             ],
@@ -80,14 +80,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
             "apiVersion": "2019-06-01",
-            "name": "[concat(parameters('StorageAccountPrefix'), uniqueString(subscription().id), '/default/', variables('storageAccountConfig').fileShare.name)]",
+            "name": "[concat(parameters('StorageAccountName'), uniqueString(subscription().id), '/default/', variables('storageAccountConfig').fileShare.name)]",
             "properties": {
                 "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
                 "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
                 "enabledProtocols": "[variables('storageAccountConfig').fileShare.protocols]"
             },
             "dependsOn": [
-                "[resourceid('Microsoft.Storage/storageAccounts',concat(parameters('StorageAccountPrefix'),uniqueString(subscription().id)))]"
+                "[resourceid('Microsoft.Storage/storageAccounts',parameters('StorageAccountName'))]"
             ]
         },
         // Creates a Key Vault used for storing secrets needed during deployment

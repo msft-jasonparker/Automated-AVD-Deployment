@@ -37,9 +37,9 @@
                 "description": "NOTE: The Network Resource Group is created for all network resources"
             }
         },
-        "StorageAccountPrefix": {
+        "StorageAccountName": {
             "type": "string",
-            "defaultValue": "wvdartifacts",
+            "defaultValue": "wvdartifactblobstore",
             "metadata": {
                 "description": "NOTE: This storage account will contain blob containers for DSC configuration, ARM templates, and file shares for WVD profiles"
             }
@@ -170,7 +170,7 @@
                 },
                 "parameters": {
                     "StorageAccountPrefix": {
-                        "value": "[parameters('StorageAccountPrefix')]"
+                        "value": "[parameters('StorageAccountName')]"
                     },
                     "KeyVaultNamePrefix": {
                         "value": "[parameters('KeyVaultNamePrefix')]"
