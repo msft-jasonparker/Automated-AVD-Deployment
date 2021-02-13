@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "Region": {
+        "Location": {
             "type": "string",
             "defaultValue": "westus2",
             "metadata": {
@@ -130,7 +130,7 @@
             "name": "[parameters('ServicesResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Region')]",
+            "location": "[parameters('Location')]",
             "dependsOn": [],
             "properties": {}
         },
@@ -139,7 +139,7 @@
             "name": "[parameters('NetworkResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Region')]",
+            "location": "[parameters('Location')]",
             "dependsOn": [],
             "properties": {}
         },
@@ -148,7 +148,7 @@
             "name": "[concat(parameters('HostPoolResourceGroupPrefix'),padleft(add(copyIndex(),1),2,'0'))]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Region')]",
+            "location": "[parameters('Location')]",
             "dependsOn": [],
             "copy": {
                 "name": "Host-Pool-Resource-Groups",

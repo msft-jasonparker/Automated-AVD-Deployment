@@ -125,10 +125,10 @@
             "resources": [
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Local Admin Account name for VM(s)",
@@ -140,10 +140,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminPassword)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminPassword)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Local Admin Account password for VM(s)",
@@ -155,10 +155,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinAccount)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinAccount)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Domain Join Account UPN for VM(s)",
@@ -170,10 +170,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinPassword)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinPassword)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Domain Join Account password for VM(s)",
@@ -185,10 +185,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinOU)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinOU)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Organizational Unit for Session Host Computer Accounts during Domain Join",
@@ -200,10 +200,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretLAWorkspaceId)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretLAWorkspaceId)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Primary Log Analytics Workspace Id",
@@ -215,10 +215,10 @@
                 },
                 {
                     "type": "Microsoft.KeyVault/vaults/secrets",
-                    "name": "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretLAWorkspaceKey)]",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretLAWorkspaceKey)]",
                     "apiVersion": "2019-09-01",
                     "dependsOn": [
-                        "[concat(parameters('wvdKeyVaultName'),'-',uniqueString(subscription().id))]"
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
                     ],
                     "properties": {
                         "contentType": "Primary Log Analytics Workspace Key",
