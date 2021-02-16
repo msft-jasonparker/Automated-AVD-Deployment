@@ -30,12 +30,12 @@
                 "input": "[concat(variables('splitSubnetAddressSpace')[0],'.',variables('splitSubnetAddressSpace')[1],'.',copyIndex('subnetArray', 1),'.',variables('splitSubnetAddressSpace')[3])]"
             }
         ],
-        "UseCustomDNS": "[equals(parameters('VirtualNetworkDNSServer'),'AzureDNS')]"
+        "virtualNetworkDNS": "[if(equals(parameters('VirtualNetworkDNSServer'),'AzureDNS'),parameters('VirtualNetworkDNSServer'),'CustomDNS')]"
     },
     "resources": [
         // Conditional deployment of WVD-VNET using AzureDNS - relies on UseCustomDNS variable
         {
-            "condition": "[variables('UseCustomDNS')]",
+            "condition": "[equals(variables('virtualNetworkDNS'),'AzureDNS')]",
             "name": "[parameters('VirtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
@@ -56,7 +56,7 @@
         },
         // Conditional deployment of WVD-VNET using VirtualNetworkDNSServer - relies on UseCustomDNS variable
         {
-            "condition": "[variables('UseCustomDNS')]",
+            "condition": "[equals(variables('virtualNetworkDNS'),'CustomDNS')]",
             "name": "[parameters('VirtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
