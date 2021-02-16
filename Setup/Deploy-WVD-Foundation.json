@@ -141,24 +141,15 @@
             "metadata": {
                 "description": "NOTE: This numeric value specifies the number of Resource Groups to create based on the number of Host Pool you plan to deploy"
             }
-        },
-        "ServicesTemplateUri": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-SVCS-Template.json",
-            "metadata": {
-                "description": "NOTE: This uri is used to call a linked Resource Group Deployment for the shared service resources"
-            }
-        },
-        "NetworkTemplateUri": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-NET-Template.json",
-            "metadata": {
-                "description": "NOTE: This uri is used to call a linked Resource Group deployment for the network resources"
-            }
         }
     },
     "functions": [],
-    "variables": {},
+    "variables": {
+        "ServicesTemplateUri": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-SVCS-Template.json",
+        "CustomDNSNetworkTemplateUri": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-NET-CustomDNS-Template.json",
+        "AzureDNSNetworkTemplateUri": "https://raw.githubusercontent.com/msft-jasonparker/Automated-WVD-Deployment/dev-test/Setup/Deploy-NET-AzureDNS-Template.json",
+        "NetworkTemplateUri": "[if(equals(parameters('VirtualNetworkDNSServer'),'AzureDNS'),variables('AzureDNSNetworkTemplateUri'),variables('CustomDNSNetworkTemplateUri'))]"
+    },
     "resources": [
         // Creates SVCS Resource Group
         {
@@ -200,7 +191,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[parameters('ServicesTemplateUri')]",
+                    "uri": "[variables('ServicesTemplateUri')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -249,7 +240,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[parameters('NetworkTemplateUri')]",
+                    "uri": "[variables('NetworkTemplateUri')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
