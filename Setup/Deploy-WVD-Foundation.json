@@ -2,13 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "Location": {
-            "type": "string",
-            "defaultValue": "westus2",
-            "metadata": {
-                "description": "NOTE: Select a region that supports Availability Zones"
-            }
-        },
         "KeyVaultAccessObjectId": {
             "type": "string",
             "defaultValue": "37382197-2e86-4077-afd4-67a49734ceb8",
@@ -160,7 +153,7 @@
             "name": "[parameters('ServicesResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [],
             "properties": {}
         },
@@ -169,7 +162,7 @@
             "name": "[parameters('NetworkResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [],
             "properties": {}
         },
@@ -178,7 +171,7 @@
             "name": "[concat(parameters('HostPoolResourceGroupPrefix'),padleft(add(copyIndex(),1),2,'0'))]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[parameters('Location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [],
             "copy": {
                 "name": "Host-Pool-Resource-Groups",
