@@ -174,7 +174,6 @@
                 "enabledForDeployment": true,
                 "enabledForTemplateDeployment": true,
                 "enabledForDiskEncryption": false,
-                "enableSoftDelete": false,
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
                     {
