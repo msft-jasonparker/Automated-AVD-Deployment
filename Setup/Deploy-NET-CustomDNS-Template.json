@@ -41,10 +41,10 @@
             "comments": "CustomDNS",
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": [ "[parameters('VirtualNetworkAddressSpace')]" ],
-                    "dhcpOptions": {
-                        "dnsServers": [ "[parameters('VirtualNetworkDNSServer')]" ]
-                    }
+                    "addressPrefixes": [ "[parameters('VirtualNetworkAddressSpace')]" ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": [ "[parameters('VirtualNetworkDNSServer')]" ]
                 },
                 // Creates the 00 Subnet for WVD Services (not for session hosts)
                 "subnets": [

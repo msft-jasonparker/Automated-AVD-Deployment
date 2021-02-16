@@ -94,9 +94,6 @@
                 },
                 {
                     "Name": "xPendingReboot"
-                },
-                {
-                    "Name": "xPSDesiredStateConfiguraiton"
                 }
             ]
         }
