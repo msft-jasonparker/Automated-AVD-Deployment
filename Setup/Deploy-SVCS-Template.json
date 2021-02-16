@@ -315,22 +315,21 @@
                 "sku": {
                     "name": "Basic"
                 }
-            },
-            "resources": [
-              {
-                  "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]",
-                  "type": "modules",
-                  "apiVersion": "2015-10-31",
-                  "dependsOn": [
-                      "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
-                  ],
-                  "properties": {
-                      "contentLink": {
-                          "uri": "https://www.powershellgallery.com/api/v2/package/Az.Accounts"
-                      }
-                  }
-              }
-            ]
+            }
+        },
+        // Installs the required Az.Accounts Module before other modules
+        {
+            "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
+            ],
+            "properties": {
+                "contentLink": {
+                    "uri": "https://www.powershellgallery.com/api/v2/package/Az.Accounts"
+                }
+            }
         },
         // Automation Account Modules - Update the variable automationAccountModuleConfig to add or remove modules to the Automation Account
         {
@@ -339,7 +338,7 @@
             "name": "[concat(parameters('AutomationAccountNamePrefix'), '-', uniqueString(subscription().id), '/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
+                "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]"
             ],
             "tags": {},
             "properties": {
