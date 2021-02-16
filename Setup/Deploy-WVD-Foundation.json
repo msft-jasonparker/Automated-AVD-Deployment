@@ -10,26 +10,38 @@
             }
         },
         "KeyVaultSecretVMDomainJoinAccount": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "admin@consoto.com",
+            "metadata": {
+                "description": "NOTE: This should be an account with domain join rights in your AD domain"
+            }
         },
         "KeyVaultSecretVMDomainJoinPassword": {
-            "type": "securestring"
+            "type": "securestring",
+            "defaultValue": "S3crEtP@$$w0r|>",
+            "metadata": {
+                "description": "NOTE: Provide the password for the domain join account"
+            }
         },
         "KeyVaultSecretVMDomainJoinOU": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "CN=Computers,DC=constoso,dc=com",
+            "metadata": {
+                "description": "NOTE: Organizational Unit where Session Host computer accounts are created"
+            }
         },
         "KeyVaultSecretVMLocalAdminAccount": {
             "type": "string",
-            "defaultValue": "<<< ENTER THE LOCAL ADMINISTRATOR ACCOUNT NAME >>>",
+            "defaultValue": "laa_administrator",
             "metadata": {
-                "description": "NOTE: "
+                "description": "NOTE: Provide the name for the local vm administrator account"
             }
         },        
         "KeyVaultSecretVMLocalAdminPassword": {
             "type": "securestring",
-            "defaultValue": "<<< ENTER THE LOCAL ADMINISTRATOR PASSWORD >>>",
+            "defaultValue": "S3crEtP@$$w0r|>",
             "metadata": {
-                "description": "NOTE: "
+                "description": "NOTE: Provide the password for the local vm administrator account"
             }
         },
         "HostPoolResourceGroupPrefix": {
