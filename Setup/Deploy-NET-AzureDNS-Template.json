@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "VirtualNetworkName": {
+            "type": "string"
+        },
+        "VirtualNetworkDNSServer": {
+            "type": "string"
+        },
+        "VirtualNetworkAddressSpace": {
+            "type": "string"
+        },
+        "VirtualNetworkSubnetAddress": {
+            "type": "string"
+        },
+        "VirtualNetworkSubnetCount": {
+            "type": "int"
+        },
+        "VirtualNetworkSubnetPrefix": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "splitSubnetAddressSpace": "[split(parameters('VirtualNetworkSubnetAddress'),'.')]",
+        "copy": [
+            {
+                "name": "subnetArray",
+                "count": "[parameters('VirtualNetworkSubnetCount')]",
+                "input": "[concat(variables('splitSubnetAddressSpace')[0],'.',variables('splitSubnetAddressSpace')[1],'.',copyIndex('subnetArray', 1),'.',variables('splitSubnetAddressSpace')[3])]"
+            }
+        ]
+    },
+    "resources": [
+        // Deploys WVD Virtual Network using AzureDNS
+        {
+            "name": "[parameters('VirtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "comments": "[parameters('VirtualNetworkDNSServer')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [ "[parameters('VirtualNetworkAddressSpace')]" ]
+                },
+                "subnets": [
+                    {
+                        "name": "[concat(parameters('VirtualNetworkSubnetPrefix'),padLeft('0',2,'0'))]",
+                        "properties": {
+                            "addressPrefix": "[parameters('VirtualNetworkSubnetAddress')]"
+                        }
+                    }
+                ]
+            }
+        },
+        // Creates WVD Subnets based on the VirtualNetworkSubnetCount parameter (should match the number of Host Pools in HostPoolResourceGroupsToCreate)
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('VirtualNetworkName'),'/',parameters('VirtualNetworkSubnetPrefix'),padLeft(copyIndex(1),2,'0'))]",
+            "copy": {
+                "name": "SubnetCopy",
+                "count": "[parameters('VirtualNetworkSubnetCount')]",
+                "batchSize": 1,
+                "mode": "Serial"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/',parameters('VirtualNetworkName'))]"
+            ],
+            "properties": {
+                "addressPrefix": "[variables('subnetArray')[copyIndex()]]"
+            }
+        }
+    ],
+    "outputs": {}
+}
