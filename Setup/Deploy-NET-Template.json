@@ -30,7 +30,7 @@
                 "input": "[concat(variables('splitSubnetAddressSpace')[0],'.',variables('splitSubnetAddressSpace')[1],'.',copyIndex('subnetArray', 1),'.',variables('splitSubnetAddressSpace')[3])]"
             }
         ],
-        "UseCustomDNS": "[if(equals(parameters('VirtualNetworkDNSServer'),'AzureDNS'),'False','True')]"
+        "UseCustomDNS": "[equals(parameters('VirtualNetworkDNSServer'),'AzureDNS')]"
     },
     "resources": [
         // Conditional deployment of WVD-VNET using AzureDNS - relies on UseCustomDNS variable
