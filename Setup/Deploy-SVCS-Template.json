@@ -338,7 +338,7 @@
             "name": "[concat(parameters('AutomationAccountNamePrefix'), '-', uniqueString(subscription().id), '/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]"
+                "[resourceId('Microsoft.Automation/automationAccounts/modules', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts'))]"
             ],
             "tags": {},
             "properties": {
