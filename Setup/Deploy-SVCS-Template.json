@@ -11,6 +11,15 @@
         "KeyVaultAccessObjectId": {
             "type": "string"
         },
+        "KeyVaultSecretVMDomainJoinAccount": {
+            "type": "string"
+        },
+        "KeyVaultSecretVMDomainJoinPassword": {
+            "type": "securestring"
+        },
+        "KeyVaultSecretVMDomainJoinOU": {
+            "type": "string"
+        },
         "KeyVaultSecretVMLocalAdminAccount": {
             "type": "string"
         },
@@ -29,7 +38,7 @@
             "dscContainer": "dsc",
             "templateContainer": "templates",
             "fileShare": {
-                "name": "wvdprofiles",
+                "name": "wvdartifacts",
                 "quota": "1024",
                 "tier": "TransactionOptimized",
                 "protocols": "SMB"
@@ -47,14 +56,54 @@
             "secretVMDomainJoinPassword": "WVD-VM-DomainJoin-Password",
             "secretVMDomainJoinOU": "WVD-SessionHost-OU",
             "accessPolicyObjectId": "[parameters('KeyVaultAccessObjectId')]"
+        },
+        "automationAccountModuleConfig": {
+            "Modules": [
+                {
+                    "Name": "Az.Automation"
+                },
+                {
+                    "Name": "Az.Compute"
+                },
+                {
+                    "Name": "Az.DesktopVirtualization"
+                },
+                {
+                    "Name": "Az.Network"
+                },
+                {
+                    "Name": "Az.OperationalInsights"
+                },
+                {
+                    "Name": "Az.Resources"
+                },
+                {
+                    "Name": "Az.Storage"
+                },
+                {
+                    "Name": "CertificateDSC"
+                },
+                {
+                    "Name": "ComputerManagementDSC"
+                },
+                {
+                    "Name": "PSDscResources"
+                },
+                {
+                    "Name": "xPendingReboot"
+                },
+                {
+                    "Name": "xPSDesiredStateConfiguraiton"
+                }
+            ]
         }
     },
     "resources": [
         // Creates Log Analytics Workspace
         {
-            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))]",
+            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.OperationalInsights/workspaces",
-            "apiVersion": "2015-11-01-preview",
+            "apiVersion": "2020-08-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "sku": {
@@ -65,7 +114,7 @@
                 }
             }
         },
-        // Creates minimum storage account for wvd artifacts with 2 containers
+        // Creates minimum storage account for wvd artifacts with 2 containers and 1 file share
         {
             "name": "[parameters('StorageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
@@ -117,6 +166,9 @@
             "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2019-09-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId)))]"
+            ],
             "location": "[resourceGroup().location]",
             "properties": {
                 "enabledForDeployment": true,
@@ -187,7 +239,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinAccount')]"
                     }
                 },
                 {
@@ -202,7 +254,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinPassword')]"
                     }
                 },
                 {
@@ -217,7 +269,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "SecretValue"
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinOU')]"
                     }
                 },
                 {
@@ -252,7 +304,7 @@
                 }
             ]
         },
-        // Creates Automation Account needed for Dynamic Scaling runbooks
+        // Creates Automation Account needed for Dynamic Scaling runbooks and State Configuration
         {
             "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id))]",
             "type": "Microsoft.Automation/automationAccounts",
@@ -262,6 +314,41 @@
                 "sku": {
                     "name": "Basic"
                 }
+            },
+            "resources": [
+              {
+                  "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]",
+                  "type": "modules",
+                  "apiVersion": "2015-10-31",
+                  "dependsOn": [
+                      "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
+                  ],
+                  "properties": {
+                      "contentLink": {
+                          "uri": "https://www.powershellgallery.com/api/v2/package/Az.Accounts"
+                      }
+                  }
+              }
+            ]
+        },
+        // Automation Account Modules - Update the variable automationAccountModuleConfig to add or remove modules to the Automation Account
+        {
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "name": "[concat(parameters('AutomationAccountNamePrefix'), '-', uniqueString(subscription().id), '/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
+            ],
+            "tags": {},
+            "properties": {
+                "contentLink": {
+                    "uri": "[concat('https://www.powershellgallery.com/api/v2/package/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]"
+                }
+            },
+            "copy": {
+                "name": "Module-Config-Install",
+                "count": "[length(variables('automationAccountModuleConfig').Modules)]"
             }
         }
     ],

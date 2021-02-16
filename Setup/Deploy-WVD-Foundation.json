@@ -16,6 +16,15 @@
                 "description": "NOTE: Provide the ObjectId of the Azure AD user or group that will be given access to the Key Vault secrets"
             }
         },
+        "KeyVaultSecretVMDomainJoinAccount": {
+            "type": "string"
+        },
+        "KeyVaultSecretVMDomainJoinPassword": {
+            "type": "securestring"
+        },
+        "KeyVaultSecretVMDomainJoinOU": {
+            "type": "string"
+        },
         "KeyVaultSecretVMLocalAdminAccount": {
             "type": "string",
             "defaultValue": "<<< ENTER THE LOCAL ADMINISTRATOR ACCOUNT NAME >>>",
@@ -91,6 +100,13 @@
             "defaultValue": "172.20.0.0/16",
             "metadata": {
                 "description": "NOTE: Class B Network Address Space, update to any private IP address space"
+            }
+        },
+        "VirtualNetworkDNSServer": {
+            "type": "string",
+            "defaultValue": "AzureDNS",
+            "metadata": {
+                "description": "NOTE: Enter the IP Address of the DNS Server to be used in the WVD-VNET or use AzureDNS"
             }
         },
         "VirtualNetworkSubnetAddress": {
@@ -192,6 +208,15 @@
                     "KeyVaultAccessObjectId": {
                         "value": "[parameters('KeyVaultAccessObjectId')]"
                     },
+                    "KeyVaultSecretVMDomainJoinAccount": {
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinAccount')]"
+                    },
+                    "KeyVaultSecretVMDomainJoinPassword": {
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinPassword')]"
+                    },
+                    "KeyVaultSecretVMDomainJoinOU": {
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinOU')]"
+                    },
                     "KeyVaultSecretVMLocalAdminAccount": {
                         "value": "[parameters('KeyVaultSecretVMLocalAdminAccount')]"
                     },
@@ -225,6 +250,9 @@
                 "parameters": {
                     "VirtualNetworkName": {
                         "value": "[parameters('VirtualNetworkName')]"
+                    },
+                    "VirtualNetworkDNSServer": {
+                        "value": "[parameters('VirtualNetworkDNSServer')]"
                     },
                     "VirtualNetworkAddressSpace": {
                         "value": "[parameters('VirtualNetworkAddressSpace')]"

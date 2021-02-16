@@ -5,6 +5,9 @@
         "VirtualNetworkName": {
             "type": "string"
         },
+        "VirtualNetworkDNSServer": {
+            "type": "string"
+        },
         "VirtualNetworkAddressSpace": {
             "type": "string"
         },
@@ -19,24 +22,27 @@
         }
     },
     "variables": {
-        "subnetpart1": "[split(parameters('VirtualNetworkSubnetAddress'),'.')]",
-        "copy": [{
-            "name": "subnetArray",
-            "count": "[parameters('VirtualNetworkSubnetCount')]",
-            "input": "[concat(variables('subnetpart1')[0],'.',variables('subnetpart1')[1],'.',copyIndex('subnetArray', 1),'.',variables('subnetpart1')[3])]"
-        }]
+        "splitSubnetAddressSpace": "[split(parameters('VirtualNetworkSubnetAddress'),'.')]",
+        "copy": [
+            {
+                "name": "subnetArray",
+                "count": "[parameters('VirtualNetworkSubnetCount')]",
+                "input": "[concat(variables('splitSubnetAddressSpace')[0],'.',variables('splitSubnetAddressSpace')[1],'.',copyIndex('subnetArray', 1),'.',variables('splitSubnetAddressSpace')[3])]"
+            }
+        ],
+        "UseCustomDNS": "[if(equals(parameters('VirtualNetworkDNSServer'),'AzureDNS'),'False','True')]"
     },
     "resources": [
+        // Conditional deployment of WVD-VNET using AzureDNS - relies on UseCustomDNS variable
         {
+            "condition": "[variables('UseCustomDNS')]",
             "name": "[parameters('VirtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('VirtualNetworkAddressSpace')]"
-                    ]
+                    "addressPrefixes": [ "[parameters('VirtualNetworkAddressSpace')]" ]
                 },
                 "subnets": [
                     {
@@ -48,6 +54,32 @@
                 ]
             }
         },
+        // Conditional deployment of WVD-VNET using VirtualNetworkDNSServer - relies on UseCustomDNS variable
+        {
+            "condition": "[variables('UseCustomDNS')]",
+            "name": "[parameters('VirtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [ "[parameters('VirtualNetworkAddressSpace')]" ],
+                    "dhcpOptions": {
+                        "dnsServers": [ "[parameters('VirtualNetworkDNSServer')]" ]
+                    }
+                },
+                // Creates the 00 Subnet for WVD Services (not for session hosts)
+                "subnets": [
+                    {
+                        "name": "[concat(parameters('VirtualNetworkSubnetPrefix'),padLeft('0',2,'0'))]",
+                        "properties": {
+                            "addressPrefix": "[parameters('VirtualNetworkSubnetAddress')]"
+                        }
+                    }
+                ]
+            }
+        },
+        // Creates WVD Subnets based on the VirtualNetworkSubnetCount parameter (should match the number of Host Pools in HostPoolResourceGroupsToCreate)
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "apiVersion": "2020-05-01",
