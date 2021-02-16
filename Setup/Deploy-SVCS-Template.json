@@ -60,6 +60,9 @@
         "automationAccountModuleConfig": {
             "Modules": [
                 {
+                    "Name": "Az.Accounts"
+                },
+                {
                     "Name": "Az.Automation"
                 },
                 {
@@ -317,20 +320,6 @@
                 }
             }
         },
-        // Installs the required Az.Accounts Module before other modules
-        {
-            "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts')]",
-            "type": "Microsoft.Automation/automationAccounts/modules",
-            "apiVersion": "2015-10-31",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
-            ],
-            "properties": {
-                "contentLink": {
-                    "uri": "https://www.powershellgallery.com/api/v2/package/Az.Accounts"
-                }
-            }
-        },
         // Automation Account Modules - Update the variable automationAccountModuleConfig to add or remove modules to the Automation Account
         {
             "type": "Microsoft.Automation/automationAccounts/modules",
@@ -338,7 +327,7 @@
             "name": "[concat(parameters('AutomationAccountNamePrefix'), '-', uniqueString(subscription().id), '/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts/modules', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id), '/Az.Accounts'))]"
+                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
             ],
             "tags": {},
             "properties": {
@@ -348,7 +337,9 @@
             },
             "copy": {
                 "name": "Module-Config-Install",
-                "count": "[length(variables('automationAccountModuleConfig').Modules)]"
+                "count": "[length(variables('automationAccountModuleConfig').Modules)]",
+                "mode": "Serial",
+                "batchSize": 1
             }
         }
     ],
