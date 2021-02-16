@@ -63,6 +63,18 @@
                     "Name": "Az.Accounts"
                 },
                 {
+                    "Name": "CertificateDSC"
+                },
+                {
+                    "Name": "ComputerManagementDSC"
+                },
+                {
+                    "Name": "PSDscResources"
+                },
+                {
+                    "Name": "xPendingReboot"
+                },
+                {
                     "Name": "Az.Automation"
                 },
                 {
@@ -82,18 +94,6 @@
                 },
                 {
                     "Name": "Az.Storage"
-                },
-                {
-                    "Name": "CertificateDSC"
-                },
-                {
-                    "Name": "ComputerManagementDSC"
-                },
-                {
-                    "Name": "PSDscResources"
-                },
-                {
-                    "Name": "xPendingReboot"
                 }
             ]
         }
@@ -335,7 +335,7 @@
                 "name": "Module-Config-Install",
                 "count": "[length(variables('automationAccountModuleConfig').Modules)]",
                 "mode": "Serial",
-                "batchSize": 1
+                "batchSize": 3
             }
         }
     ],
