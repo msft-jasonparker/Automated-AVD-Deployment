@@ -153,7 +153,7 @@
             "name": "[parameters('ServicesResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[resourceGroup().location]",
+            "location": "westus2",
             "dependsOn": [],
             "properties": {}
         },
@@ -162,7 +162,7 @@
             "name": "[parameters('NetworkResourceGroupName')]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[resourceGroup().location]",
+            "location": "westus2",
             "dependsOn": [],
             "properties": {}
         },
@@ -171,7 +171,7 @@
             "name": "[concat(parameters('HostPoolResourceGroupPrefix'),padleft(add(copyIndex(),1),2,'0'))]",
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2019-10-01",
-            "location": "[resourceGroup().location]",
+            "location": "westus2",
             "dependsOn": [],
             "copy": {
                 "name": "Host-Pool-Resource-Groups",
