@@ -167,7 +167,7 @@
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2019-09-01",
             "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId)))]"
+                "[resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().Id)))]"
             ],
             "location": "[resourceGroup().location]",
             "properties": {
@@ -285,7 +285,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))),'2020-08-01').customerId]"
+                        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().Id))),'2020-08-01').customerId]"
                     }
                 },
                 {
@@ -300,7 +300,7 @@
                         "attributes": {
                             "enabled": true
                         },
-                        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().tenantId))),'2020-08-01').primarySharedKey]"
+                        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().Id))),'2020-08-01').primarySharedKey]"
                     }
                 }
             ]
