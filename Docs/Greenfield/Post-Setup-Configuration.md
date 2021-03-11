@@ -69,8 +69,8 @@ After importing the custom Az.WvdOperations module and configuring your DSC soft
 Update-AzWvdPackageZipFiles -Path C:\DFSRoot\DscSoftwareRepository\DEV\ -Build VDI -Verbose
 ```
 
-|**Output**
--
-|![PowerShell Output](../_media/update-wvd-packages.png)
+| **Output** |
+|---|
+| ![PowerShell Output](../_media/update-wvd-packages.png) |
 
 [**Back <<<--- Table of Contents**](../../README.md)
