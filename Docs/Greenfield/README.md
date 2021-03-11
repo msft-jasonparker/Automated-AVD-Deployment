@@ -171,5 +171,6 @@ When deploying to the Azure Portal, you can change the default values. Be sure y
     }
 ```
 
-[**Back --->>> Table of Contents](../../README.md)
+[**Back --->>> Table of Contents**](../../README.md)
+
 [**Next --->>> Post Setup Configuration**](Post-Setup-Configuration.md)
