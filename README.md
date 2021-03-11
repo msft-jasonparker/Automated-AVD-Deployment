@@ -10,8 +10,13 @@ This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM temp
 
 ## Table of Contents
 
-- [Automated Deployment of Windows Virtual Desktop](#automated-deployment-of-windows-virtual-desktop)
-  - [Table of Contents](#table-of-contents)
+- [Requirements](Docs/Requirements.md)
+  - [Knowledge](Docs/Requirements.md#knowledge)
+  - [Azure](Docs/Requirements.md#azure)
+  - [Non-Azure](Docs/Requirements.md#non-azure)
+- [Azure Greenfield Foundation](Docs/Greenfield/README.md)
+  - [Post Setup Configuration](Docs/Greenfield/Post-Setup-Configuration.md)
+- [Getting Started]()
 
 
 ---
