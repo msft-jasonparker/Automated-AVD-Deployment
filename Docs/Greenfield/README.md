@@ -22,7 +22,10 @@ The Azure foundation setup will create all the necessary Azure components that a
 --- | ---
 [![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fdev-test%2FSetup%2FDeploy-WVD-Foundation.json) | [![Deploy To Azure US Gov](https://aka.ms/deploytoazuregovbutton)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmsft-jasonparker%2FAutomated-WVD-Deployment%2Fdev-test%2FSetup%2FDeploy-WVD-Foundation.json)
 
-### Required Parameters
+### Required Parameters and Default Values
+
+When deploying to the Azure Portal, you can change the default values. Be sure you remember the changes you make if you deviate from the defaults.
+
 ```JSON
     "parameters": {
         "KeyVaultAccessObjectId": {
@@ -167,32 +170,5 @@ The Azure foundation setup will create all the necessary Azure components that a
         }
     }
 ```
-
-## Azure Foundation Resources (default values)
-
-  - Resource Groups:
-    - WVD-NET-RG (Networking Resources)
-    - WVD-SVCS-RG (Shared Services Resources)
-    - WVD-POOL-RG-01 (Host Pool Resources)
-    - WVD-POOL-RG-02 (Host Pool Resources)
-  - Resources:
-    - WVD-VNET (Virtual Network - 172.20.0.0/16)
-      - WVD-Subnet-00 (Shared Services subnet - 172.20.0.0/24)
-      - WVD-Subnet-01 (Host Pool 01 subnet - 172.20.1.0/24)
-      - WVD-Subnet-02 (Host Pool 02 subnet - 172.20.2.0/24)
-    - WVD-KV-(uniqueString)
-      - Secrets:
-        - WVD-LA-WorkspaceId
-        - WVD-LA-WorkspaceKey
-        - WVD-SessionHost-OU
-        - WVD-VM-DomainJoin-Account
-        - WVD-VM-DomainJoin-Password
-        - WVD-VM-LocalAdmin-Account
-        - WVD-VM-LocalAdmin-Password        
-    - WVD-AA-(uniqueString) (Automation Account)
-    - WVD-LA-(uniqueString) (Log Analytics Workspace)
-    - wvdartifacts(uniquestring) (Storage Account)
-      - Blob container(s): dsc,templates
-      - File Share(s): wvdartifacts
 
 [**Next --->>> Post Setup Configuration**](Post-Setup-Configuration.md)
