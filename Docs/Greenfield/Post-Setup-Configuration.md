@@ -22,13 +22,13 @@ For example, I would highly recommend using the [VDI Optimization Tool](https://
 
 In my lab, I configured DFS on my Domain Controller and configured the directories like the below:
 
-|**DSC Software**
--
-|![DSC Software Repo](../_media/DSC_Software_Repo.png)
+| **DSC Software** |
+|---|
+| ![DSC Software Repo](../_media/DSC_Software_Repo.png) |
 
-|**DFS Configuration**
--
-|![DFS Configuration](../_media/dfs_setup.png)
+| **DFS Configuration** |
+|---|
+| ![DFS Configuration](../_media/dfs_setup.png) |
 
 The underlying framework around the directory structure is based the properties you'll apply to your WVD Host Pools and configurations.  In this example, we have 2 environments; *DEV* and **PROD**.  Within each of these environments there are builds as outlined below:
 
