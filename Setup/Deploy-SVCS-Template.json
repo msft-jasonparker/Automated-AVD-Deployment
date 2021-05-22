@@ -75,6 +75,9 @@
                     "Name": "xPendingReboot"
                 },
                 {
+                    "Name": "cChoco"
+                },
+                {
                     "Name": "Az.Automation"
                 },
                 {
@@ -335,7 +338,7 @@
                 "name": "Module-Config-Install",
                 "count": "[length(variables('automationAccountModuleConfig').Modules)]",
                 "mode": "Serial",
-                "batchSize": 3
+                "batchSize": 5
             }
         }
     ],
