@@ -14,9 +14,12 @@ This repo is comprised of a PowerShell module (Az.WvdOperations), Azure ARM temp
   - [Knowledge](Docs/Requirements.md#knowledge)
   - [Azure](Docs/Requirements.md#azure)
   - [Non-Azure](Docs/Requirements.md#non-azure)
-- [Azure Greenfield Foundation](Docs/Greenfield/README.md)
-  - [Post Setup Configuration](Docs/Greenfield/Post-Setup-Configuration.md)
-- [Getting Started]()
-
+- [Azure Greenfield Setup](Docs/Azure-Greenfiled-Setup.md)
+- [Post Setup Configuration](Docs/Post-Setup-Configuration.md)
+- [Getting Started](docs/Getting-Started.md)
 
 ---
+
+## Architecture Example (my personal lab)
+
+![WVD-Architecture](/Docs/_media/WVD-Architecture.png)
