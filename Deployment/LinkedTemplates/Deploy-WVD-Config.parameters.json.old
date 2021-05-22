@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "az_AutomationAccountName": {
+      "value": "WVD-AA-ocbbxvhx3gdz2"
+    },
+    "az_AAModuleConfig": {
+      "value": {
+        "Modules": [
+          {
+            "Name": "Az.Accounts",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.accounts.2.1.2.nupkg"
+          },
+          {
+            "Name": "Az.Storage",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.storage.3.0.0.nupkg"
+          },
+          {
+            "Name": "Az.Automation",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.automation.1.3.6.nupkg"
+          },
+          {
+            "Name": "Az.DesktopVirtualization",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.desktopvirtualization.2.0.0.nupkg"
+          },
+          {
+            "Name": "Az.Compute",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.compute.4.6.0.nupkg"
+          },
+          {
+            "Name": "Az.Network",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.network.4.2.0.nupkg"
+          },
+          {
+            "Name": "Az.OperationalInsights",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.operationalinsights.2.3.0.nupkg"
+          },
+          {
+            "Name": "Az.Resources",
+            "Uri": "https://devopsgallerystorage.blob.core.windows.net:443/packages/az.resources.3.0.0.nupkg"
+          }
+        ]
+      }
+    },
+    "az_DscConfigurationName": {
+        "value": "WvdSessionHostConfig"
+    }
+  }
+}
