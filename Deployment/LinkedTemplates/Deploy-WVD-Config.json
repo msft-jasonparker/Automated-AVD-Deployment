@@ -4,11 +4,9 @@
   "parameters": {
     "az_automationAccountName": {
       "type": "string",
-      "defaultValue": "WVD-AA-ocbbxvhx3gdz2"
     },
     "az_aaResourceGroupName": {
       "type": "string",
-      "defaultValue": "WVD-SVCS-RG"
     },
     "az_virtualMachineNames": {
       "type": "array"
