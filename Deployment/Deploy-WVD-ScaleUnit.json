@@ -27,13 +27,16 @@
             "type": "string"
         },
         "wvd_deploymentString": {
-            "type": "string",
+            "type": "string"
+        },
+        "wvd_deploymentGuid": {
+            "type": "string"
         },
         "wvd_hostPoolInitialValue": {
             "type": "int"
         },
         "wvd_hostPoolTemplateUri": {
-            "type": "string",
+            "type": "string"
         },
         "wvd_sessionHostTemplateUri": {
             "type": "string"
@@ -188,6 +191,9 @@
                     "wvd_hostPoolIncrement": {
                         "value": "[add(parameters('wvd_hostPoolInitialValue'),copyIndex())]"
                     },
+                    "wvd_hostPoolType": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdHostPoolType]"
+                    },
                     "wvd_maxSessionLimit": {
                         "value": "[parameters('wvd_maxSessionLimit')]"
                     },
@@ -211,6 +217,9 @@
                     },
                     "wvd_Role": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdRole]"
+                    },                    
+                    "wvd_deploymentGuid": {
+                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdDeploymentGuid]"
                     },
                     "az_vmImagePublisher": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].azVmImagePublisher]"
@@ -220,9 +229,6 @@
                     },
                     "az_vmImageSKU": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].azVmImageSku]"
-                    },
-                    "az_vmAvailabilityType": {
-                        "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].azVmAvailabilityType]"
                     },
                     "wvd_fsLogixVhdLocation": {
                         "value": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]"
@@ -284,6 +290,7 @@
                     "wvdType": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdType]",
                     "wvdBuild": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdBuild]",
                     "wvdRole": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdRole]",
+                    "wvdDeploymentGuid": "[parameters('wvd_DeploymentGuid')]",
                     "dscConfiguration": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].dscConfiguration]",
                     "fsLogixVhdLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].fsLogixVhdLocation]",
                     "wvdArtifactLocation": "[parameters('wvd_hostPoolConfig').configs[copyIndex()].wvdArtifactLocation]",
