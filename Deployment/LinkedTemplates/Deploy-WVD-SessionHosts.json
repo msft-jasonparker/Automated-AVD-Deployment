@@ -6,13 +6,16 @@
       "type": "string",
       "defaultValue": "[utcNow()]"
     },
+    "az_logAnalyticsWorkspaceId": {
+      "type": "string"
+    },
+    "az_logAnalyticsWorkspaceKey": {
+      "type": "string"
+    },
     "az_vmSize": {
       "type": "string"
     },
     "az_vmNumberOfInstances": {
-      "type": "int"
-    },
-    "az_vmStartingIncrement": {
       "type": "int"
     },
     "az_vmNamePrefix": {
@@ -30,16 +33,37 @@
     "az_vmDiskType": {
       "type": "string"
     },
-    "wvd_groupReference": {
+    "dj_AdminAccountUPN": {
+      "type": "string"
+    },
+    "dj_AdminAccountPassword": {
+      "type": "securestring"
+    },
+    "dj_OrganizationalUnit": {
+      "type": "string"
+    },
+    "dj_Domain": {
+      "type": "string"
+    },
+    "wvd_Env": {
+      "type": "string"
+    },
+    "wvd_Type": {
+      "type": "string"
+    },
+    "wvd_Build": {
+      "type": "string"
+    },
+    "wvd_Role": {
       "type": "string"
     },
     "wvd_buildVersion": {
       "type": "string"
     },
-    "wvd_subnetId": {
+    "wvd_hostPoolName": {
       "type": "string"
     },
-    "wvd_hostpoolName": {
+    "wvd_subnetId": {
       "type": "string"
     },
     "az_vmAdminAccount": {
@@ -50,10 +74,8 @@
     }
   },
   "variables": {
-    "azVmAvSetName": "[concat(parameters('wvd_hostpoolName'),'-AVSet-',parameters('wvd_groupReference'))]",
     "storageAccountType": "[parameters('az_vmDiskType')]",
-    "wvdResourceLocation": "[resourceGroup().location]",
-    "wvdshOffSet": "[if(equals(parameters('wvd_groupReference'),'A'),parameters('az_vmStartingIncrement'),add(parameters('az_vmNumberOfInstances'),parameters('az_vmStartingIncrement')))]"
+    "wvdResourceLocation": "[resourceGroup().location]"
   },
   "functions": [
     {
@@ -83,7 +105,7 @@
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp'))]",
+      "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)),'-nic-',parameters('timeStamp'))]",
       "location": "[variables('wvdResourceLocation')]",
       "copy": {
         "name": "WVD-SH-nic-loop",
@@ -105,33 +127,40 @@
       "dependsOn": [
       ]
     },
-    // Virtual Machine creation; copy iteration based on the 'az_vmNumberOfInstances' parameter
+    // [ZONES] Virtual Machine creation; copy iteration based on the 'az_vmNumberOfInstances' parameter
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
+      "name": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1))]",
       "location": "[variables('wvdResourceLocation')]",
       "tags": {
         "WVD-Maintenance": "True",
-        "WVD-Build": "[parameters('wvd_buildVersion')]",
-        "WVD-Group": "[parameters('wvd_groupReference')]",
-        "WVD-PostDscComplete": "False"
+        "WVD-Environment": "[parameters('wvd_Env')]",
+        "WVD-Type": "[parameters('wvd_Type')]",
+        "WVD-Build": "[parameters('wvd_Build')]",
+        "WVD-Role": "[parameters('wvd_Role')]",
+        "WVD-BuildVersion": "[parameters('wvd_buildVersion')]",
+        "WVD-Group": "[if(equals(add(mod(copyIndex('WVD-SH-VM-Loop'), 2), 1), 1), 'A', 'B')]"
       },
       "copy": {
         "name": "WVD-SH-VM-Loop",
         "count": "[parameters('az_vmNumberOfInstances')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)),'-nic-',parameters('timeStamp')))]"
       ],
+      "zones": "[if(greaterOrEquals(parameters('az_vmNumberOfInstances'),2),split(string(add(mod(copyIndex('WVD-SH-VM-Loop'),3),1)), ','),'')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('az_vmSize')]"
         },
         "osProfile": {
-          "computerName": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]",
+          "computerName": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1))]",
           "adminUsername": "[parameters('az_vmAdminAccount')]",
-          "adminPassword": "[parameters('az_vmAdminAccountPassword')]"
+          "adminPassword": "[parameters('az_vmAdminAccountPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "Pacific Standard Time"
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -142,7 +171,7 @@
           },
           "osDisk": {
             "createOption": "FromImage",
-            "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-osDisk-',parameters('timeStamp'))]",
+            "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)),'-osDisk-',parameters('timeStamp'))]",
             "managedDisk": {
               "storageAccountType": "[variables('storageAccountType')]"
             }
@@ -151,12 +180,9 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet'))),'-nic-',parameters('timeStamp')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)),'-nic-',parameters('timeStamp')))]"
             }
           ]
-        },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('azVmAvSetName'))]"
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
@@ -165,6 +191,80 @@
         },
         "licenseType": "Windows_Client"
       }
+    },
+    // Microsoft Monitoring Agent extension; copy iteration based on the 'az_vmNumberOfInstances' parameter
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)), '/MMAExtension')]",
+      "location": "[variables('wvdResourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines',wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)))]"
+      ],
+      "copy": {
+        "name": "WVD-SH-MMA-Extension",
+        "count": "[parameters('az_vmNumberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "MicrosoftMonitoringAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[parameters('az_logAnalyticsWorkspaceId')]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[parameters('az_logAnalyticsWorkspaceKey')]"
+        }
+      }
+    },
+    // Azure Depenency Agent extension; copy iteration based on the 'az_vmNumberOfInstances' parameter
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)), '/DependencyAgent')]",
+      "location": "[variables('wvdResourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1)), 'MMAExtension')]"
+      ],      
+      "copy": {
+        "name": "WVD-SH-DepAgent-Extension",
+        "count": "[parameters('az_vmNumberOfInstances')]"
+      },
+      "properties": {
+          "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+          "type": "DependencyAgentWindows",
+          "typeHandlerVersion": "9.10",
+          "autoUpgradeMinorVersion": true
+      }
+    },
+    // joinDomain extension; copy iteration based on the 'az_virtualMachineNames' parameter
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(wvdSessionHost.getName(parameters('az_vmNamePrefix'), copyIndex(1)), '/ActiveDirectoryDomainJoin')]",
+      "location": "[variables('wvdResourceLocation')]",
+      "dependsOn": [],
+      "copy": {
+        "name": "WVD-SH-Domain-Join-Loop",
+        "count": "[parameters('az_vmNumberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "name": "[parameters('dj_Domain')]",
+          "ouPath": "[parameters('dj_OrganizationalUnit')]",
+          "user": "[parameters('dj_AdminAccountUPN')]",
+          "restart": "true",
+          "options": "3"
+        },
+        "protectedSettings": {
+          "password": "[parameters('dj_AdminAccountPassword')]"
+        }
+      }
     }
   ],
   "outputs": {
@@ -172,7 +272,7 @@
       "type": "array",
       "copy": {
         "count": "[parameters('az_vmNumberOfInstances')]",
-        "input": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(variables('wvdshOffSet')))]"
+        "input": "[wvdSessionHost.getName(parameters('az_vmNamePrefix'),copyIndex(1))]"
       }
     }
   }
