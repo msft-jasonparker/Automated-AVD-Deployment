@@ -8,6 +8,7 @@ Configuration Wvd_SessionHost_ChocoConfig {
     Node $AllNodes.Where{ $true }.NodeName {
         $WvdData = $ConfigurationData.WvdData
 
+        # [--------------------------| Baseline:  Config Data Path Directory Setup |--------------------------]
         # LCM Settings
         LocalConfigurationManager {
             RebootNodeIfNeeded = $true
@@ -262,12 +263,6 @@ Configuration Wvd_SessionHost_ChocoConfig {
             Version   = '7.9.3'
             DependsOn = '[cChocoInstaller]ChocolateyInstall'
         }
-        cChocoPackageInstaller MicrosoftEdge {
-            Name      = 'microsoft-edge'
-            Ensure    = 'Present'
-            Version   = '88.0.705.68'
-            DependsOn = '[cChocoInstaller]ChocolateyInstall'
-        }
         cChocoPackageInstaller GoogleChrome {
             Name      = 'googlechrome'
             Ensure    = 'Present'
@@ -374,6 +369,98 @@ Configuration Wvd_SessionHost_ChocoConfig {
             ValueData = "1"
             ValueType = "DWORD"
             DependsOn = '[cChocoPackageInstaller]fslogix'
+        }
+        Registry FsLogixRedirXMLSourceFolder {
+            Ensure    = "Present"
+            Key       = "HKLM:\SOFTWARE\FSLogix\Profiles"
+            ValueName = "RedirXMLSourceFolder"
+            ValueData = ("{0}\DSC\Packages\Microsoft\FSLogix\ProfileManagement" -f $Node.DscSourcePath)
+            ValueType = "string"
+            DependsOn = '[xPackage]FsLogix'
+        }
+        Registry OneDriveRailRunOnce {
+            Ensure    = 'Present'
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\RailRunOnce'
+            ValueName = 'OneDrive'
+            ValueData = '"C:\Program Files (x86)\Microsoft OneDrive\OneDrive.exe" /background'
+            ValueType = 'ExpandString'
+        }
+        Registry MicrosoftOneDriveRunOneDrive {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
+            ValueName = "OneDrive"
+            ValueData = "C:\Program Files (x86)\Microsoft OneDrive\OneDrive.exe /background"
+            ValueType = "String"
+        }
+        Registry MicrosoftOneDriveSilentAccountConfig {
+            Ensure    = "Present"
+            Key       = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"
+            ValueName = "SilentAccountConfig"
+            ValueData = "1"
+            ValueType = "DWORD"
+        }
+        Registry OneDriveFilesOnDemandEnabled {
+            Ensure    = 'Present'
+            Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\OneDrive'
+            ValueName = 'FilesOnDemandEnabled'
+            ValueData = 1
+            ValueType = 'DWORD'
+        }
+        Registry WindowsUpdateNoAutoUpdate {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate\AU"
+            ValueName = "NoAutoUpdate"
+            ValueData = "1"
+            ValueType = "DWORD"
+        }
+        Registry WvdEnvironment {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdEnvironment"
+            ValueData = $wvdEnv
+            ValueType = "String"
+        }
+        Registry WvdType {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdType"
+            ValueData = $wvdType
+            ValueType = "String"
+        }
+        Registry WvdBuild {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdBuild"
+            ValueData = $wvdBuild
+            ValueType = "String"
+        }
+        Registry wvdDeploymentGuid {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdDeploymentGuid"
+            ValueData = $wvdDeploymentGuid
+            ValueType = "String"
+        }
+        Registry WvdRole {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdRole"
+            ValueData = $wvdRole
+            ValueType = "String"
+        }
+        Registry WvdHostPoolName {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdHostPoolName"
+            ValueData = $HostPoolName
+            ValueType = "String"
+        }
+        Registry WvdArtifactLocation {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdArtifactLocation"
+            ValueData = $wvdArtifactLocation
+            ValueType = "String"
         }
         Script RebootPostInstall {
             GetScript  = { return @{'Result' = '' } }
