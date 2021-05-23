@@ -2,11 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "timeStamp": {
-            "type": "string",
-            "defaultValue": "[utcNow('u')]"
-        },
         "az_cloudResourcePrefix": {
+            "type": "string"
+        },
+        "az_logAnalyticsWorkspaceId": {
+            "type": "string"
+        },
+        "az_logAnalyticsWorkspaceKey": {
             "type": "string"
         },
         "az_wkstaPrefix": {
@@ -24,23 +26,19 @@
         "az_vmSize": {
             "type": "string"
         },
-        "az_vmNumberOfInstances": {
-            "type": "int"
-        },
-         "az_vmStartingIncrement": {
-            "type": "int",
-            "defaultValue": 1
-        },
-        "az_vmImageOffer": {
-            "type": "string"
-        },
-        "az_vmImagePublisher": {
-            "type": "string"
-        },
-        "az_vmImageSKU": {
-            "type": "string"
-        },
         "az_vmDiskType": {
+            "type": "string"
+        },
+        "dj_AdminAccountUPN": {
+            "type": "string"
+        },
+        "dj_AdminAccountPassword": {
+            "type": "securestring"
+        },
+        "dj_OrganizationalUnit": {
+            "type": "string"
+        },
+        "dj_Domain": {
             "type": "string"
         },
         "vn_virtualNetworkName": {
@@ -55,14 +53,14 @@
         "wvd_buildVersion": {
             "type": "string"
         },
-        "wvd_groupReference": {
-            "type": "array"
-        },
         "wvd_sessionHostTemplateUri": {
             "type": "string"
         },
         "wvd_hostPoolIncrement": {
             "type": "int"
+        },
+        "wvd_hostPoolType": {
+            "type": "string"
         },
         "wvd_maxSessionLimit": {
             "type": "int"
@@ -76,23 +74,47 @@
         "wvd_apiVersion": {
             "type": "string"
         },
-        "wvd_deploymentType": {
+        "wvd_Env": {
             "type": "string"
         },
-        "wvd_deploymentFunction": {
+        "wvd_Type": {
             "type": "string"
         },
-        "wvd_dscConfiguration": {
+        "wvd_Build": {
+            "type": "string"
+        },
+        "wvd_Role": {
+            "type": "string"
+        },
+        "wvd_deploymentGuid": {
+            "type": "string"
+        },
+        "az_vmImagePublisher": {
+            "type": "string"
+        },
+        "az_vmImageOffer": {
+            "type": "string"
+        },
+        "az_vmImageSKU": {
+            "type": "string"
+        },
+        "az_vmAvailabilityType": {
             "type": "string"
         },
         "wvd_fsLogixVhdLocation": {
             "type": "string"
         },
+        "wvd_dscConfiguration": {
+            "type": "string"
+        },
         "wvd_artifactLocation": {
             "type": "string"
         },
-        "domain": {
-            "type": "string"
+        "az_vmNumberOfInstances": {
+            "type": "int"
+        },
+        "wvd_Canary": {
+            "type": "bool"
         }
     },
     "functions": [
@@ -140,15 +162,15 @@
         }
     ],
     "variables": {
-        "wvdHostPoolTokenExpirationTime": "[dateTimeAdd(parameters('timeStamp'), 'PT23H')]",
         "createVMs": "[greater(parameters('az_vmNumberOfInstances'),0)]",
         "wvdHostPoolName": "[wvdHostPool.getName(parameters('az_cloudResourcePrefix'),parameters('wvd_hostPoolIncrement'))]",
+        "wvdAssignmentType": "[if(equals(parameters('wvd_hostPoolType'), 'Personal'),'Automatic','')]",
         "wvdshPrefix": "[wvdSessionHost.getName(parameters('az_wkstaPrefix'),parameters('wvd_hostPoolIncrement'))]",
         "wvdSubnetName": "[concat(parameters('vn_virtualNetworkSubnetPrefix'),padLeft(parameters('wvd_hostPoolIncrement'),2,'0'))]",
         "wvdSubnetId": "[resourceId(parameters('vn_virtualNetworkResourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vn_virtualNetworkName'), variables('wvdSubnetName'))]",
         "wvdVMTemplate": "[concat(
             '{\"domain\":\"',
-            parameters('domain'),
+            parameters('dj_Domain'),
             '\",\"galleryImageOffer\":\"',
             parameters('az_vmImageOffer'),
             '\",\"galleryImagePublisher\":\"',
@@ -167,8 +189,7 @@
             parameters('az_vmSize'),
             '\",\"cores\":2,\"ram\":8}}')]",
         "wvdResourceLocation": "[resourceGroup().location]",
-        "wvdResourceGroupName": "[resourceGroup().name]",
-        "wvdSessionHostInstances": "[div(parameters('az_vmNumberOfInstances'),length(parameters('wvd_groupReference')))]"
+        "wvdResourceGroupName": "[resourceGroup().name]"
     },
     "resources": [
         // Host Pool resource creation
@@ -179,25 +200,25 @@
             "location": "[variables('wvdResourceLocation')]",
             "tags": {
                 "WVD-Maintenance": "True",
-                "WVD-Build": "[parameters('wvd_buildVersion')]",
-                "WVD-Deployment": "[parameters('wvd_deploymentType')]",
-                "WVD-Function": "[parameters('wvd_deploymentFunction')]",
+                "WVD-Environment": "[parameters('wvd_Env')]",
+                "WVD-Type": "[parameters('wvd_Type')]",
+                "WVD-Build": "[parameters('wvd_Build')]",
+                "WVD-Role": "[parameters('wvd_Role')]",
+                "WVD-DeploymentGuid": "[parameters('wvd_deploymentGuid')]",
+                "WVD-BuildVersion": "[parameters('wvd_buildVersion')]",
                 "WVD-DscConfiguration": "[parameters('wvd_dscConfiguration')]",
-                "WVD-FsLogixVhdLocation": "[parameters('wvd_FsLogixVhdLocation')]",
+                "WVD-FsLogixVhdLocation": "[parameters('wvd_fsLogixVhdLocation')]",
                 "WVD-ArtifactLocation": "[parameters('wvd_artifactLocation')]"
             },
             "properties": {
-                "friendlyName": "[concat('WVD Host Pool ',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),' (',toUpper(parameters('wvd_deploymentType')),' v',parameters('wvd_buildVersion'),')')]",
-                "hostpoolType": "Pooled",
+                "friendlyName": "[if(parameters('wvd_Canary'),concat(parameters('wvd_Env'),'-',parameters('wvd_Type'),'-',parameters('wvd_Build'),'-',parameters('wvd_Role')),concat('(Canary) ',parameters('wvd_Env'),'-',parameters('wvd_Type'),'-',parameters('wvd_Build'),'-',parameters('wvd_Role')))]",
+                "hostpoolType": "[parameters('wvd_hostPoolType')]",
                 "customRdpProperty": "[parameters('wvd_customRdpProperty')]",
                 "maxSessionLimit": "[parameters('wvd_maxSessionLimit')]",
                 "loadBalancerType": "[parameters('wvd_loadBalancerType')]",
+                "personalDesktopAssignmentType": "[variables('wvdAssignmentType')]",
                 "ring": null,
-                "registrationInfo": {
-                    "expirationTime": "[variables('wvdhostPoolTokenExpirationTime')]",
-                    "token": null,
-                    "registrationTokenOperation": "Update"
-                },
+                "registrationInfo": {},
                 "vmTemplate": "[variables('wvdVMTemplate')]"
             }
         },
@@ -207,48 +228,30 @@
             "apiVersion": "[parameters('wvd_apiVersion')]",
             "name": "[concat(variables('wvdHostPoolName'),'-DAG')]",
             "location": "[variables('wvdResourceLocation')]",
+            "tags": {
+                "WVD-Environment": "[parameters('wvd_Env')]",
+                "WVD-Type": "[parameters('wvd_Type')]",
+                "WVD-Build": "[parameters('wvd_Build')]",
+                "WVD-Role": "[parameters('wvd_Role')]",
+                "WVD-BuildVersion": "[parameters('wvd_buildVersion')]"
+            },
             "properties": {
                 "hostpoolarmpath": "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('wvdHostPoolName'))]",
-                "friendlyName": "[concat('vDesktop [',padLeft(parameters('wvd_hostPoolIncrement'),2,'0'),']')]",
-                "description": "",
+                "friendlyName": "[concat(parameters('wvd_Build'),'-',parameters('wvd_Role'),'-',parameters('wvd_Type'),'-Desktop')]",
+                "description": "[concat(parameters('wvd_Build'),'-',parameters('wvd_Role'),'-',parameters('wvd_Type'),'-Desktop')]",
                 "applicationGroupType": "Desktop"
             },
             "dependsOn": [
                 "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('wvdHostPoolName'))]"
             ]
         },
-        {
-            "apiVersion": "2019-07-01",
-            "type": "Microsoft.Compute/availabilitySets",
-            "name": "[concat(variables('wvdHostPoolName'),'-AVSet-',parameters('wvd_groupReference')[copyIndex()])]",
-            "location": "[variables('wvdResourceLocation')]",
-            "condition": "[variables('createVMs')]",
-            "copy": {
-                "name": "WVD-Availability-Set",
-                "count": "[length(parameters('wvd_groupReference'))]"
-            },
-            "properties": {
-                "platformFaultDomainCount": 3,
-                "platformUpdateDomainCount": 20
-            },
-            "sku": {
-                "name": "Aligned"
-            }
-        },
         // Session Host resource deployment; copy iteration based on 'wvd_groupReference' parameter
         {
-            "apiVersion": "2019-10-01",
-            "name": "[concat('Deploy-WVD-SessionHosts-Group-',parameters('wvd_groupReference')[copyIndex()],'-',parameters('az_deploymentString'))]",
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat('Deploy-WVD-SessionHosts-',parameters('az_deploymentString'))]",
             "condition": "[variables('createVMs')]",
             "resourceGroup": "[variables('wvdResourceGroupName')]",
-            "copy": {
-                "name": "WVD-SessionHost-Loop",
-                "count": "[length(parameters('wvd_groupReference'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('wvdHostPoolName'),'-AVSet-',parameters('wvd_groupReference')[copyIndex()]))]"
-            ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -256,17 +259,20 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "az_logAnalyticsWorkspaceId": {
+                        "value": "[parameters('az_logAnalyticsWorkspaceId')]"
+                    },
+                    "az_logAnalyticsWorkspaceKey": {
+                        "value": "[parameters('az_logAnalyticsWorkspaceKey')]"
+                    },
                     "az_vmSize": {
                         "value": "[parameters('az_vmSize')]"
                     },
                     "az_vmNumberOfInstances": {
-                        "value": "[variables('wvdSessionHostInstances')]"
+                        "value": "[parameters('az_vmNumberOfInstances')]"
                     },
                     "az_vmNamePrefix": {
                         "value": "[variables('wvdshPrefix')]"
-                    },
-                   "az_vmStartingIncrement": {
-                        "value": "[parameters('az_vmStartingIncrement')]"
                     },
                     "az_vmImageOffer": {
                         "value": "[parameters('az_vmImageOffer')]"
@@ -280,17 +286,38 @@
                     "az_vmDiskType": {
                         "value": "[parameters('az_vmDiskType')]"
                     },
+                    "dj_AdminAccountUPN": {
+                        "value": "[parameters('dj_AdminAccountUPN')]"
+                    },
+                    "dj_AdminAccountPassword": {
+                        "value": "[parameters('dj_AdminAccountPassword')]"
+                    },
+                    "dj_OrganizationalUnit": {
+                        "value": "[parameters('dj_OrganizationalUnit')]"
+                    },
+                    "dj_Domain": {
+                        "value": "[parameters('dj_Domain')]"
+                    },                  
                     "wvd_buildVersion": {
                         "value": "[parameters('wvd_buildVersion')]"
                     },
-                    "wvd_groupReference": {
-                        "value": "[parameters('wvd_groupReference')[copyIndex()]]"
+                    "wvd_Env": {
+                        "value": "[parameters('wvd_Env')]"
+                    },
+                    "wvd_Type": {
+                        "value": "[parameters('wvd_Type')]"
+                    },
+                    "wvd_Build": {
+                        "value": "[parameters('wvd_Build')]"
+                    },
+                    "wvd_Role": {
+                        "value": "[parameters('wvd_Role')]"
+                    },
+                    "wvd_hostPoolName": {
+                        "value": "[variables('wvdHostPoolName')]"
                     },
                     "wvd_subnetId": {
                         "value": "[variables('wvdSubnetId')]"
-                    },
-                    "wvd_hostpoolName": {
-                        "value": "[variables('wvdHostPoolName')]"
                     },
                     "az_vmAdminAccount": {
                         "value": "[parameters('az_vmAdminAccount')]"
@@ -311,16 +338,9 @@
             "type": "string",
             "value": "[variables('wvdResourceGroupName')]"
         },
-        "deploymentType": {
-            "type": "string",
-            "value": "[parameters('wvd_deploymentType')]"
-        },
         "sessionHostNames": {
             "type": "array",
-            "copy": {
-                "count": "[length(parameters('wvd_groupReference'))]",
-                "input": "[reference(concat('Deploy-WVD-SessionHosts-Group-',parameters('wvd_groupReference')[copyIndex()],'-',parameters('az_deploymentString'))).outputs.sessionHostNames.value]"
-            }
+            "value": "[reference(concat('Deploy-WVD-SessionHosts-',parameters('az_deploymentString'))).outputs.sessionHostNames.value]"
         }
     }
 }
