@@ -45,7 +45,7 @@
             }
         },
         "wvd_buildVersion": {
-            "value": "1.0",
+            "value": "2021.05.21",
             "metadata": {
                 "description": "Update this value to reflect the current build version"
             }
@@ -69,7 +69,7 @@
             }
         },
         "wvd_maxSessionLimit": {
-            "value": 8,
+            "value": 2,
             "metadata": {
                 "description": "Update this value to reflect the maximum session limit per Session Host. Should be based on 1 user session per CPU core of the VM size."
             }
@@ -109,10 +109,10 @@
                         "wvdType": "VDI",
                         "wvdBuild": "Win10",
                         "wvdRole": "MAIN",
+                        "wvdHostPoolType": "Pooled",
                         "azVMImagePublisher": "MicrosoftWindowsDesktop",
                         "azVMImageOffer": "windows-10",
                         "azVMImageSKU": "20h1-evd-o365pp",
-                        "azVmAvailabilityType": "Zones", // Zones or Sets
                         "fsLogixVhdLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdartifacts\\Profiles\\%userdomain%",
                         "dscConfiguration": "WVD_SessionHost_ChocoConfig",
                         "wvdArtifactLocation": "\\\\prkrlabs.com\\dfsroot\\DscSoftwareRepository\\WVD-Windows10",
@@ -124,10 +124,10 @@
                         "wvdType": "VDI",
                         "wvdBuild": "Server",
                         "wvdRole": "MAIN",
+                        "wvdHostPoolType": "Pooled",
                         "azVMImagePublisher": "MicrosoftWindowsServer",
                         "azVMImageOffer": "windowsserver",
                         "azVMImageSKU": "2019-datacenter",
-                        "azVmAvailabilityType": "Zones", // Zones or Sets
                         "fsLogixVhdLocation": "\\\\wvdartifactblobstore.file.core.windows.net\\wvdartifacts\\Profiles\\%userdomain%",
                         "dscConfiguration": "WVD_SessionHost_ChocoConfig",
                         "wvdArtifactLocation": "\\\\prkrlabs.com\\dfsroot\\DscSoftwareRepository\\WVD-Windows10",
