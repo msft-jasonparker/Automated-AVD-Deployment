@@ -7,12 +7,11 @@ Function Get-ADAttributes {
            [Switch]$Search
     )
 
-    $userDomainSplit = $env:USERDNSDOMAIN.Split(".")
     $ADSearch = New-Object System.DirectoryServices.DirectorySearcher
     $ADSearch.ClientTimeout = "00:00:15"
     $ADSearch.ServerTimeLimit = "00:00:30"
     $ADSearch.ServerPageTimeLimit = "00:00:15"
-    $ADSearch.SearchRoot = ("GC://dc={0},dc={1}" -f $userDomainSplit[-2],$userDomainSplit[-1])
+    $ADSearch.SearchRoot = "GC://dc=va,dc=gov"
 
     If ($AllProperties) {
            #Write-Debug "Check AllProperties Switch"

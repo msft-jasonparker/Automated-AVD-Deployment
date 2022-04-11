@@ -1,4 +1,4 @@
-Function New-AzWvdLogEntry {
+Function New-AzAvdLogEntry {
     <#
         .SYNOPSIS
             Writes a log entry into an Azure Log Analytics workspace in a Custom Log table.

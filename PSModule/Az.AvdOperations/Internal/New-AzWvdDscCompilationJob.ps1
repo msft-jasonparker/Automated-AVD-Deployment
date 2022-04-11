@@ -15,10 +15,7 @@ Function New-AzWvdDscCompilationJob {
 
         [Parameter(Mandatory=$true,ParameterSetName="Default")]
         [Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters.ResourceNameCompleterAttribute("Microsoft.DesktopVirtualization/hostPools","HostPoolResourceGroup")]
-        [System.String]$HostPoolName,
-
-        [Parameter(Mandatory=$true,ParameterSetName="Default")]
-        [System.String]$DeploymentGuid
+        [System.String]$HostPoolName
     )
     BEGIN {
         #Requires -Modules @{ ModuleName = "Az.DesktopVirtualization"; ModuleVersion = "2.0.0" }
@@ -26,7 +23,7 @@ Function New-AzWvdDscCompilationJob {
         Do {
             Show-Menu -Title "Select DSC Configuration Data file (*.psd1)" -Style Info -Color Cyan -DisplayOnly
             $dscConfigurationData = Get-FileNameDialog -InitialDirectory (Get-Location).Path -Filter "PowerShell Data files (*.psd1)| *.psd1"
-            Write-Verbose "`t $dscConfigurationData"
+            Write-Verbose $dscConfigurationData
             If ([system.string]::IsNullOrEmpty($dscConfigurationData)) { Write-Warning ("No Configuration Data file selected!") }
             Else { $ValidFile = $true }
         } Until ($ValidFile -eq $true)
@@ -57,6 +54,8 @@ Function New-AzWvdDscCompilationJob {
         $configurationData.WvdData.WvdAgentInstallUri = Get-LatestWVDConfigZip -OutputType Local -LocalPath $hostPoolInfo.Tag["WVD-ArtifactLocation"]
 
         Write-Verbose ("Creating new / updated DSC Compilation - {0}.{1}" -f $hostPoolInfo.Tag["WVD-DscConfiguration"],$HostPoolName)
-        Start-AzAutomationDscCompilationJob -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccountName -ConfigurationName $hostPoolInfo.Tag["WVD-DscConfiguration"] -ConfigurationData $configurationData -WhatIf
+        $CompileJob = Start-AzAutomationDscCompilationJob -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccountName -ConfigurationName $hostPoolInfo.Tag["WVD-DscConfiguration"] -ConfigurationData $configurationData
+
+        Write-Host ("Get-AzAutomationDscCompilationJob -ResourceGroupName {0} -AutomationAccountName {1} -Id {2}" -f $AutomationResourceGroup, $AutomationAccountName, $CompileJob.Id)
     }
 }

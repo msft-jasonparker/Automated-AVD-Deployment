@@ -1,4 +1,10 @@
 Function Update-FSLogixProfilePermissions {
+    <#
+        .SYNOPSIS
+            Updates the NTFS permissions on existing folders for FSLogix Profile Containers.
+        .DESCRIPTION
+            This cmdlet is used to fix or update the NTFS permissions for the folders FSLogix uses to storage profile containers.
+    #>
     [CmdletBinding(DefaultParameterSetName="Default")]
     Param (
         [Parameter(Mandatory=$true,ParameterSetName="Default",Position=0)]
@@ -35,7 +41,7 @@ Function Update-FSLogixProfilePermissions {
             }
         }
         Else {
-            $volumeSharePath = ("\\{0}\{1}" -f $NetAppFQDN, $NetAppVolume)
+            $volumeSharePath = ("\\{0}\{1}" -f $ComputerName, $ShareName)
             Write-Verbose ("Testing the path: '{0}'" -f $volumeSharePath)
             # Test the path
             If (Test-Path -Path $volumeSharePath) {
@@ -62,11 +68,11 @@ Function Update-FSLogixProfilePermissions {
             $userName = $item.Name.Split("_")[0]
 
             $userAccount = $null
-            ## query AD to check if user exsists
+            # query AD to check if user exsists
             $userAccount = _GetADAttributes -Property "samAccountName" -Value $userName
 
             Write-Debug "check user account"
-            ## if the user prinicpal is active 
+            # if the user prinicpal is active 
             If ($null -ne $userAccount) {
                 # Create domain\username variable
                 If ($NetBIOSDomainName) { $User = ("{0}\{1}" -f $NetBIOSDomainName, $userAccount.samAccountName) }
