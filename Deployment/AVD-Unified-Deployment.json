@@ -1,0 +1,310 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "avd_deploymentGuid": {
+          "type": "string",
+          "defaultValue": "[newGuid()]"
+      },
+      "avd_SubscriptionId": {
+        "type": "string"
+      },
+      "avd_VirtualMachineTemplateUri": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "az_Cloud": {
+        "type": "string",
+        "allowedValues": [
+          "MAG",
+          "MAP"
+        ]
+      },
+      "az_Role": {
+        "type": "string",
+        "defaultValue": "AVD"
+      },
+      "az_LogAnalyticsWorkspaceId": {
+        "type": "string"
+      },
+      "az_LogAnalyticsResourceId": {
+        "type": "string"
+      },
+      "vm_timestamp": {
+        "type": "string",
+        "defaultValue": "[utcNow()]"
+      },
+      "avd_BuildVersion": {
+        "type": "string"
+      },
+      "avd_WorkloadData": {
+          "type": "object"
+      }
+    },
+  "functions": [
+    {
+      "namespace": "resourceNames",
+      "members": {
+        "getHostPoolName": {
+            "parameters": [
+                {
+                "name": "Region",
+                "type": "string"
+                },
+                {
+                "name": "Environment",
+                "type": "string"
+                },
+                {
+                "name": "Program",
+                "type": "string"
+                },
+                {
+                "name": "Workload",
+                "type": "string"
+                }
+            ],
+            "output": {
+                "type": "string",
+                "value": "[tolower(concat(parameters('Program'),'-',parameters('Environment'),'-',parameters('Region'),'-',parameters('Workload'),'-hostpool'))]"
+            }
+        },
+        "getVNetRG": {
+          "parameters": [
+            {
+              "name": "Program",
+              "type": "string"
+            },
+            {
+              "name": "Environment",
+              "type": "string"
+            },
+            {
+              "name": "Region",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[toupper(concat(parameters('Program'),'-',parameters('Environment'),'-',parameters('Region'),'-NET-RG'))]"
+          }
+        },
+        "getVNetName": {
+          "parameters": [
+            {
+              "name": "Program",
+              "type": "string"
+            },
+            {
+              "name": "Cloud",
+              "type": "string"
+            },
+            {
+              "name": "Environment",
+              "type": "string"
+            },
+            {
+              "name": "Region",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[toupper(concat(parameters('Program'),'-',parameters('Cloud'),'-',parameters('Environment'),'-',parameters('Region')))]"
+          }
+        },
+        "getRegionName": {
+          "parameters": [
+            {
+              "name": "Cloud",
+              "type": "string"
+            },
+            {
+              "name": "Location",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[toupper(if(equals(parameters('Cloud'),'GOV'), if(equals(parameters('Location'),'usgovvirginia'),'EAST', if(equals(parameters('Location'),'usgovarizona'),'SOUTHWEST','EAST')),parameters('Location')))]"
+          }
+        },
+        "getKeyVaultId": {
+          "parameters": [
+            {
+              "name": "SubscriptionId",
+              "type": "string"
+            },
+            {
+              "name": "Program",
+              "type": "string"
+            },
+            {
+              "name": "Environment",
+              "type": "string"
+            },
+            {
+              "name": "Region",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[concat(parameters('SubscriptionId'),'/resourceGroups/',parameters('Program'),'-',parameters('Environment'),'-',parameters('Region'),'-MGMT-RG/providers/Microsoft.KeyVault/vaults/',parameters('Program'),'-mgmtkv-',parameters('Environment'))]"
+          }
+        }
+      }
+    }
+  ],
+    "variables": {
+      "azRegionPrefix": {
+        "usgovvirginia": "ge",
+        "usgovarizona": "gsw",
+        "usgovtexas": "gs",
+        "eastus": "eus",
+        "westus2": "wus2"
+      },
+      "azRegion": "[resourceNames.getRegionName(parameters('az_Cloud'),resourceGroup().location)]",
+      "avdDeploymentString": "[last(split(parameters('avd_deploymentGuid'),'-'))]"
+    },
+    "resources": [
+      // Session Host Deployment
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2021-04-01",
+        "name": "[concat('AVD-VirtualMachine-Deployment-',variables('avdDeploymentString'),copyIndex('AVD-VirtualMachine-Loop'))]",
+        "subscriptionId": "[parameters('avd_WorkloadData').configs[copyIndex()].az_SubscriptionId]",
+        "resourceGroup": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmResourceGroup]",
+        "copy": {
+          "name": "AVD-VirtualMachine-Loop",
+          "count": "[length(parameters('avd_WorkloadData').configs)]"
+        },
+        "dependsOn": [],
+        "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[parameters('avd_VirtualMachineTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "avd_BuildVersion": {
+                      "value": "[parameters('avd_BuildVersion')]"
+                    },
+                    "avd_HostPoolName": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].avd_HostPoolName]"
+                    },
+                    "avd_Workload": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].avd_Workload]"
+                    },
+                    "az_Environment": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_Environment]"
+                    },
+                    "az_Prefix": {
+                      "value": "[variables('azRegionPrefix')[resourceGroup().location]]"
+                    },
+                    "az_Program": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_Program]"
+                    },
+                    "az_Role": {
+                      "value": "[parameters('az_Role')]"
+                    },
+                    "az_VirtualMachineType": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VirtualMachineType]"
+                    },
+                    "az_VmImageOffer": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmImageOffer]"
+                    },
+                    "az_VmImagePublisher": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmImagePublisher]"
+                    },
+                    "az_VmImageSku": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmImageSku]"
+                    },
+                    "az_VmOSVersion": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmOSVersion]"
+                    },
+                    "az_vNetName": {
+                      "value": "[resourceNames.getVNetName(parameters('avd_WorkloadData').configs[copyIndex()].az_Program,parameters('az_Cloud'),parameters('avd_WorkloadData').configs[copyIndex()].az_Environment,variables('azRegion'))]"
+                    },
+                    "az_vNetResourceGroup": {
+                      "value": "[resourceNames.getVNetRG(parameters('avd_WorkloadData').configs[copyIndex()].az_Program,parameters('avd_WorkloadData').configs[copyIndex()].az_Environment,variables('azRegion'))]"
+                    },
+                    "az_vNetSubnetName": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].az_vNetSubnetName]"
+                    },
+                    "vm_AcceleratedNetworking": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_AcceleratedNetworking]"
+                    },
+                    "vm_adminAccountName": {
+                      "reference": {
+                        "keyVault": {
+                          "id": "[resourceNames.getKeyVaultId(subscription().id,parameters('avd_WorkloadData').configs[copyIndex()].az_Program,parameters('avd_WorkloadData').configs[copyIndex()].az_Environment,variables('azRegion'))]"
+                        },
+                        "secretName": "AVD-VM-LocalAdmin-Account"
+                      }
+                    },
+                    "vm_adminAccountPassword": {
+                      "reference": {
+                        "keyVault": {
+                          "id": "[resourceNames.getKeyVaultId(subscription().id,parameters('avd_WorkloadData').configs[copyIndex()].az_Program,parameters('avd_WorkloadData').configs[copyIndex()].az_Environment,variables('azRegion'))]"
+                        },
+                        "secretName": "AVD-VM-LocalAdmin-Password"
+                      }
+                    },
+                    "vm_BuildImageId": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_BuildImageId]"
+                    },
+                    "vm_DiskSize": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_DiskSize]"
+                    },
+                    "vm_DiskType": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_DiskType]"
+                    },
+                    "vm_NameType": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_NameType]"
+                    },
+                    "vm_NumberOfInstances": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_NumberOfInstances]"
+                    },
+                    "vm_Size": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_Size]"
+                    },
+                    "vm_timeStamp": {
+                      "value": "[parameters('vm_timestamp')]"
+                    },
+                    "vm_UseZones": {
+                      "value": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_UseZones]"
+                    }
+                }
+            }
+      }
+    ],
+    "outputs": {
+      "avdDeployedVirtualMachines": {
+        "type": "array",
+        "copy": {
+          "count": "[length(parameters('avd_WorkloadData').configs)]",
+          "input": {
+            "azProgram": "[parameters('avd_WorkloadData').configs[copyIndex()].az_Program]",
+            "azCloud": "[parameters('az_Cloud')]",
+            "azLogAnalyticsWorkspaceId": "[parameters('az_LogAnalyticsWorkspaceId')]",
+            "azLogAnalyticsResourceId": "[parameters('az_LogAnalyticsResourceId')]",
+            "hostPoolName": "[parameters('avd_WorkloadData').configs[copyIndex()].avd_HostPoolName]",
+            "vmSubscriptionId": "[parameters('avd_WorkloadData').configs[copyIndex()].az_SubscriptionId]",
+            "vmResourceGroup": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VmResourceGroup]",
+            "sessionHostNames": "[reference(concat('AVD-VirtualMachine-Deployment-',variables('avdDeploymentString'),copyIndex())).outputs.sessionHostNames.value]",
+            "vmDomainFQDN": "[parameters('avd_WorkloadData').configs[copyIndex()].vm_domainFQDN]",
+            "azKeyVaultId": "[resourceNames.getKeyVaultId(subscription().id,parameters('avd_WorkloadData').configs[copyIndex()].az_Program,parameters('avd_WorkloadData').configs[copyIndex()].az_Environment,variables('azRegion'))]",
+            "dscConfigurationScript": "[parameters('avd_WorkloadData').configs[copyIndex()].dsc_ConfigurationScript]",
+            "dscConfiguration": "[parameters('avd_WorkloadData').configs[copyIndex()].dsc_Configuration]",
+            "dscLocalAdminGroups": "[parameters('avd_WorkloadData').configs[copyIndex()].dsc_LocalAdminGroups]",
+            "dscFsLogixVhdLocation": "[parameters('avd_WorkloadData').configs[copyIndex()].dsc_FslogixVhdLocation]",
+            "azVirtualMachinetype": "[parameters('avd_WorkloadData').configs[copyIndex()].az_VirtualMachineType]",
+            "avdBuildType": "[parameters('avd_WorkloadData').configs[copyIndex()].avd_BuildType]",
+            "avdCanary": "[parameters('avd_WorkloadData').configs[copyIndex()].avd_Canary]"
+          }
+        }
+      }
+    }
+  }
+  

@@ -1,0 +1,268 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "az_VirtualMachineNames": {
+      "type": "array"
+    },
+    "vm_DomainFQDN": {
+      "type": "string"
+    },
+    "dsc_ConfigurationZipUri": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This is the actual DSC Configuration Script URL from the Blob SAS Token"
+      }
+    },
+    "dsc_ConfigurationScript": {
+      "type": "string"
+    },
+    "dsc_Configuration": {
+      "type": "string"
+    },
+    "az_Cloud": {
+      "type": "string"
+    },
+    "avd_DscHostPoolName": {
+      "type": "string"
+    },
+    "avd_DscHostPoolToken": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell"
+      }
+    },
+    "avd_ConfigurationZipUri": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This is the actual AVD Configuration Zip URL from AVD GitHub Repository"
+      }
+    },
+    "az_Environment": {
+      "type": "string"
+    },
+    "avd_Workload": {
+      "type": "string"
+    },
+    "avd_BuildType": {
+      "type": "string"
+    },
+    "az_VirtualMachineType": {
+      "type": "string"
+    },
+    "avd_DeploymentGuid": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell"
+      }
+    },
+    "avd_DscFsLogixVhdLocation": {
+      "type": "string"
+    },
+    "avd_DscBaselineZip": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This URL comes from the artifact stored in the Storage Account container called apps"
+      }
+    },
+    "avd_DscDesktopZip": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This URL comes from the artifact stored in the Storage Account container called apps"
+      }
+    },
+    "avd_DscServerZip": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This URL comes from the artifact stored in the Storage Account container called apps"
+      }
+    },
+    "avd_DscCanaryZip": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell",
+        "description": "This URL comes from the artifact stored in the Storage Account container called apps"
+      }
+    },
+    "avd_DscCanary": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "avd_DscLocalAdminGroups": {
+      "type": "array"
+    },
+    "avd_LogAnalyticsWorkspaceId": {
+      "type": "string"
+    },
+    "avd_LogAnalyticsWorkspaceKey": {
+      "type": "securestring"
+    },
+    "az_LogAnalyticsWorkspaceId": {
+      "type": "string"
+    },
+    "az_LogAnalyticsResourceId": {
+      "type": "string"
+    },
+    "vm_AdminAccountName": {
+      "type": "string",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell"
+      }
+    },
+    "vm_AdminAccountPassword": {
+      "type": "securestring",
+      "metadata": {
+        "comment": "Parameter value comes from PowerShell"
+      }
+    }
+  },
+  "functions": [
+    {
+      "namespace": "templateNames",
+      "members": {
+        "getDomainJoinOU": {
+          "parameters": [
+            {
+              "name": "Cloud",
+              "type": "string"
+            },
+            {
+              "name": "Environment",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "type": "string"
+            },
+            {
+              "name": "BasePath",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[tolower(concat('OU=',parameters('Type'),',OU=',parameters('Environment'),',OU=',parameters('Cloud'),',',parameters('BasePath')))]"
+          }
+        }
+      }
+    }
+  ],
+  "variables": {
+    "azVirtualMachinetype": {
+      "SERVER": "Servers",
+      "DESKTOP": "Workstations"
+    },
+    "adComputerType": "[variables('azVirtualMachinetype')[parameters('az_VirtualMachineType')]]",
+    "adDominJoinOU": "[templateNames.getDomainJoinOU(parameters('az_Cloud'),toUpper(parameters('az_Environment')),variables('adComputerType'),'DC=contoso,DC=com')]"
+  },
+  "resources": [
+    // Microsoft Monitoring Agent extension; copy iteration based on the 'az_virtualMachineNames' parameter
+    {
+      "apiVersion": "2021-11-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/MMAExtension')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "copy": {
+        "name": "AVD-MMA-Extension-Loop",
+        "count": "[length(parameters('az_virtualMachineNames'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "MicrosoftMonitoringAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[parameters('az_LogAnalyticsWorkspaceId')]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(parameters('az_LogAnalyticsResourceId'),'2021-06-01').primarySharedKey]"
+        }
+      }
+    },
+    // joinDomain extension; copy iteration based on the 'az_virtualMachineNames' parameter
+    {
+      "apiVersion": "2021-11-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/ActiveDirectoryDomainJoin')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'MMAExtension')]"
+      ],
+      "copy": {
+        "name": "AVD-DomainJoin-Extension-Loop",
+        "count": "[length(parameters('az_virtualMachineNames'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "name": "[parameters('vm_domainFQDN')]",
+          "ouPath": "[variables('adDominJoinOU')]",
+          "user": "[concat(parameters('vm_AdminAccountName'),'@',parameters('vm_domainFQDN'))]",
+          "restart": "true",
+          "options": "3"
+        },
+        "protectedSettings": {
+          "password": "[parameters('vm_AdminAccountPassword')]"
+        }
+      }
+    },
+    // PowerShell DSC extension; copy interation based on the 'az_virtualMachineNames' parameter
+    {
+      "apiVersion": "2021-11-01",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/Microsoft.PowerShell.DSC')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('az_virtualMachineNames')[copyIndex()], 'ActiveDirectoryDomainJoin')]"
+      ],
+      "copy": {
+        "name": "AVD-PowershellDsc-Extension-Loop",
+        "count": "[length(parameters('az_virtualMachineNames'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.80",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Configuration": {
+            "url": "[parameters('dsc_ConfigurationZipUri')]",
+            "script": "[parameters('dsc_ConfigurationScript')]",
+            "function": "[parameters('dsc_Configuration')]"
+          },
+          "configurationArguments": {
+            "azCloud": "[parameters('az_Cloud')]",
+            "avdHostPoolName": "[parameters('avd_DscHostpoolName')]",
+            "avdHostPoolToken": "[parameters('avd_DscHostpoolToken')]",
+            "avdLogAnalyticsWorkspaceId": "[parameters('avd_LogAnalyticsWorkspaceId')]",
+            "avdLogAnalyticsWorkspaceKey": "[parameters('avd_LogAnalyticsWorkspaceKey')]",
+            "avdConfigurationZip": "[parameters('avd_ConfigurationZipUri')]",
+            "avdEnvironment": "[parameters('az_Environment')]",
+            "avdWorkload": "[parameters('avd_Workload')]",
+            "avdVirtualMachineType": "[parameters('az_VirtualMachineType')]",
+            "avdBuildType": "[parameters('avd_BuildType')]",
+            "avdDeploymentGuid": "[parameters('avd_DeploymentGuid')]",
+            "avdfsLogixVhdLocation": "[parameters('avd_DscFsLogixVhdLocation')]",
+            "avdBaselineZip": "[parameters('avd_DscBaselineZip')]",
+            "avdDesktopZip": "[parameters('avd_DscDesktopZip')]",
+            "avdServerZip": "[parameters('avd_DscServerZip')]",
+            "avdCanaryZip": "[parameters('avd_DscCanaryZip')]",
+            "avdCanary": "[parameters('avd_DscCanary')]",
+            "avdLocalAdminGroups": "[parameters('avd_DscLocalAdminGroups')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

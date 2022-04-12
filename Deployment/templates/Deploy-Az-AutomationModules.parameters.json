@@ -3,10 +3,10 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "accountName": {
-            "value": "WVD-AA-ocbbxvhx3gdz2"
+            "value": ""
         },
         "accountLocation": {
-            "value": "westus"
+            "value": ""
         },
         "level0": {
             "value": {

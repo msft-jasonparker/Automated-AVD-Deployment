@@ -1,0 +1,248 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "avd_BuildVersion": {
+      "type": "string"
+    },
+    "avd_HostPoolName": {
+      "type": "string"
+    },
+    "avd_Workload": {
+      "type": "string"
+    },
+    "az_deploymentGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "az_Environment": {
+      "type": "string"
+    },
+    "az_Prefix": {
+      "type": "string"
+    },
+    "az_Program": {
+      "type": "string"
+    },
+    "az_Role": {
+      "type": "string"
+    },
+    "az_VirtualMachineType": {
+      "type": "string"
+    },
+    "az_VmImageOffer": {
+      "type": "string"
+    },
+    "az_VmImagePublisher": {
+      "type": "string"
+    },
+    "az_VmImageSku": {
+      "type": "string"
+    },
+    "az_VmOSVersion": {
+      "type": "string"
+    },
+    "az_vNetName": {
+      "type": "string"
+    },
+    "az_vNetResourceGroup": {
+      "type": "string"
+    },
+    "az_vNetSubnetName": {
+      "type": "string"
+    },
+    "vm_AcceleratedNetworking": {
+      "type": "bool"
+    },
+    "vm_adminAccountName": {
+      "type": "string"
+    },
+    "vm_adminAccountPassword": {
+      "type": "securestring"
+    },
+    "vm_BuildImageId": {
+      "type": "string"
+    },
+    "vm_DiskSize": {
+      "type": "int"
+    },
+    "vm_DiskType": {
+      "type": "string"
+    },
+    "vm_NameType": {
+      "type": "string"
+    },
+    "vm_NumberOfInstances": {
+      "type": "int"
+    },
+    "vm_Size": {
+      "type": "string"
+    },
+    "vm_timeStamp": {
+      "type": "string"
+    },
+    "vm_UseZones": {
+      "type": "bool"
+    }
+  },
+  "functions": [
+    {
+      "namespace": "resourceNames",
+      "members": {
+        "getSessionHostPrefix": {
+          "parameters": [
+            {
+              "name": "Prefix",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "type": "string"
+            },
+            {
+              "name": "Program",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[if(equals(parameters('Type'), 'SERVER'), concat(parameters('Prefix'),'vd',parameters('Program')),concat(substring(parameters('Prefix'),2,3),'-ws',parameters('Program')))]"
+          }
+        },
+        "avdSessionHost": {
+          "parameters": [
+            {
+              "name": "avdshPrefix",
+              "type": "string"
+            },
+            {
+              "name": "uniqueValue",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[toLower(concat(parameters('avdshPrefix'),parameters('uniqueValue')))]"
+          }
+        }
+      }
+    }
+  ],
+  "variables": {
+    "copy": [
+      {
+        "name": "avdSessionHostNames",
+        "count": "[parameters('vm_NumberOfInstances')]",
+        "input": "[resourceNames.avdSessionHost(variables('avdSessionHostPrefix'),substring(uniqueString(subscription().id,concat(variables('vmNameIdentifier'),copyIndex('avdSessionHostNames'))),0,5))]"
+      }
+    ],
+    "vmNameIdentifier": "[if(equals(parameters('vm_NameType'), 'Dynamic'), parameters('az_deploymentGuid'),resourceGroup().name)]",
+    "avdSessionHostPrefix": "[resourceNames.getSessionHostPrefix(parameters('az_Prefix'),parameters('az_VirtualMachineType'),parameters('az_Program'))]",
+    "vmSubnetId": "[resourceId(parameters('az_vNetResourceGroup'),'Microsoft.Network/virtualNetworks/subnets',parameters('az_vNetName'), parameters('az_vNetSubnetName'))]"
+  },
+  "resources": [
+    // Virtual Network Interface creation
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-11-01",
+      "name": "[concat(variables('avdSessionHostNames')[copyIndex()],'-nic-',parameters('vm_timeStamp'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "AVD-VirtualMachine-NIC-Loop",
+        "count": "[parameters('vm_NumberOfInstances')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetId')]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[parameters('vm_AcceleratedNetworking')]"
+      },
+      "dependsOn": []
+    },
+    // Virtual Machine creation
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-11-01",
+      "name": "[variables('avdSessionHostNames')[copyIndex()]]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "Role": "[parameters('az_Role')]",
+        "AVD-Maintenance": "True",
+        "AVD-Environment": "[parameters('az_Environment')]",
+        "AVD-BuildImageId": "[parameters('vm_BuildImageId')]",
+        "AVD-Workload": "[parameters('avd_Workload')]",
+        "AVD-BuildVersion": "[parameters('avd_buildVersion')]",
+        "AVD-HostPool": "[parameters('avd_hostPoolName')]",
+        "AVD-HostState": "STANDBY"
+      },
+      "copy": {
+        "name": "AVD-VirtualMachine-Loop",
+        "count": "[parameters('vm_NumberOfInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('avdSessionHostNames')[copyIndex()],'-nic-',parameters('vm_timeStamp')))]"
+      ],
+      "zones": "[if(parameters('vm_UseZones'),if(greaterOrEquals(parameters('vm_NumberOfInstances'),2),split(string(add(mod(copyIndex('AVD-VirtualMachine-Loop'), 3), 1)), ','), ''),json('null'))]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vm_Size')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('avdSessionHostNames')[copyIndex()]]",
+          "adminUsername": "[parameters('vm_adminAccountName')]",
+          "adminPassword": "[parameters('vm_adminAccountPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[if(empty(parameters('vm_BuildImageId')),json('null'),parameters('vm_BuildImageId'))]",
+            "publisher": "[if(empty(parameters('vm_BuildImageId')), parameters('az_VmImagePublisher'), json('null'))]",
+            "offer": "[if(empty(parameters('vm_BuildImageId')), parameters('az_VmImageOffer'), json('null'))]",
+            "sku": "[if(empty(parameters('vm_BuildImageId')), parameters('az_VmImageSku'), json('null'))]",
+            "version": "[if(empty(parameters('vm_BuildImageId')), parameters('az_VmOSVersion'), json('null'))]"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "name": "[concat(variables('avdSessionHostNames')[copyIndex()],'-osDisk-',parameters('vm_timeStamp'))]",
+            "diskSizeGB": "[parameters('vm_DiskSize')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('vm_DiskType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('avdSessionHostNames')[copyIndex()],'-nic-',parameters('vm_timeStamp')))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        },
+        "licenseType": "[if(equals(parameters('az_VirtualMachineType'), 'SERVER'), 'Windows_Server', 'Windows_Client')]"
+      }
+    }
+  ],
+  "outputs": {
+    "sessionHostNames": {
+      "type": "array",
+      "copy": {
+        "count": "[parameters('vm_NumberOfInstances')]",
+        "input": "[variables('avdSessionHostNames')[copyIndex()]]"
+      }
+    }
+  }
+}

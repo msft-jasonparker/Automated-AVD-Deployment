@@ -1,0 +1,135 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "avd_ApiVersion": {
+            "type": "string",
+            "defaultvalue": "2021-07-12",
+            "metadata": {
+                "description": "Update this value to reflect the API version for the AVD resource objects."
+            }
+        },
+        "avd_ResourceData": {
+            "type": "object"
+        }
+    },
+    "functions": [{
+        "namespace": "resourceNames",
+        "members": {
+            "getHostPoolName": {
+                "parameters": [
+                    {
+                    "name": "Region",
+                    "type": "string"
+                    },
+                    {
+                    "name": "Environment",
+                    "type": "string"
+                    },
+                    {
+                    "name": "Program",
+                    "type": "string"
+                    },
+                    {
+                    "name": "Workload",
+                    "type": "string"
+                    }
+                ],
+                "output": {
+                    "type": "string",
+                    "value": "[tolower(concat(parameters('Program'),'-',parameters('Environment'),'-',parameters('Region'),'-',parameters('Workload'),'-hostpool'))]"
+                }
+            }
+        }
+    }],
+    "variables": {
+        "copy": [
+            {
+                "name": "avdHostPools",
+                "count": "[length(parameters('avd_ResourceData').configs)]",
+                "input": "[resourceNames.getHostPoolName(resourceGroup().location,parameters('avd_ResourceData').configs[copyIndex('avdHostPools')].az_Environment,parameters('avd_ResourceData').configs[copyIndex('avdHostPools')].az_Program,parameters('avd_ResourceData').configs[copyIndex('avdHostPools')].avd_Workload)]"
+            },
+            {
+                "name": "avdAppGroups",
+                "count": "[length(parameters('avd_ResourceData').configs)]",
+                "input": "[concat(resourceNames.getHostPoolName(resourceGroup().location,parameters('avd_ResourceData').configs[copyIndex('avdAppGroups')].az_Environment,parameters('avd_ResourceData').configs[copyIndex('avdAppGroups')].az_Program,parameters('avd_ResourceData').configs[copyIndex('avdAppGroups')].avd_Workload),'-DAG')]"
+            },
+            {
+                "name": "avdHostPoolFriendlyNames",
+                "count": "[length(parameters('avd_ResourceData').configs)]",
+                "input": "[toUpper(concat(parameters('avd_ResourceData').configs[copyIndex('avdHostPoolFriendlyNames')].az_Cloud,'-',parameters('avd_ResourceData').configs[copyIndex('avdHostPoolFriendlyNames')].az_Environment,'-',parameters('avd_ResourceData').configs[copyIndex('avdHostPoolFriendlyNames')].az_Program,'-',parameters('avd_ResourceData').configs[copyIndex('avdHostPoolFriendlyNames')].avd_Workload))]"
+            }
+        ]
+    },
+    "resources": [
+        // Host Pool resource creation
+        {
+            "type": "Microsoft.DesktopVirtualization/hostpools",
+            "apiVersion": "[parameters('avd_ApiVersion')]",
+            "name": "[variables('avdHostPools')[copyIndex()]]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "AVD-HostPool-Copy-Loop",
+                "count": "[length(variables('avdHostPools'))]"
+            },
+            "tags": {
+                "AVD-Maintenance": true,
+                "AVD-Environment": "[parameters('avd_ResourceData').configs[copyIndex()].az_Environment]",
+                "AVD-VirtualMachineType": "[parameters('avd_ResourceData').configs[copyIndex()].az_VirtualMachineType]",
+                "AVD-Workload": "[parameters('avd_ResourceData').configs[copyIndex()].avd_Workload]",
+                "AVD-VmSubscriptionId": "[parameters('avd_ResourceData').configs[copyIndex()].az_SubscriptionId]"
+            },
+            "properties": {
+                "description": "[concat(
+                    '{
+                        \"vmSubscriptionId\":\"',parameters('avd_ResourceData').configs[copyIndex()].az_SubscriptionId,'\"
+                    }'
+                )]",
+                "friendlyName": "[variables('avdHostPoolFriendlyNames')[copyIndex()]]",
+                "hostpoolType": "[parameters('avd_ResourceData').configs[copyIndex()].avd_HostPoolType]",
+                "customRdpProperty": "[parameters('avd_ResourceData').configs[copyIndex()].avd_RdpProperties]",
+                "maxSessionLimit": "[parameters('avd_ResourceData').configs[copyIndex()].avd_SessionHostLimit]",
+                "loadBalancerType": "[parameters('avd_ResourceData').configs[copyIndex()].avd_LoadBalancerType]",
+                "personalDesktopAssignmentType": "[if(equals(parameters('avd_ResourceData').configs[copyIndex()].avd_PersonalDesktopAssignmentType, 'Personal'),'Automatic',json('null'))]",
+                "startVMOnConnect": "[parameters('avd_ResourceData').configs[copyIndex()].avd_StartVmOnConnect]",
+                "validationEnvironment": "[parameters('avd_ResourceData').configs[copyIndex()].avd_ValidationEnvironment]",
+                "vmTemplate": "[json('null')]"
+            }
+        },
+        // Desktop Application Group resource creation
+        {
+            "type": "Microsoft.DesktopVirtualization/applicationgroups",
+            "apiVersion": "[parameters('avd_ApiVersion')]",
+            "name": "[variables('avdAppGroups')[copyIndex()]]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "AVD-AppGroups-Copy-Loop",
+                "count": "[length(variables('avdHostPools'))]"
+            },
+            "tags": {
+            },
+            "properties": {
+                "hostpoolarmpath": "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('avdHostPools')[copyIndex()])]",
+                "applicationGroupType": "Desktop"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.DesktopVirtualization/hostpools/', variables('avdHostPools')[copyIndex()])]"
+            ]
+        }
+    ],
+    "outputs": {
+      "avdCoreProperties": {
+          "type": "array",
+          "copy": {
+              "count": "[length(parameters('avd_ResourceData').configs)]",
+              "input": {
+                  "azEnvironment": "[parameters('avd_ResourceData').configs[copyIndex()].az_Environment]",
+                  "azProgram": "[parameters('avd_ResourceData').configs[copyIndex()].az_Program]",
+                  "avdWorkload": "[parameters('avd_ResourceData').configs[copyIndex()].avd_Workload]",
+                  "avdHostPoolName": "[variables('avdHostPools')[copyIndex()]]",
+                  "avdAppGroupId": "[resourceId('Microsoft.DesktopVirtualization/applicationgroups',variables('avdAppGroups')[copyIndex()])]"
+              }
+          }
+      }
+    }
+}

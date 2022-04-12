@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "avd_ResourceData": {
+            "metadata": {
+                "message": "",
+                "description": ""
+            },
+            "value": {
+                "configs": [
+                    {
+                        "az_Cloud": "MAP",
+                        "az_Environment": "PROD",
+                        "az_Program": "PGM",
+                        "az_SubscriptionId": "00000000-0000-0000-0000-000000000000",
+                        "az_VirtualMachineType": "DESKTOP",
+                        "avd_HostPoolType": "Pooled",
+                        "avd_LoadBalancerType": "BreadthFirst",
+                        "avd_PersonalDesktopAssignmentType": "",
+                        "avd_RdpProperties": "audiomode:i:0;audiocapturemode:i:1;encode redirected video capture:i:1;redirected video capture encoding quality:i:1;camerastoredirect:s:*;drivestoredirect:s:;redirectclipboard:i:0;redirectprinters:i:0;use multimon:i:0;singlemoninwindowedmode:i:1;maximizetocurrentdisplays:i:1;screen mode id:i:2;smart sizing:i:0;dynamic resolution:i:1;authentication level:i:0;gatewaycredentialssource:i:0;Kdcproxyname:s:",
+                        "avd_SessionHostLimit": "8",
+                        "avd_SsoadfsAuthority": "",
+                        "avd_SsoClientId": "https://www.wvd.microsoft.com",
+                        "avd_SsoClientSecretKeyVaultPath": "",
+                        "avd_SsoSecretType": "CertificateInKeyVault",
+                        "avd_StartVmOnConnect": true,
+                        "avd_ValidationEnvironment": false,
+                        "avd_Workload": "W11"
+                    },
+                    {
+                        "az_Cloud": "MAG",
+                        "az_Environment": "PROD",
+                        "az_Program": "PGM",
+                        "az_SubscriptionId": "00000000-0000-0000-0000-000000000000",
+                        "az_VirtualMachineType": "SERVER",
+                        "avd_HostPoolType": "Pooled",
+                        "avd_LoadBalancerType": "BreadthFirst",
+                        "avd_PersonalDesktopAssignmentType": "",
+                        "avd_RdpProperties": "audiomode:i:0;audiocapturemode:i:1;encode redirected video capture:i:1;redirected video capture encoding quality:i:1;camerastoredirect:s:*;drivestoredirect:s:;redirectclipboard:i:0;redirectprinters:i:0;use multimon:i:0;singlemoninwindowedmode:i:1;maximizetocurrentdisplays:i:1;screen mode id:i:2;smart sizing:i:0;dynamic resolution:i:1;authentication level:i:0;gatewaycredentialssource:i:0;Kdcproxyname:s:",
+                        "avd_SessionHostLimit": "8",
+                        "avd_SsoadfsAuthority": "",
+                        "avd_SsoClientId": "https://www.wvd.microsoft.com",
+                        "avd_SsoClientSecretKeyVaultPath": "",
+                        "avd_SsoSecretType": "CertificateInKeyVault",
+                        "avd_StartVmOnConnect": true,
+                        "avd_ValidationEnvironment": false,
+                        "avd_Workload": "S19"
+                    }
+                ]
+            }
+        }
+    }
+}

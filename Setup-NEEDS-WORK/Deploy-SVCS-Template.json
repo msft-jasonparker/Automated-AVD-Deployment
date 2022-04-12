@@ -1,0 +1,270 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "StorageAccountName": {
+            "type": "string"
+        },
+        "KeyVaultNamePrefix": {
+            "type": "string"
+        },
+        "KeyVaultSecretVMDomainJoinAccount": {
+            "type": "string"
+        },
+        "KeyVaultSecretVMLocalAdminAccount": {
+            "type": "string"
+        },
+        "AutomationAccountNamePrefix": {
+            "type": "string"
+        },
+        "LogAnalyticsWorkspaceNamePrefix": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountConfig": {
+            "dscContainer": "dsc",
+            "templateContainer": "templates",
+            "fileShare": {
+                "name": "avdartifacts",
+                "quota": "1024",
+                "tier": "TransactionOptimized",
+                "protocols": "SMB"
+            },
+            "tier": "Standard",
+            "replication": "Standard_RAGRS",
+            "accessTier": "Hot"
+        },
+        "keyVaultConfig": {
+            "secretVMAdminAccount": "AVD-VM-LocalAdmin-Account",
+            "secretVMAdminPassword": "AVD-VM-LocalAdmin-Password",
+            "secretVMDomainJoinAccount": "AVD-VM-DomainJoin-Account",
+            "secretVMDomainJoinPassword": "AVD-VM-DomainJoin-Password"
+        },
+        "automationAccountModuleConfig": {
+            "Modules": [
+                {
+                    "Name": "Az.Accounts"
+                },
+                {
+                    "Name": "CertificateDSC"
+                },
+                {
+                    "Name": "ComputerManagementDSC"
+                },
+                {
+                    "Name": "PSDscResources"
+                },
+                {
+                    "Name": "xPendingReboot"
+                },
+                {
+                    "Name": "cChoco"
+                },
+                {
+                    "Name": "Az.Automation"
+                },
+                {
+                    "Name": "Az.Compute"
+                },
+                {
+                    "Name": "Az.DesktopVirtualization"
+                },
+                {
+                    "Name": "Az.Network"
+                },
+                {
+                    "Name": "Az.OperationalInsights"
+                },
+                {
+                    "Name": "Az.Resources"
+                },
+                {
+                    "Name": "Az.Storage"
+                }
+            ]
+        }
+    },
+    "resources": [
+        // Creates Log Analytics Workspace
+        {
+            "name": "[concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2020-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "features": {
+                    "searchVersion": 1
+                }
+            }
+        },
+        // Creates minimum storage account for wvd artifacts with 2 containers and 1 file share
+        {
+            "name": "[parameters('StorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "[variables('storageAccountConfig').replication]",
+                "tier": "[variables('storageAccountConfig').tier]"
+            },
+            "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/',variables('storageAccountConfig').dscContainer)]",
+                    "dependsOn": [
+                        "[parameters('StorageAccountName')]"
+                    ]
+                },
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/',variables('storageAccountConfig').templateContainer)]",
+                    "dependsOn": [
+                        "[parameters('StorageAccountName')]"
+                    ]
+                }
+            ],
+            "properties": {
+                "accessTier": "[variables('storageAccountConfig').accessTier]"
+            }
+        },
+        // Creates file share in the storage account - setting are in variables section
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('StorageAccountName'), '/default/', variables('storageAccountConfig').fileShare.name)]",
+            "properties": {
+                "accessTier": "[variables('storageAccountConfig').fileShare.tier]",
+                "shareQuota": "[variables('storageAccountConfig').fileShare.quota]",
+                "enabledProtocols": "[variables('storageAccountConfig').fileShare.protocols]"
+            },
+            "dependsOn": [
+                "[resourceid('Microsoft.Storage/storageAccounts',parameters('StorageAccountName'))]"
+            ]
+        },
+        // Creates a Key Vault used for storing secrets needed during deployment
+        {
+            "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', concat(parameters('LogAnalyticsWorkspaceNamePrefix'),'-',uniqueString(subscription().Id)))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "enabledForDeployment": true,
+                "enabledForTemplateDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enableRbacAuthorization": true,
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminAccount)]",
+                    "apiVersion": "2019-09-01",
+                    "dependsOn": [
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
+                    ],
+                    "properties": {
+                        "contentType": "Local Admin Account name for VM(s)",
+                        "attributes": {
+                            "enabled": true
+                        },
+                        "value": "[parameters('KeyVaultSecretVMLocalAdminAccount')]"
+                    }
+                },
+                {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMAdminPassword)]",
+                    "apiVersion": "2019-09-01",
+                    "dependsOn": [
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
+                    ],
+                    "properties": {
+                        "contentType": "Local Admin Account password for VM(s)",
+                        "attributes": {
+                            "enabled": true
+                        },
+                        "value": "[uniqueString(subscription().id,subscription().tenantId,newGuid())]"
+                    }
+                },
+                {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinAccount)]",
+                    "apiVersion": "2019-09-01",
+                    "dependsOn": [
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
+                    ],
+                    "properties": {
+                        "contentType": "Domain Join Account UPN for VM(s)",
+                        "attributes": {
+                            "enabled": true
+                        },
+                        "value": "[parameters('KeyVaultSecretVMDomainJoinAccount')]"
+                    }
+                },
+                {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id),'/',variables('keyVaultConfig').secretVMDomainJoinPassword)]",
+                    "apiVersion": "2019-09-01",
+                    "dependsOn": [
+                        "[concat(parameters('KeyVaultNamePrefix'),'-',uniqueString(subscription().id))]"
+                    ],
+                    "properties": {
+                        "contentType": "Domain Join Account password for VM(s)",
+                        "attributes": {
+                            "enabled": true
+                        },
+                        "value": "[uniqueString(subscription().id,subscription().tenantId,newGuid())]"
+                    }
+                }
+            ]
+        },
+        // Creates Automation Account needed for Dynamic Scaling runbooks and State Configuration
+        {
+            "name": "[concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id))]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-10-31",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "Basic"
+                }
+            }
+        },
+        // Automation Account Modules - Update the variable automationAccountModuleConfig to add or remove modules to the Automation Account
+        {
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "apiVersion": "2015-10-31",
+            "name": "[concat(parameters('AutomationAccountNamePrefix'), '-', uniqueString(subscription().id), '/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', concat(parameters('AutomationAccountNamePrefix'),'-',uniqueString(subscription().id)))]"
+            ],
+            "tags": {},
+            "properties": {
+                "contentLink": {
+                    "uri": "[concat('https://www.powershellgallery.com/api/v2/package/', variables('automationAccountModuleConfig').Modules[copyIndex()].Name)]"
+                }
+            },
+            "copy": {
+                "name": "Module-Config-Install",
+                "count": "[length(variables('automationAccountModuleConfig').Modules)]",
+                "mode": "Serial",
+                "batchSize": 5
+            }
+        }
+    ],
+    "outputs": {}
+}

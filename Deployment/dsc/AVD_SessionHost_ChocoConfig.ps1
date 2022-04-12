@@ -1,16 +1,13 @@
-Configuration Wvd-SessionHost-Configuration {
+Configuration Wvd_SessionHost_ChocoConfig {
     # DSC Modules
     Import-DSCResource -ModuleName "PSDesiredStateConfiguration"
     Import-DscResource -ModuleName ComputerManagementDsc
-    Import-DSCResource -ModuleName "xPSDesiredStateConfiguration" -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName cChoco
+    Import-DSCResource -ModuleName "xPSDesiredStateConfiguration"
 
     Node $AllNodes.Where{ $true }.NodeName {
         $WvdData = $ConfigurationData.WvdData
 
-        # LCM Settings
-        LocalConfigurationManager {
-            RebootNodeIfNeeded = $true
-        }
         # PowerShell Execution Policy
         PowerShellExecutionPolicy ExecutionPolicyLocalMachine {
             ExecutionPolicyScope = 'LocalMachine'
@@ -67,23 +64,27 @@ Configuration Wvd-SessionHost-Configuration {
                 Start-Sleep -Seconds 60
             }
         }
+        # Chocolatey Install
+        cChocoInstaller ChocolateyInstall {
+            InstallDir = ("{0}\choco" -f $Node.DscSourcePath)
+        }
         # WVD Packages
         Script WVDSoftwarePackage {
             GetScript  = { Return @{ 'Result' = '' } }
             TestScript = {
                 If (Test-Path -Path ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath)) {
                     $currentZip = Get-ChildItem -Path ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath)
-                    return ((Get-Date).ToUniversalTime -ge $currentZip.CreationTimeUtc)
+                    return ((Get-Date).ToUniversalTime() -ge $currentZip.CreationTimeUtc)
                 }
                 else { return $false }
             }
             SetScript  = {
-                If (Test-Path -Path ("{0}\wvd_packages.zip" -f $using:WvdData.WvdArtifactLocation)) {
-                    (New-Object System.Net.WebClient).DownloadFile(("{0}\wvd_packages.zip" -f $using:WvdData.WvdArtifactLocation), ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath))
+                If (Test-Path -Path ("{0}\wvd_packages.zip" -f $using:Node.WvdArtifactLocation)) {
+                    (New-Object System.Net.WebClient).DownloadFile(("{0}\wvd_packages.zip" -f $using:Node.WvdArtifactLocation), ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath))
                     If (Test-Path -Path ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath)) { Expand-Archive -Path ("{0}\Temp\wvd_packages.zip" -f $using:Node.DscSourcePath) -DestinationPath ("{0}\DSC" -f $using:Node.DscSourcePath) -Force }
                 }
                 Else {
-                    Write-Warning ("Path not found: {0}\wvd_packages.zip" -f $using:WvdData.WvdArtifactLocation)
+                    Write-Warning ("Path not found: {0}\wvd_packages.zip" -f $using:Node.WvdArtifactLocation)
                     If (Test-Path -Path ("{0}\MissingWVDPackageReboot.txt" -f $using:Node.DscSourcePath)) {
                         Throw [System.Exception]::new("WVD Packages zip not found post 2nd reboot", "MissingWVDPackageReboot")
                     }
@@ -187,18 +188,8 @@ Configuration Wvd-SessionHost-Configuration {
         Script WVDAgentInstall {
             DependsOn  = "[Script]WVDAgentDownload"
             GetScript  = { return @{'Result' = '' } }
-            SetScript  = {
-                . ($using:Node.DscSourcePath + "\WVD\Functions.ps1")
-                try { & ("{0}\WVD\Script-AddRdshServer.ps1" -f $using:Node.DscSourcePath) -HostPoolName $using:WvdData.HostPoolName -RegistrationInfoToken $using:WvdData.RegistrationToken }
-                catch {
-                    $ErrMsg = $PSItem | Format-List -Force | Out-String
-                    Write-Log -Err $ErrMsg
-                    throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer SetScript: $ErrMsg", $PSItem.Exception)
-                }
-            }
             TestScript = {
                 If (Test-Path -Path ($using:Node.DscSourcePath + "\WVD\Functions.ps1")) {
-                    . ($using:Node.DscSourcePath + "\WVD\Functions.ps1")
                     try {
                         If (Test-path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\RDInfraAgent") { Return $true }
                         Else { Return $false }
@@ -214,6 +205,15 @@ Configuration Wvd-SessionHost-Configuration {
                     throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer TestScript: $ErrMsg", $PSItem.Exception)
                 }
             }
+            SetScript  = {
+                . ($using:Node.DscSourcePath + "\WVD\Functions.ps1")
+                try { & ("{0}\WVD\Script-AddRdshServer.ps1" -f $using:Node.DscSourcePath) -HostPoolName $using:Node.NodeName -RegistrationInfoToken $using:Node.RegistrationToken }
+                catch {
+                    $ErrMsg = $PSItem | Format-List -Force | Out-String
+                    Write-Log -Err $ErrMsg
+                    throw [System.Exception]::new("Some error occurred in DSC ExecuteRdAgentInstallServer SetScript: $ErrMsg", $PSItem.Exception)
+                }
+            }
         }
         # VDI/WVD Optimization Script
         Script VDI_Optimize {
@@ -222,7 +222,7 @@ Configuration Wvd-SessionHost-Configuration {
                 else { return $false }
             }
             SetScript  = {
-                try { & ("{0}\DSC\Packages\VDI-Optimize\Win10_VirtualDesktop_Optimize.ps1" -f $using:Node.DscSourcePath) -Restart -Verbose }
+                try { & ("{0}\DSC\Packages\VDI-Optimize\Win10_VirtualDesktop_Optimize.ps1" -f $using:Node.DscSourcePath) -Verbose }
                 catch {
                     $ErrMsg = $PSItem | Format-List -Force | Out-String
                     throw [System.Exception]::new(("Error running VDI Script Resource: {0}" -f $ErrMsg), $PSItem.Exception)
@@ -234,59 +234,64 @@ Configuration Wvd-SessionHost-Configuration {
             DependsOn  = "[Script]WVDSoftwarePackage"
         }
         # Software Packages
-        xPackage VisualStudioCode {
-            Ensure       = "Present"
-            Name         = "Microsoft Visual Studio Code"
-            Path         = ("{0}\DSC\Packages\Visual-Studio-Code\1.53.2\VSCodeSetup.exe" -f $Node.DscSourcePath)
-            ProductId    = ''
-            Arguments    = ('/VERYSILENT /NORESTART /MERGETASKS=!runcode /LOG="{0}\Logs\VSCodeSetup.log"' -f $Node.DscSourcePath)
-            IgnoreReboot = $true
-            DependsOn    = "[Script]WVDSoftwarePackage"
+        cChocoPackageInstaller fslogix {
+            Name      = 'fslogix'
+            Ensure    = 'Present'
+            Version   = '2.9.7654.4615001'
+            DependsOn = "[cChocoInstaller]ChocolateyInstall"
         }
-        xPackage Git {
-            Ensure       = "Present"
-            Name         = "Git version 2.30.1"
-            Path         = ("{0}\DSC\Packages\Git\2.30.1\Git.exe" -f $Node.DscSourcePath)
-            ProductId    = ''
-            Arguments    = ('/VERYSILENT /NORESTART /LOG="{0}\Logs\Git.log"' -f $Node.DscSourcePath)
-            IgnoreReboot = $true
-            DependsOn    = "[Script]WVDSoftwarePackage"
+        cChocoPackageInstaller VisualStudioCode {
+            Name      = 'vscode'
+            Ensure    = 'Present'
+            Version   = '1.53.2'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
         }
-        xPackage NotepadPlusPlus {
-            Ensure       = "Present"
-            Name         = "Notepad++ (64-bit x64)"
-            Path         = ("{0}\DSC\Packages\Notepad++\7.8.8\npp.exe" -f $Node.DscSourcePath)
-            ProductId    = ''
-            Arguments    = '/S /noUpdater'
-            LogPath      = ("{0}\Logs\npp.log" -f $Node.DscSourcePath)
-            IgnoreReboot = $true
-            DependsOn    = "[Script]WVDSoftwarePackage"
+        cChocoPackageInstaller GitSourceControl {
+            Name      = 'git'
+            Ensure    = 'Present'
+            Version   = '2.30.1'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
         }
-        # FSLogix
-        xPackage FsLogix {
-            Ensure       = "Present"
-            Name         = "Microsoft FsLogix Apps"
-            Path         = ("{0}\DSC\Packages\FSLogix\2.9.7654.46150\FSLogixAppsSetup.exe" -f $Node.DscSourcePath)
-            ProductId    = ''
-            Arguments    = ("/norestart /quiet /log {0}\Logs\FSLogixAppsSetup.log" -f $Node.DscSourcePath)
-            IgnoreReboot = $true
-            DependsOn    = "[Script]WVDSoftwarePackage"
+        cChocoPackageInstaller NotepadPlusPlus {
+            Name      = 'notepadplusplus'
+            Ensure    = 'Present'
+            Version   = '7.9.3'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
         }
+        cChocoPackageInstaller GoogleChrome {
+            Name      = 'googlechrome'
+            Ensure    = 'Present'
+            Version   = '88.0.4324.182'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
+        }
+        cChocoPackageInstaller 7Zip {
+            Name      = '7zip'
+            Ensure    = 'Present'
+            Version   = '19.0'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
+        }
+        cChocoPackageInstaller AdobeReader {
+            Name      = 'adobereader'
+            Ensure    = 'Present'
+            Version   = '2021.001.20138'
+            DependsOn = '[cChocoInstaller]ChocolateyInstall'
+        }
+        # Registry Settings
         Registry FsLogixProfileEnabled {
             Ensure    = "Present"
             Key       = "HKLM:\SOFTWARE\FSLogix\Profiles"
             ValueName = "Enabled"
             ValueData = "1"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixProfileVhdLocations {
             Ensure    = "Present"
             Key       = "HKLM:\SOFTWARE\FSLogix\Profiles"
             ValueName = "VHDLocations"
-            ValueData = $WvdData.FsLogixVhdLocation
+            ValueData = $Node.WvdFsLogixVhdLocation
             ValueType = "MultiString"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixConcurrentUserSessions {
             Ensure    = "Present"
@@ -294,7 +299,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "ConcurrentUserSessions"
             ValueData = "0"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixProfileSize {
             Ensure    = "Present"
@@ -302,7 +307,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "SizeInMBs"
             ValueData = "30000"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixDeleteLocalProfileWhenVHDShouldApply {
             Ensure    = "Present"
@@ -310,7 +315,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "DeleteLocalProfileWhenVHDShouldApply"
             ValueData = "1"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixLockedRetryCount {
             Ensure    = "Present"
@@ -318,7 +323,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "LockedRetryCount"
             ValueData = 3
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixVolumeType {
             Ensure    = "Present"
@@ -326,7 +331,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "VolumeType"
             ValueData = "vhdx"
             ValueType = "string"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixVHDNamePattern {
             Ensure    = "Present"
@@ -334,7 +339,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "VHDNamePattern"
             ValueData = "%username%_Profile"
             ValueType = "string"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixVHDNameMatch {
             Ensure    = "Present"
@@ -342,7 +347,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "VHDNameMatch"
             ValueData = "%username%_Profile"
             ValueType = "string"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixFlipFlopProfileDirectoryName {
             Ensure    = "Present"
@@ -350,7 +355,7 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "FlipFlopProfileDirectoryName"
             ValueData = "1"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
         }
         Registry FsLogixCleanupInvalidSessions {
             Ensure    = "Present"
@@ -358,7 +363,99 @@ Configuration Wvd-SessionHost-Configuration {
             ValueName = "CleanupInvalidSessions"
             ValueData = "1"
             ValueType = "DWORD"
-            DependsOn = '[xPackage]FsLogix'
+            DependsOn = '[cChocoPackageInstaller]fslogix'
+        }
+        Registry FsLogixRedirXMLSourceFolder {
+            Ensure    = "Present"
+            Key       = "HKLM:\SOFTWARE\FSLogix\Profiles"
+            ValueName = "RedirXMLSourceFolder"
+            ValueData = ("{0}\DSC\Packages\Microsoft\FSLogix\ProfileManagement" -f $Node.DscSourcePath)
+            ValueType = "string"
+            DependsOn = '[cChocoPackageInstaller]fslogix'
+        }
+        Registry OneDriveRailRunOnce {
+            Ensure    = 'Present'
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\RailRunOnce'
+            ValueName = 'OneDrive'
+            ValueData = '"C:\Program Files (x86)\Microsoft OneDrive\OneDrive.exe" /background'
+            ValueType = 'ExpandString'
+        }
+        Registry MicrosoftOneDriveRunOneDrive {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
+            ValueName = "OneDrive"
+            ValueData = "C:\Program Files (x86)\Microsoft OneDrive\OneDrive.exe /background"
+            ValueType = "String"
+        }
+        Registry MicrosoftOneDriveSilentAccountConfig {
+            Ensure    = "Present"
+            Key       = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"
+            ValueName = "SilentAccountConfig"
+            ValueData = "1"
+            ValueType = "DWORD"
+        }
+        Registry OneDriveFilesOnDemandEnabled {
+            Ensure    = 'Present'
+            Key       = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\OneDrive'
+            ValueName = 'FilesOnDemandEnabled'
+            ValueData = 1
+            ValueType = 'DWORD'
+        }
+        Registry WindowsUpdateNoAutoUpdate {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate\AU"
+            ValueName = "NoAutoUpdate"
+            ValueData = "1"
+            ValueType = "DWORD"
+        }
+        Registry WvdEnvironment {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdEnvironment"
+            ValueData = $Node.Environment
+            ValueType = "String"
+        }
+        Registry WvdType {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdType"
+            ValueData = $Node.Type
+            ValueType = "String"
+        }
+        Registry WvdBuild {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdBuild"
+            ValueData = $Node.Build
+            ValueType = "String"
+        }
+        Registry wvdDeploymentGuid {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdDeploymentGuid"
+            ValueData = $Node.DeploymentGuid
+            ValueType = "String"
+        }
+        Registry WvdRole {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdRole"
+            ValueData = $Node.Role
+            ValueType = "String"
+        }
+        Registry WvdHostPoolName {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdHostPoolName"
+            ValueData = $Node.NodeName
+            ValueType = "String"
+        }
+        Registry WvdArtifactLocation {
+            Ensure    = "Present"
+            Key       = "HKLM:\Software\Microsoft\WindowsVirtualDesktop"
+            ValueName = "wvdArtifactLocation"
+            ValueData = $Node.wvdArtifactLocation
+            ValueType = "String"
         }
         Script RebootPostInstall {
             GetScript  = { return @{'Result' = '' } }

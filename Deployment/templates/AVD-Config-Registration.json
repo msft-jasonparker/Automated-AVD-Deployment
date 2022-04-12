@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "az_automationAccountName": {
+      "type": "string",
+    },
+    "az_aaResourceGroupName": {
+      "type": "string",
+    },
+    "az_virtualMachineNames": {
+      "type": "array"
+    },
+    "wvd_dscNodeConfiguration": {
+      "type": "string"
+    }
+  },
+  "variables": {},
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('az_virtualMachineNames')[copyIndex()], '/Microsoft.Powershell.DSC')]",
+      "apiVersion": "2018-06-01",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "VM-State-Config-Loop",
+        "count": "[length(parameters('az_virtualMachineNames'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.8",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "Items": {
+            "registrationKeyPrivate": "[listKeys(resourceId(parameters('az_aaResourceGroupName'), 'Microsoft.Automation/automationAccounts/', parameters('az_automationAccountName')), '2018-06-30').Keys[0].value]"
+          }
+        },
+        "settings": {
+          "Properties": [
+            {
+              "Name": "RegistrationKey",
+              "Value": {
+                "UserName": "PLACEHOLDER_DONOTUSE",
+                "Password": "PrivateSettingsRef:registrationKeyPrivate"
+              },
+              "TypeName": "System.Management.Automation.PSCredential"
+            },
+            {
+              "Name": "RegistrationUrl",
+              "Value": "[reference(resourceId(parameters('az_aaResourceGroupName'), 'Microsoft.Automation/automationAccounts/', parameters('az_automationAccountName')), '2018-06-30').registrationUrl]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "NodeConfigurationName",
+              "Value": "[parameters('wvd_dscNodeConfiguration')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "ConfigurationMode",
+              "Value": "ApplyOnly",
+              "TypeName": "System.String"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

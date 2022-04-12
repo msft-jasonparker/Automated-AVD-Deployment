@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "hostPoolObjects": {
+            "type": "object"
+        },
+        "shutdownTime": {
+            "type": "string"
+        },
+        "notificationTime": {
+            "type": "int"
+        }
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "name": "[concat('shutdown-computevm-',parameters('hostPoolObjects').SessionHosts[copyIndex()].vmName)]",
+            "type": "Microsoft.DevTestLab/schedules",
+            "apiVersion": "2018-09-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "VM-Auto-Shutdown-Loop",
+                "count": "[length(parameters('hostPoolObjects').SessionHosts)]"
+            },
+            "properties": {
+                "status": "Enabled",
+                "taskType": "ComputeVmShutdownTask",
+                "dailyRecurrence": {
+                    "time": "[parameters('shutdownTime')]"
+                },
+                "timeZoneId": "Eastern Standard Time",
+                "notificationSettings": {
+                    "status": "Enabled",
+                    "timeInMinutes": "[parameters('notificationTime')]",
+                    "emailRecipient": "[parameters('hostPoolObjects').SessionHosts[copyIndex()].assignedUser]"
+                },
+                "targetResourceId": "[parameters('hostPoolObjects').SessionHosts[copyIndex()].resourceId]"
+            }
+        }
+    ],
+    "outputs": {
+        // "SessionHosts": {
+        //     "type": "array",
+        //     "copy": {
+        //         "count": "[length(parameters('hostPoolObjects').SessionHosts)]",
+        //         "input": {
+        //             "VMName": "[parameters('hostPoolObjects').SessionHosts[copyIndex()].VMName]",
+        //             "User": "[parameters('hostPoolObjects').SessionHosts[copyIndex()].assignedUser]",
+        //             "Id": "[parameters('hostPoolObjects').SessionHosts[copyIndex()].resourceId]"
+        //         }
+        //     }
+        // }
+    }
+}

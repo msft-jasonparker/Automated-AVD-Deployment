@@ -1,0 +1,70 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "avd_BuildVersion": {
+            "metadata": {
+                "message": "",
+                "description": ""
+            },
+            "value": "22.03.26.preview"
+        },
+        "avd_SubscriptionId": {
+            "metadata": {
+                "comment": "This is the AVD Subscription Id where the Host Pool objects are located. This parameter is used to change context and fetch the Host Pool tokens."
+            },
+            "value": "00000000-0000-0000-0000-000000000000"
+        },
+        "avd_WorkloadData": {
+            "metadata": {
+                "message": "",
+                "description": ""
+            },
+            "value": {
+                "configs": [
+                    {
+                        "avd_BuildType": "",
+                        "avd_HostPoolName": "pgm-env-loc-workload-hostpool", // Should already be created via the Core Resources script
+                        "avd_Workload": "W11",
+                        "avd_Canary": false,
+                        "az_SubscriptionId": "00000000-0000-0000-0000-000000000000", // Where the VMs get deployed
+                        "az_VmResourceGroup": "PGM-ENV-LOC-AVDSH-WORKLOAD-RG",
+                        "az_vNetSubnetName": "Subnet-01-AVDSH",
+                        "az_Environment": "PROD",
+                        "az_Program": "PGM",
+                        "az_VirtualMachineType": "DESKTOP",
+                        "az_VmImagePublisher": "",
+                        "az_VmImageOffer": "",
+                        "az_VmImageSku": "",
+                        "az_VmOSVersion": "",
+                        "vm_UseZones": true,
+                        "vm_DiskSize": 256,
+                        "vm_DiskType": "Premium_LRS",
+                        "vm_BuildImageId": "##--RESOURCE ID TO COMPUTE GALLERY IMAGE--##",
+                        "vm_NameType": "Dynamic",
+                        "vm_Size": "Standard_D8s_v4",
+                        "vm_AcceleratedNetworking": true,
+                        "vm_NumberOfInstances": 4,
+                        "vm_DomainFQDN": "contoso.com",
+                        "dsc_Configuration": "AvdSessionHostConfig",
+                        "dsc_ConfigurationScript": "AVD-DscConfiguration.ps1",
+                        "dsc_LocalAdminGroups": "'contoso\\admins','contoso\\admins2'",
+                        "dsc_FslogixVhdLocation": "\\\\fileshare.contoso.com\\avd_profiles"
+                    }
+                ]
+            }
+        },
+        "az_Cloud": {
+            "value": "MAG" // MAG = Microsoft Azure Government
+        },
+        "az_Role": {
+            "value": "AVD"
+        },
+        "az_LogAnalyticsWorkspaceId": {
+            "value": "00000000-0000-0000-0000-000000000000"
+        },
+        "az_LogAnalyticsResourceId": {
+            "value": "##--LOG ANALYTICS RESOURCE ID--##"
+        }
+    }
+}
